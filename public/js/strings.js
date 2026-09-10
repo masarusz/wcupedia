@@ -39,6 +39,8 @@ export const STRINGS = Object.freeze({
   podium: '{大会|たいかい}{結果|けっか}',
   awards: '{大会|たいかい}{賞|しょう}',
   bracket: '{決勝|けっしょう}トーナメント',
+  beginning: 'はじまり',
+  afterRound: 'のあと',
   replay: '{再試合|さいしあい}',
   matchDetails: '{試合|しあい}の{記録|きろく}',
   dataSources: 'データの{出典|しゅってん}',

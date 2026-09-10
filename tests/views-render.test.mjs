@@ -211,9 +211,39 @@ export function register(test, equal, deepEqual) {
       let tournament2022Tree;
       let tournament2026Tree;
       let canadaMoroccoTree;
+      let replayTieVerified = false;
+      let shootoutVerified = false;
       for (const detail of details) {
         const tree = render(`tournament ${detail.year}`, () => tournamentView(detail, teams));
         if (tree) tournamentRenders += 1;
+        const knockoutRounds = detail.stages.filter((stage) => ['r32', 'r16', 'qf', 'sf', 'final'].includes(stage));
+        const chart = descendants(tree).find((node) => hasClass(node, 'bracket'));
+        equal(Boolean(chart), knockoutRounds.length > 0, `${detail.year} chart presence`);
+        if (chart) {
+          const stateButtons = descendants(tree).filter((node) => hasClass(node, 'bracket-state-button'));
+          equal(stateButtons.length, knockoutRounds.length + 1, `${detail.year} state button count`);
+          equal(stateButtons.at(-1).getAttribute('aria-pressed'), 'true', `${detail.year} default final state`);
+          const defaultBoxes = descendants(chart).filter((node) => hasClass(node, 'bracket-box'));
+          equal(defaultBoxes.every((node) => /^#\/m\/M-/.test(node.getAttribute('href') || '')), true,
+            `${detail.year} box match links`);
+          equal(descendants(chart).filter((node) => hasClass(node, 'bracket-results')).length, defaultBoxes.length,
+            `${detail.year} default scored boxes`);
+          if (detail.year === 1934) {
+            const replayBox = defaultBoxes.find((node) => node.getAttribute('href') === '#/m/M-1934-13');
+            equal(Boolean(replayBox), true, '1934 replay destination');
+            equal(descendants(replayBox).filter((node) => hasClass(node, 'bracket-result')).length, 2, '1934 both replay scores');
+            replayTieVerified = true;
+          }
+          if (detail.year === 2022) shootoutVerified = chart.textContent.includes('PK 4–2');
+          try {
+            stateButtons[0].listeners.get('click')[0]();
+          } catch (error) {
+            errors.push(`tournament ${detail.year} beginning state: ${error.message}`);
+          }
+          equal(stateButtons[0].getAttribute('aria-pressed'), 'true', `${detail.year} beginning selected`);
+          equal(descendants(tree).filter((node) => hasClass(node, 'bracket-results')).length, 0,
+            `${detail.year} beginning score count`);
+        }
         for (const panel of descendants(tree).filter((node) => hasClass(node, 'group-panel'))) {
           const heading = panel.childNodes.find((node) => node instanceof FakeElement && node.tagName === 'H3');
           if (heading.textContent.includes('Group ')) englishGroupLabels.push(`tournament ${detail.year}: ${heading.textContent}`);
@@ -252,6 +282,16 @@ export function register(test, equal, deepEqual) {
       });
       equal(descendants(finalRound1950).filter((node) => hasClass(node, 'advanced-mark')).length, 0,
         '1950 final-round advance marks');
+      equal(descendants(tournament1950Tree).filter((node) => hasClass(node, 'bracket')).length, 0, '1950 no chart');
+      equal(descendants(tournament2022Tree).filter((node) => hasClass(node, 'bracket-box')).length, 15, '2022 chart boxes');
+      const tournament1974Tree = render('tournament 1974 box count', () => tournamentView(details.find((detail) => detail.year === 1974), teams));
+      equal(descendants(tournament1974Tree).filter((node) => hasClass(node, 'bracket-box')).length, 1, '1974 one chart box');
+      const sections1974 = tournament1974Tree.childNodes.filter((node) => node instanceof FakeElement && hasClass(node, 'stage-section'));
+      const chartIndex1974 = sections1974.findIndex((node) => descendants(node).some((descendant) => hasClass(descendant, 'bracket')));
+      const thirdIndex1974 = sections1974.findIndex((node) => descendants(node).some((descendant) => hasClass(descendant, 'standalone-match')));
+      equal(chartIndex1974 < thirdIndex1974, true, '1974 third-place card below chart');
+      equal(replayTieVerified, true, 'replay tie render checked');
+      equal(shootoutVerified, true, 'shootout result render checked');
 
       deepEqual(renderedAwardKeys(tournament2022Tree), [
         'golden-ball', 'silver-ball', 'bronze-ball', 'golden-boot',
@@ -265,6 +305,8 @@ export function register(test, equal, deepEqual) {
         header.split(',').map((selector) => selector.trim()).includes('ruby'));
       equal(Boolean(rubyRule && /(?:^|;)\s*ruby-align\s*:\s*center\s*(?:;|$)/.test(rubyRule.body)), true,
         'top-level ruby alignment');
+      equal(/\.bracket-state-button\s*\{[^}]*min-height:\s*44px/s.test(readFileSync(join(ROOT, 'public/css/app.css'), 'utf8')), true,
+        'bracket state button tap target');
 
       const firstCardCount = descendants(homeTree).find((node) => hasClass(node, 'card-count'));
       equal(firstCardCount.textContent.startsWith('出場国'), true, 'home first card count label first');

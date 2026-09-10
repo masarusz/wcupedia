@@ -1,4 +1,5 @@
 import { buildBracket } from './bracket.js?v=0.1.0';
+import { bracketLayout, bracketState } from './bracket-layout.js?v=0.1.0';
 import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.1.0';
 import { formatDate, formatMinute, groupLabel, signed, tournamentTitle } from './format.js?v=0.1.0';
 import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.1.0';
@@ -125,29 +126,73 @@ function groupSection(detail, teams, stage) {
   ]);
 }
 
-function bracketTie(tie, detail, teams) {
-  const matches = tie.matches.map((id) => detail.matches.find((match) => match.id === id));
-  return el('article', { class: 'bracket-tie' }, [
-    tie.teams.map((key) => el('div', { class: tie.winner === key ? 'bracket-team winner' : 'bracket-team' }, [
-      team(teams, key), tie.winner === key ? text(' ✓') : null,
-    ])),
-    el('div', { class: 'tie-links' }, matches.map((match, index) => el('a', { href: `#/m/${match.id}` }, [
-      rubyNodes(index ? STRINGS.replay : STRINGS.matchDetails), text(` ${match.score.home}–${match.score.away}`),
-    ]))),
+function bracketResult(match, index) {
+  return el('span', { class: 'bracket-result' }, [
+    index || match.replay ? badge(STRINGS.replay) : null,
+    el('strong', {}, `${match.score.home}–${match.score.away}`),
+    match.score.aet ? badge(STRINGS.extraTime) : null,
+    match.score.pens ? el('span', { class: 'badge' }, `PK ${match.score.pens[0]}–${match.score.pens[1]}`) : null,
+  ]);
+}
+
+function bracketBox(box, state, detail, teams) {
+  const matches = box.matches.map((id) => detail.matches.find((match) => match.id === id));
+  const destination = matches.find((match) => match.replay) || matches.at(-1);
+  const classes = [
+    'bracket-box', `box-col-${box.column}`, `row-start-${box.rowStart}`, `row-span-${box.rowSpan}`,
+    box.round === 'final' ? 'final-box' : '',
+  ].filter(Boolean).join(' ');
+  return el('a', { class: classes, href: `#/m/${destination.id}` }, [
+    state.teams.map((key) => {
+      const isWinner = state.winner === key;
+      const teamClass = ['bracket-team', isWinner ? 'winner' : '', state.champion === key ? 'champion-team' : ''].filter(Boolean).join(' ');
+      return el('span', { class: teamClass }, state.showTeams ? [
+        flag(teams, key), el('span', { class: 'bracket-name' }, rubyNodes(teams[key].ja)),
+        isWinner ? el('span', { class: 'bracket-winner-mark' }, '✓') : null,
+      ] : el('span', { class: 'bracket-name' }, key));
+    }),
+    state.showScore ? el('span', { class: 'bracket-results' }, matches.map(bracketResult)) : null,
+  ]);
+}
+
+function bracketChart(bracket, detail, teams, stepIndex) {
+  const layout = bracketLayout(bracket, { compactOuter: detail.year === 2026 });
+  const state = bracketState(bracket, stepIndex);
+  const states = new Map(state.boxes.map((box) => [box.id, { ...box, champion: state.champion }]));
+  const templateClass = `bracket-grid-template bracket-columns-${layout.columnCount}`;
+  return el('div', { class: `bracket bracket-column-count-${layout.columnCount}` }, [
+    el('div', { class: `bracket-headings ${templateClass}` }, layout.columns.map((column) =>
+      rubyEl('h3', stageLabel(column.round, detail.year), { class: `bracket-column-heading box-col-${column.column}` }))),
+    el('div', { class: `bracket-grid ${templateClass}` }, [
+      layout.connectors.map((connector) => el('span', {
+        class: `bracket-connector connector-${connector.side} connector-${connector.direction} gap-col-${connector.gapColumn} row-start-${connector.rowStart} row-span-${connector.rowSpan}`,
+        role: 'presentation',
+      })),
+      layout.boxes.map((box) => bracketBox(box, states.get(box.id), detail, teams)),
+    ]),
   ]);
 }
 
 function bracketSection(detail, teams) {
   const bracket = buildBracket(detail);
-  const columns = detail.stages.filter((stage) => ['r32', 'r16', 'qf', 'sf', 'final'].includes(stage));
-  if (!columns.length) return null;
+  if (!bracket.root) return null;
+  const initialState = bracketState(bracket, Number.MAX_SAFE_INTEGER);
+  const chartRegion = el('div', { class: 'bracket-chart-region' });
+  const buttons = [STRINGS.beginning, ...initialState.rounds.map((round) => `${stageLabel(round, detail.year)}${STRINGS.afterRound}`)].map((label, index) => {
+    const button = rubyEl('button', label, {
+      type: 'button', class: 'bracket-state-button', 'aria-pressed': index === initialState.rounds.length ? 'true' : 'false',
+    });
+    button.addEventListener('click', () => {
+      buttons.forEach((item, buttonIndex) => item.setAttribute('aria-pressed', buttonIndex === index ? 'true' : 'false'));
+      chartRegion.replaceChildren(bracketChart(bracket, detail, teams, index));
+    });
+    return button;
+  });
+  chartRegion.append(bracketChart(bracket, detail, teams, initialState.rounds.length));
   return el('section', { class: 'stage-section' }, [
     rubyEl('h2', STRINGS.bracket),
-    el('div', { class: 'bracket-scroll', role: 'region', 'aria-label': 'bracket' },
-      el('div', { class: 'bracket' }, columns.map((round) => el('section', { class: 'bracket-round' }, [
-        rubyEl('h3', stageLabel(round, detail.year)),
-        bracket.rounds[round].map((tie) => bracketTie(tie, detail, teams)),
-      ])))),
+    el('div', { class: 'bracket-state-switcher', role: 'group', 'aria-label': 'bracket state' }, buttons),
+    el('div', { class: 'bracket-scroll', role: 'region', 'aria-label': 'bracket' }, chartRegion),
   ]);
 }
 
@@ -163,14 +208,16 @@ function thirdSection(detail, teams) {
 export function tournamentView(detail, teams) {
   const stageViews = [];
   let bracketRendered = false;
+  let thirdView = null;
   for (const stage of detail.stages) {
     if (['group', 'second-group', 'final-round'].includes(stage)) stageViews.push(groupSection(detail, teams, stage));
-    else if (stage === 'third') stageViews.push(thirdSection(detail, teams));
+    else if (stage === 'third') thirdView = thirdSection(detail, teams);
     else if (!bracketRendered) {
       stageViews.push(bracketSection(detail, teams));
       bracketRendered = true;
     }
   }
+  if (thirdView) stageViews.push(thirdView);
   return el('article', { class: 'page tournament-page' }, [
     rubyEl('h1', tournamentTitle(detail, teams)),
     el('p', { class: 'dates' }, `${formatDate(detail.start)}〜${formatDate(detail.end)}`),
