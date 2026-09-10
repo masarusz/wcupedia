@@ -1,7 +1,7 @@
 import { buildBracket } from './bracket.js?v=0.1.0';
 import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.1.0';
-import { formatDate, formatMinute, signed, tournamentTitle } from './format.js?v=0.1.0';
-import { AWARD_LABELS, stageLabel, STRINGS } from './strings.js?v=0.1.0';
+import { formatDate, formatMinute, groupLabel, signed, tournamentTitle } from './format.js?v=0.1.0';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.1.0';
 import { VERSION } from './version.js?v=0.1.0';
 
 function flag(teams, key) {
@@ -56,7 +56,7 @@ export function homeView(tournaments, teams) {
       rubyEl('h2', tournamentTitle(tournament, teams)),
       el('div', { class: 'host-flags', 'aria-label': 'hosts' }, tournament.hosts.map((key) => flag(teams, key))),
       el('p', { class: 'champion' }, [text('🏆 '), rubyNodes(STRINGS.champion), text(' '), team(teams, champion)]),
-      el('p', { class: 'card-count' }, [String(tournament.teams), rubyNodes(STRINGS.teams)]),
+      el('p', { class: 'card-count' }, [rubyNodes(STRINGS.teams), text(` ${tournament.teams}`)]),
     ]);
   });
   return el('section', { class: 'page home-page' }, [
@@ -82,7 +82,10 @@ function honours(detail, teams) {
       el('strong', {}, `${scorer.goals}`), rubyNodes(STRINGS.goals),
     ]);
   });
-  const awardRows = detail.awards.map((award) => el('li', {}, [
+  const awardRank = new Map(AWARD_ORDER.map((key, index) => [key, index]));
+  const awards = [...detail.awards].sort((a, b) =>
+    (awardRank.get(a.award) ?? AWARD_ORDER.length) - (awardRank.get(b.award) ?? AWARD_ORDER.length));
+  const awardRows = awards.map((award) => el('li', {}, [
     rubyEl('strong', AWARD_LABELS[award.award] || award.award),
     el('span', { class: 'person' }, playerName(detail, award.player)),
     team(teams, award.team),
@@ -94,13 +97,13 @@ function honours(detail, teams) {
   ]);
 }
 
-function standingsTable(group, teams) {
+function standingsTable(group, teams, showAdvanceMark = true) {
   const headers = [STRINGS.rank, STRINGS.country, STRINGS.played, STRINGS.wins, STRINGS.draws, STRINGS.losses,
     STRINGS.goalsFor, STRINGS.goalsAgainst, STRINGS.goalDifference, STRINGS.points];
   return el('div', { class: 'table-scroll', role: 'region', 'aria-label': 'standings' }, el('table', { class: 'standings' }, [
     el('thead', {}, el('tr', {}, headers.map((label) => rubyEl('th', label, { scope: 'col' })))),
     el('tbody', {}, group.standings.map((row) => el('tr', { class: row.advanced ? 'advanced' : '' }, [
-      el('td', {}, [String(row.pos), row.advanced ? rubyEl('span', STRINGS.advanced, { class: 'advanced-mark' }) : null]),
+      el('td', {}, [String(row.pos), row.advanced && showAdvanceMark ? rubyEl('span', STRINGS.advanced, { class: 'advanced-mark' }) : null]),
       el('td', {}, team(teams, row.team)),
       ...[row.p, row.w, row.d, row.l, row.gf, row.ga].map((value) => el('td', {}, String(value))),
       el('td', {}, signed(row.gd)), el('td', {}, el('strong', {}, String(row.pts))),
@@ -115,7 +118,7 @@ function groupSection(detail, teams, stage) {
     groups.map((group) => {
       const matches = detail.matches.filter((match) => match.stage === stage && match.group === group.name);
       return el('article', { class: 'group-panel' }, [
-        el('h3', {}, group.name), standingsTable(group, teams),
+        el('h3', {}, groupLabel(group.name)), standingsTable(group, teams, stage !== 'final-round'),
         el('div', { class: 'match-list' }, matches.map((match) => matchLink(match, teams))),
       ]);
     }),
@@ -181,7 +184,7 @@ export function tournamentView(detail, teams) {
 }
 
 export function matchView(detail, match, teams) {
-  const stage = match.group || stageLabel(match.stage, detail.year);
+  const stage = match.group ? groupLabel(match.group) : stageLabel(match.stage, detail.year);
   const goals = [...match.goals].sort((a, b) => a.sort - b.sort);
   return el('article', { class: 'page match-page' }, [
     el('nav', { class: 'breadcrumb', 'aria-label': 'breadcrumb' }, [

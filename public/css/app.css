@@ -51,6 +51,7 @@ body {
 a { color: var(--primary); text-underline-offset: .18em; }
 a:focus-visible, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 button { font: inherit; font-size: 16px; }
+ruby { ruby-align: center; }
 rt { font-size: .55em; color: var(--muted); }
 .furigana-off rt { display: none; }
 

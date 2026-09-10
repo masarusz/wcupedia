@@ -8,6 +8,10 @@ export function formatMinute(value) {
   return `${String(value)}分`;
 }
 
+export function groupLabel(value) {
+  return String(value).replace(/^Group\s+/, 'グループ');
+}
+
 export function tournamentTitle(tournament, teams) {
   const hosts = [...tournament.hosts];
   const japan = hosts.indexOf('JPN');

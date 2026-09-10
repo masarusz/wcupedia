@@ -72,6 +72,17 @@ export const AWARD_LABELS = Object.freeze({
   'best-young-player': STRINGS.bestYoungPlayer,
 });
 
+export const AWARD_ORDER = Object.freeze([
+  'golden-ball',
+  'silver-ball',
+  'bronze-ball',
+  'golden-boot',
+  'silver-boot',
+  'bronze-boot',
+  'golden-glove',
+  'best-young-player',
+]);
+
 export const STAGE_LABELS = Object.freeze({
   group: 'グループリーグ',
   'second-group': '{2次|にじ}リーグ',
