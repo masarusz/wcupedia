@@ -2,6 +2,21 @@ const BOX_ROW_SPAN = 6;
 const LEAF_ROW_STEP = 8;
 const LEAF_CENTRE = 5;
 
+export const BRACKET_STYLE_METRICS = Object.freeze({
+  pagePaddingInlinePx: 24,
+  nameFontPx: 14,
+  shortNameCharacters: 7,
+  flagWidthPx: 20,
+  teamColumnGapPx: 2,
+  boxBorderPx: 1,
+  finalBoxBorderPx: 2,
+  boxPaddingInlinePx: 1,
+  teamPaddingInlinePx: 0,
+  halfGapPx: Object.freeze({ 1: 0, 2: 12, 3: 10, 4: 10 }),
+  sideGapPx: Object.freeze({ 3: 12, 5: 12, 7: 8 }),
+  sideThresholdPx: Object.freeze({ 3: 0, 5: 640, 7: 900 }),
+});
+
 function rootOf(tree) {
   if (!tree) return null;
   return Object.hasOwn(tree, 'root') ? tree.root : tree;
@@ -33,10 +48,10 @@ function collectTies(root) {
   return ties;
 }
 
-export function bracketLayout(tree, { compactOuter = false } = {}) {
+export function bracketLayout(tree) {
   const root = rootOf(tree);
   if (!root) {
-    return { columnCount: 0, rowCount: 0, columns: [], boxes: [], connectors: [], emptySlots: [], compactOuter };
+    return { columnCount: 0, rowCount: 0, columns: [], boxes: [], connectors: [], emptySlots: [] };
   }
 
   const depth = treeDepth(root);
@@ -106,7 +121,58 @@ export function bracketLayout(tree, { compactOuter = false } = {}) {
     const box = boxes.find((candidate) => candidate.column === column);
     return { column, side: column < centreColumn ? 'left' : column > centreColumn ? 'right' : 'centre', round: box?.round || null };
   });
-  return { columnCount, rowCount, columns, boxes, connectors, emptySlots, compactOuter };
+  return { columnCount, rowCount, columns, boxes, connectors, emptySlots };
+}
+
+export function stackedBracketLayout(tree) {
+  const wide = bracketLayout(tree);
+  if (!wide.boxes.length) {
+    return {
+      columnCount: 0, halfColumnCount: 0, rowCount: 0, halves: [], final: null,
+      boxes: [], connectors: [], finalConnectors: [], emptySlots: [],
+    };
+  }
+
+  const centreColumn = Math.ceil(wide.columnCount / 2);
+  const final = wide.boxes.find((box) => box.side === 'centre');
+  const halves = ['left', 'right'].map((side) => {
+    const toLocalColumn = (column) => side === 'left' ? column : column - centreColumn;
+    const boxes = wide.boxes.filter((box) => box.side === side).map((box) => ({
+      ...box, column: toLocalColumn(box.column),
+    }));
+    const boxIds = new Set(boxes.map((box) => box.id));
+    const connectors = wide.connectors.filter((connector) => boxIds.has(connector.to)).map((connector) => {
+      const from = boxes.find((box) => box.id === connector.from);
+      const to = boxes.find((box) => box.id === connector.to);
+      return { ...connector, gapColumn: Math.min(from.column, to.column) };
+    });
+    const emptySlots = wide.emptySlots.filter((slot) => slot.side === side).map((slot) => ({
+      ...slot, column: toLocalColumn(slot.column),
+    }));
+    const columns = Array.from({ length: Math.max(0, centreColumn - 1) }, (_, offset) => {
+      const column = offset + 1;
+      return { column, round: boxes.find((box) => box.column === column)?.round || null };
+    });
+    return { side, columns, boxes, connectors, emptySlots };
+  });
+  const halfBoxIds = new Set(halves.flatMap((half) => half.boxes.map((box) => box.id)));
+  const finalConnectors = wide.connectors.filter((connector) => connector.to === final.id
+    && halfBoxIds.has(connector.from));
+  const boxes = [...halves.flatMap((half) => half.boxes), final];
+  const connectors = [...halves.flatMap((half) => half.connectors), ...finalConnectors];
+  const emptySlots = halves.flatMap((half) => half.emptySlots);
+
+  return {
+    columnCount: wide.columnCount,
+    halfColumnCount: centreColumn - 1,
+    rowCount: wide.rowCount,
+    halves,
+    final,
+    boxes,
+    connectors,
+    finalConnectors,
+    emptySlots,
+  };
 }
 
 export function bracketState(tree, stepIndex) {

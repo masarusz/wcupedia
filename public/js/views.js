@@ -1,9 +1,10 @@
-import { buildBracket } from './bracket.js?v=0.2.0';
-import { bracketLayout, bracketState } from './bracket-layout.js?v=0.2.0';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.2.0';
-import { formatDate, formatMinute, groupLabel, signed, tournamentTitle } from './format.js?v=0.2.0';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.2.0';
-import { VERSION } from './version.js?v=0.2.0';
+import { buildBracket } from './bracket.js?v=0.2.2';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.2.2';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.2.2';
+import { formatDate, formatMinute, groupLabel, signed, tournamentTitle } from './format.js?v=0.2.2';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.2.2';
+import { VERSION } from './version.js?v=0.2.2';
+import { rubyPlain } from './ruby.js?v=0.2.2';
 
 function flag(teams, key) {
   return el('img', {
@@ -47,7 +48,10 @@ function stat(markup, value) {
 }
 
 function hostList(detail, teams) {
-  return el('div', { class: 'team-list' }, detail.hosts.map((key) => team(teams, key)));
+  const hosts = [...detail.hosts];
+  const japan = hosts.indexOf('JPN');
+  if (japan > 0) hosts.unshift(...hosts.splice(japan, 1));
+  return el('div', { class: 'team-list' }, hosts.map((key) => team(teams, key)));
 }
 
 export function homeView(tournaments, teams) {
@@ -135,11 +139,24 @@ function bracketResult(match, index) {
   ]);
 }
 
-function bracketBox(box, state, detail, teams) {
+function chartName(markup) {
+  const name = rubyPlain(markup);
+  const nameClass = [...name].length <= 7 ? 'bracket-name bracket-name-short' : 'bracket-name bracket-name-long';
+  const parts = name.split('・');
+  return el('span', { class: nameClass }, parts.flatMap((part, index) => [
+    index ? text('・') : null,
+    index ? el('wbr') : null,
+    text(part),
+  ]));
+}
+
+function bracketBox(box, state, detail, teams, standaloneFinal = false) {
   const matches = box.matches.map((id) => detail.matches.find((match) => match.id === id));
   const destination = matches.find((match) => match.replay) || matches.at(-1);
   const classes = [
-    'bracket-box', `box-col-${box.column}`, `row-start-${box.rowStart}`, `row-span-${box.rowSpan}`,
+    'bracket-box', standaloneFinal ? '' : `half-box-col-${box.column}`,
+    standaloneFinal ? '' : `row-start-${box.rowStart}`,
+    standaloneFinal ? '' : `row-span-${box.rowSpan}`,
     box.round === 'final' ? 'final-box' : '',
   ].filter(Boolean).join(' ');
   return el('a', { class: classes, href: `#/m/${destination.id}` }, [
@@ -147,29 +164,50 @@ function bracketBox(box, state, detail, teams) {
       const isWinner = state.winner === key;
       const teamClass = ['bracket-team', isWinner ? 'winner' : '', state.champion === key ? 'champion-team' : ''].filter(Boolean).join(' ');
       return el('span', { class: teamClass }, state.showTeams ? [
-        flag(teams, key), el('span', { class: 'bracket-name' }, rubyNodes(teams[key].ja)),
-        isWinner ? el('span', { class: 'bracket-winner-mark' }, '✓') : null,
-      ] : el('span', { class: 'bracket-name' }, key));
+        flag(teams, key), chartName(teams[key].ja),
+      ] : el('span', { class: 'bracket-name bracket-name-short' }, key));
     }),
     state.showScore ? el('span', { class: 'bracket-results' }, matches.map(bracketResult)) : null,
   ]);
 }
 
-function bracketChart(bracket, detail, teams, stepIndex) {
-  const layout = bracketLayout(bracket, { compactOuter: detail.year === 2026 });
-  const state = bracketState(bracket, stepIndex);
-  const states = new Map(state.boxes.map((box) => [box.id, { ...box, champion: state.champion }]));
-  const templateClass = `bracket-grid-template bracket-columns-${layout.columnCount}`;
-  return el('div', { class: `bracket bracket-column-count-${layout.columnCount}` }, [
-    el('div', { class: `bracket-headings ${templateClass}` }, layout.columns.map((column) =>
-      rubyEl('h3', stageLabel(column.round, detail.year), { class: `bracket-column-heading box-col-${column.column}` }))),
+function bracketHalf(half, layout, states, detail, teams) {
+  const templateClass = `bracket-half-grid-template bracket-half-columns-${layout.halfColumnCount}`;
+  return el('section', { class: `bracket-half bracket-half-${half.side}` }, [
+    el('div', { class: `bracket-headings ${templateClass}` }, half.columns.map((column) =>
+      rubyEl('h3', stageLabel(column.round, detail.year), {
+        class: `bracket-column-heading half-box-col-${column.column}`,
+      }))),
     el('div', { class: `bracket-grid ${templateClass}` }, [
-      layout.connectors.map((connector) => el('span', {
-        class: `bracket-connector connector-${connector.side} connector-${connector.direction} gap-col-${connector.gapColumn} row-start-${connector.rowStart} row-span-${connector.rowSpan}`,
+      half.connectors.map((connector) => el('span', {
+        class: `bracket-connector connector-${connector.side} connector-${connector.direction} half-gap-col-${connector.gapColumn} row-start-${connector.rowStart} row-span-${connector.rowSpan}`,
         role: 'presentation',
       })),
-      layout.boxes.map((box) => bracketBox(box, states.get(box.id), detail, teams)),
+      half.boxes.map((box) => bracketBox(box, states.get(box.id), detail, teams)),
     ]),
+  ]);
+}
+
+function bracketChart(bracket, detail, teams, stepIndex) {
+  const layout = stackedBracketLayout(bracket);
+  const state = bracketState(bracket, stepIndex);
+  const states = new Map(state.boxes.map((box) => [box.id, { ...box, champion: state.champion }]));
+  if (layout.columnCount === 1) {
+    return el('div', { class: 'bracket chart-cols-1' }, bracketBox(layout.final, states.get(layout.final.id), detail, teams, true));
+  }
+  const finalLink = (connector) => el('span', {
+    class: `bracket-final-connector bracket-final-connector-${connector.side}`,
+    role: 'presentation',
+  });
+  return el('div', { class: `bracket chart-cols-${layout.columnCount}` }, [
+    bracketHalf(layout.halves[0], layout, states, detail, teams),
+    finalLink(layout.finalConnectors.find((connector) => connector.side === 'left')),
+    el('section', { class: 'bracket-final-stage' }, [
+      rubyEl('h3', stageLabel(layout.final.round, detail.year), { class: 'bracket-column-heading' }),
+      el('div', { class: 'bracket-final-grid' }, bracketBox(layout.final, states.get(layout.final.id), detail, teams, true)),
+    ]),
+    finalLink(layout.finalConnectors.find((connector) => connector.side === 'right')),
+    bracketHalf(layout.halves[1], layout, states, detail, teams),
   ]);
 }
 

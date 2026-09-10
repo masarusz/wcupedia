@@ -164,7 +164,7 @@ export function register(test, equal, deepEqual) {
 
     try {
       const { creditsView, errorView, homeView, matchView, notFoundView, tournamentView } =
-        await import('../public/js/views.js?v=0.2.0');
+        await import('../public/js/views.js?v=0.2.2');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const meta = load('meta.json');
@@ -173,6 +173,7 @@ export function register(test, equal, deepEqual) {
       const englishGroupLabels = [];
       let tournamentRenders = 0;
       let matchRenders = 0;
+      let bracketStateRenders = 0;
       let missingAlt = 0;
       let readingElementCount = 0;
       const readingElementSamples = [];
@@ -212,6 +213,12 @@ export function register(test, equal, deepEqual) {
           equal(stateButtons.length, knockoutRounds.length + 1, `${detail.year} state button count`);
           equal(stateButtons.at(-1).getAttribute('aria-pressed'), 'true', `${detail.year} default final state`);
           const defaultBoxes = descendants(chart).filter((node) => hasClass(node, 'bracket-box'));
+          equal(descendants(chart).filter((node) => hasClass(node, 'bracket-winner-mark')).length, 0,
+            `${detail.year} has no redundant winner marks`);
+          equal(descendants(chart).filter((node) => hasClass(node, 'final-box')).length, 1,
+            `${detail.year} one shared final`);
+          equal(/^bracket chart-cols-(?:1|3|5|7|9)$/.test(chart.getAttribute('class') || ''), true,
+            `${detail.year} CSS-selectable chart class`);
           equal(defaultBoxes.every((node) => /^#\/m\/M-/.test(node.getAttribute('href') || '')), true,
             `${detail.year} box match links`);
           equal(descendants(chart).filter((node) => hasClass(node, 'bracket-results')).length, defaultBoxes.length,
@@ -223,6 +230,19 @@ export function register(test, equal, deepEqual) {
             replayTieVerified = true;
           }
           if (detail.year === 2022) shootoutVerified = chart.textContent.includes('PK 4–2');
+          for (let stateIndex = 0; stateIndex < stateButtons.length; stateIndex += 1) {
+            try {
+              stateButtons[stateIndex].listeners.get('click')[0]();
+              const currentChart = descendants(tree).find((node) => hasClass(node, 'bracket'));
+              equal(descendants(currentChart).filter((node) => hasClass(node, 'bracket-box')).length, defaultBoxes.length,
+                `${detail.year} state ${stateIndex} box count`);
+              equal(descendants(currentChart).filter((node) => hasClass(node, 'final-box')).length, 1,
+                `${detail.year} state ${stateIndex} final count`);
+              bracketStateRenders += 1;
+            } catch (error) {
+              errors.push(`tournament ${detail.year} state ${stateIndex}: ${error.message}`);
+            }
+          }
           try {
             stateButtons[0].listeners.get('click')[0]();
           } catch (error) {
@@ -252,10 +272,11 @@ export function register(test, equal, deepEqual) {
       render('not found', () => notFoundView());
       render('error', () => errorView(() => {}));
 
-      console.log(`views render counts: tournaments=${tournamentRenders} matches=${matchRenders} exceptions=${errors.length}`);
+      console.log(`views render counts: tournaments=${tournamentRenders} matches=${matchRenders} bracket-states=${bracketStateRenders} exceptions=${errors.length}`);
       if (errors.length) throw new Error(`render exceptions: ${errors.slice(0, 3).join('; ')}`);
       equal(tournamentRenders, 23, 'tournament render count');
       equal(matchRenders, 1068, 'match render count');
+      equal(bracketStateRenders > 0, true, 'all available bracket states rendered');
       equal(missingAlt, 0, 'images missing alt');
       equal(readingElementCount, 0, `ruby or rt elements rendered: ${readingElementSamples.join(', ')}`);
 
@@ -272,6 +293,10 @@ export function register(test, equal, deepEqual) {
       equal(descendants(finalRound1950).filter((node) => hasClass(node, 'advanced-mark')).length, 0,
         '1950 final-round advance marks');
       equal(descendants(tournament1950Tree).filter((node) => hasClass(node, 'bracket')).length, 0, '1950 no chart');
+      const hosts2002 = descendants(render('tournament 2002 host order', () =>
+        tournamentView(details.find((detail) => detail.year === 2002), teams)))
+        .find((node) => hasClass(node, 'team-list'));
+      deepEqual(hosts2002.childNodes.map((node) => node.textContent), ['日本', '韓国'], '2002 host list Japan first');
       equal(descendants(tournament2022Tree).filter((node) => hasClass(node, 'bracket-box')).length, 15, '2022 chart boxes');
       const tournament1974Tree = render('tournament 1974 box count', () => tournamentView(details.find((detail) => detail.year === 1974), teams));
       equal(descendants(tournament1974Tree).filter((node) => hasClass(node, 'bracket-box')).length, 1, '1974 one chart box');

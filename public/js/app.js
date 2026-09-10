@@ -1,8 +1,8 @@
-import { loadMeta, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.2.0';
-import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.2.0';
-import { STRINGS } from './strings.js?v=0.2.0';
-import { creditsView, errorView, homeView, matchView, notFoundView, tournamentView } from './views.js?v=0.2.0';
-import { VERSION } from './version.js?v=0.2.0';
+import { loadMeta, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.2.2';
+import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.2.2';
+import { STRINGS } from './strings.js?v=0.2.2';
+import { creditsView, errorView, homeView, matchView, notFoundView, tournamentView } from './views.js?v=0.2.2';
+import { VERSION } from './version.js?v=0.2.2';
 
 const root = document.querySelector('#app');
 
