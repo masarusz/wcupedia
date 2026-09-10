@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { rubyPlain } from '../public/js/ruby.js?v=0.2.4';
+import { stageLabel } from '../public/js/strings.js?v=0.2.4';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -164,7 +166,7 @@ export function register(test, equal, deepEqual) {
 
     try {
       const { creditsView, errorView, homeView, matchView, notFoundView, tournamentView } =
-        await import('../public/js/views.js?v=0.2.3');
+        await import('../public/js/views.js?v=0.2.4');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const meta = load('meta.json');
@@ -208,6 +210,27 @@ export function register(test, equal, deepEqual) {
         const knockoutRounds = detail.stages.filter((stage) => ['r32', 'r16', 'qf', 'sf', 'final'].includes(stage));
         const chart = descendants(tree).find((node) => hasClass(node, 'bracket'));
         equal(Boolean(chart), knockoutRounds.length > 0, `${detail.year} chart presence`);
+        const stageSections = tree.childNodes.filter((node) =>
+          node instanceof FakeElement && hasClass(node, 'stage-section'));
+        const groupSections = stageSections.filter((node) =>
+          descendants(node).some((descendant) => hasClass(descendant, 'group-panel')));
+        const groupStages = detail.stages.filter((stage) => ['group', 'second-group', 'final-round'].includes(stage));
+        deepEqual(groupSections.map((section) => section.childNodes.find((node) =>
+          node instanceof FakeElement && node.tagName === 'H2').textContent),
+        groupStages.map((stage) => rubyPlain(stageLabel(stage, detail.year))), `${detail.year} group stage DOM order`);
+        const chartSectionIndex = stageSections.findIndex((section) =>
+          descendants(section).some((node) => hasClass(node, 'bracket-chart-region')));
+        const thirdSectionIndex = stageSections.findIndex((section) =>
+          descendants(section).some((node) => hasClass(node, 'standalone-match')));
+        const firstGroupIndex = stageSections.indexOf(groupSections[0]);
+        const hasThirdPlace = detail.matches.some((match) => match.stage === 'third');
+        equal(chartSectionIndex >= 0, Boolean(chart), `${detail.year} chart stage section`);
+        equal(thirdSectionIndex >= 0, hasThirdPlace, `${detail.year} third-place section`);
+        if (chart && firstGroupIndex >= 0) {
+          equal(chartSectionIndex < firstGroupIndex, true, `${detail.year} chart before group stages`);
+          if (hasThirdPlace) equal(thirdSectionIndex < firstGroupIndex, true, `${detail.year} third place before group stages`);
+        }
+        if (hasThirdPlace) equal(thirdSectionIndex, chartSectionIndex + 1, `${detail.year} third place directly below chart`);
         if (chart) {
           const stateButtons = descendants(tree).filter((node) => hasClass(node, 'bracket-state-button'));
           equal(stateButtons.length, knockoutRounds.length + 1, `${detail.year} state button count`);

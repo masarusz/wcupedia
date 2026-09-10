@@ -1,10 +1,10 @@
-import { buildBracket } from './bracket.js?v=0.2.3';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.2.3';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.2.3';
-import { formatDate, formatMinute, groupLabel, signed, tournamentTitle } from './format.js?v=0.2.3';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.2.3';
-import { VERSION } from './version.js?v=0.2.3';
-import { rubyPlain } from './ruby.js?v=0.2.3';
+import { buildBracket } from './bracket.js?v=0.2.4';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.2.4';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.2.4';
+import { formatDate, formatMinute, groupLabel, signed, tournamentTitle } from './format.js?v=0.2.4';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.2.4';
+import { VERSION } from './version.js?v=0.2.4';
+import { rubyPlain } from './ruby.js?v=0.2.4';
 
 function flag(teams, key) {
   return el('img', {
@@ -250,18 +250,13 @@ function thirdSection(detail, teams) {
 }
 
 export function tournamentView(detail, teams) {
-  const stageViews = [];
-  let bracketRendered = false;
-  let thirdView = null;
-  for (const stage of detail.stages) {
-    if (['group', 'second-group', 'final-round'].includes(stage)) stageViews.push(groupSection(detail, teams, stage));
-    else if (stage === 'third') thirdView = thirdSection(detail, teams);
-    else if (!bracketRendered) {
-      stageViews.push(bracketSection(detail, teams));
-      bracketRendered = true;
-    }
-  }
-  if (thirdView) stageViews.push(thirdView);
+  const groupStages = new Set(['group', 'second-group', 'final-round']);
+  const groupViews = detail.stages.filter((stage) => groupStages.has(stage))
+    .map((stage) => groupSection(detail, teams, stage));
+  const bracketView = bracketSection(detail, teams);
+  const stageViews = bracketView
+    ? [bracketView, thirdSection(detail, teams), ...groupViews].filter(Boolean)
+    : groupViews;
   return el('article', { class: 'page tournament-page' }, [
     rubyEl('h1', tournamentTitle(detail, teams)),
     el('p', { class: 'dates' }, `${formatDate(detail.start)}〜${formatDate(detail.end)}`),
