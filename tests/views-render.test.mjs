@@ -164,7 +164,7 @@ export function register(test, equal, deepEqual) {
 
     try {
       const { creditsView, errorView, homeView, matchView, notFoundView, tournamentView } =
-        await import('../public/js/views.js?v=0.2.2');
+        await import('../public/js/views.js?v=0.2.3');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const meta = load('meta.json');

@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import ui from './golden/ui.json' with { type: 'json' };
-import { buildBracket } from '../public/js/bracket.js?v=0.2.2';
-import { BRACKET_STYLE_METRICS, bracketLayout, bracketState, stackedBracketLayout } from '../public/js/bracket-layout.js?v=0.2.2';
+import { buildBracket } from '../public/js/bracket.js?v=0.2.3';
+import { BRACKET_STYLE_METRICS, bracketLayout, bracketState, stackedBracketLayout } from '../public/js/bracket-layout.js?v=0.2.3';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -173,6 +173,50 @@ export function register(test, equal, deepEqual) {
     }
   });
 
+  test('stacked semi-final connectors run edge-to-edge without crossing a box', () => {
+    for (const { year } of tournaments) {
+      const layout = stackedBracketLayout(bracketFor(year));
+      const semiFinals = layout.boxes.filter((box) => box.round === 'sf');
+      if (!semiFinals.length) continue;
+
+      for (const semiFinal of semiFinals) {
+        const connectors = layout.finalConnectors.filter((connector) => connector.from === semiFinal.id);
+        equal(connectors.length, 1, `${year} connector count from ${semiFinal.id}`);
+        const connector = connectors[0];
+        const expectedSemiRow = connector.side === 'left'
+          ? semiFinal.stackedRowStart + semiFinal.rowSpan
+          : semiFinal.stackedRowStart;
+        const expectedFinalRow = connector.side === 'left'
+          ? layout.final.stackedRowStart
+          : layout.final.stackedRowStart + layout.final.rowSpan;
+        deepEqual(connector.fromEdge, { column: semiFinal.stackedColumn, row: expectedSemiRow },
+          `${year} ${connector.side} semi-final edge`);
+        deepEqual(connector.toEdge, { column: layout.final.stackedColumn, row: expectedFinalRow },
+          `${year} ${connector.side} final edge`);
+        equal(connector.segments.length > 0, true, `${year} ${connector.side} connector segments`);
+
+        let point = connector.fromEdge;
+        for (const segment of connector.segments) {
+          deepEqual({ column: segment.column, row: segment.fromRow }, point,
+            `${year} ${connector.side} continuous connector`);
+          equal(segment.column, layout.final.stackedColumn, `${year} ${connector.side} final column`);
+          const segmentTop = Math.min(segment.fromRow, segment.toRow);
+          const segmentBottom = Math.max(segment.fromRow, segment.toRow);
+          for (const box of layout.boxes.filter((candidate) => candidate.stackedColumn === segment.column)) {
+            const boxTop = box.stackedRowStart;
+            const boxBottom = box.stackedRowStart + box.rowSpan;
+            equal(Math.max(segmentTop, boxTop) < Math.min(segmentBottom, boxBottom), false,
+              `${year} ${connector.side} crosses ${box.id}`);
+          }
+          point = { column: segment.column, row: segment.toRow };
+        }
+        deepEqual(point, connector.toEdge, `${year} ${connector.side} reaches final`);
+      }
+      equal(layout.finalConnectors.every((connector) => connector.column === layout.final.stackedColumn), true,
+        `${year} semi-final connectors share final column`);
+    }
+  });
+
   test('stacked 1938 walkover slot has no connector', () => {
     const layout = stackedBracketLayout(bracketFor(1938));
     const slot = layout.emptySlots.find((candidate) => candidate.team === 'SWE' && candidate.round === 'r16');
@@ -304,6 +348,22 @@ export function register(test, equal, deepEqual) {
     equal(fiveSideRules.length, 1, '5-column side-by-side rule count');
     equal(fiveSideRules[0].atRules.some((header) => new RegExp(`@container\\s+bracket-chart\\s*\\(min-width:\\s*${BRACKET_STYLE_METRICS.sideThresholdPx[5]}px\\)`).test(header)), true,
       '5 columns switch at 640px');
+  });
+
+  test('side-by-side final stage has no full-height frame', () => {
+    const css = readFileSync(join(ROOT, 'public/css/app.css'), 'utf8');
+    const rules = parseCssRules(css);
+    for (const columns of [3, 5, 7]) {
+      const finalStageRules = rules.filter(({ selector, atRules }) =>
+        selector.split(',').map((part) => part.trim()).includes(`.chart-cols-${columns} .bracket-final-stage`)
+        && (columns === 3
+          ? atRules.length === 0
+          : atRules.some((header) => new RegExp(`@container\\s+bracket-chart\\s*\\(min-width:\\s*${BRACKET_STYLE_METRICS.sideThresholdPx[columns]}px\\)`).test(header))));
+      equal(finalStageRules.some(({ body }) => /border\s*:\s*0\s*;/.test(body)
+        && /background\s*:\s*none\s*;/.test(body)), true, `${columns}-column final-stage frame reset`);
+    }
+    equal(rules.some(({ selector, body }) => selector.includes('.bracket-final-grid .bracket-box')
+      && /align-self\s*:\s*center\s*;/.test(body)), true, 'final box does not stretch to chart height');
   });
 
   test('CSS defines every computed stacked bracket grid placement class', () => {

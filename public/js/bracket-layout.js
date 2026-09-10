@@ -1,6 +1,7 @@
 const BOX_ROW_SPAN = 6;
 const LEAF_ROW_STEP = 8;
 const LEAF_CENTRE = 5;
+const STACKED_SECTION_GAP_ROWS = 2;
 
 export const BRACKET_STYLE_METRICS = Object.freeze({
   pagePaddingInlinePx: 24,
@@ -134,12 +135,26 @@ export function stackedBracketLayout(tree) {
   }
 
   const centreColumn = Math.ceil(wide.columnCount / 2);
-  const final = wide.boxes.find((box) => box.side === 'centre');
+  const halfColumnCount = centreColumn - 1;
+  const wideFinal = wide.boxes.find((box) => box.side === 'centre');
+  const finalRowStart = wide.rowCount + 1 + STACKED_SECTION_GAP_ROWS;
+  const bottomRowOffset = finalRowStart + BOX_ROW_SPAN + STACKED_SECTION_GAP_ROWS - 1;
+  const final = {
+    ...wideFinal,
+    stackedColumn: halfColumnCount,
+    stackedRowStart: finalRowStart,
+  };
   const halves = ['left', 'right'].map((side) => {
     const toLocalColumn = (column) => side === 'left' ? column : column - centreColumn;
-    const boxes = wide.boxes.filter((box) => box.side === side).map((box) => ({
-      ...box, column: toLocalColumn(box.column),
-    }));
+    const boxes = wide.boxes.filter((box) => box.side === side).map((box) => {
+      const column = toLocalColumn(box.column);
+      return {
+        ...box,
+        column,
+        stackedColumn: side === 'left' ? column : halfColumnCount - column + 1,
+        stackedRowStart: box.rowStart + (side === 'right' ? bottomRowOffset : 0),
+      };
+    });
     const boxIds = new Set(boxes.map((box) => box.id));
     const connectors = wide.connectors.filter((connector) => boxIds.has(connector.to)).map((connector) => {
       const from = boxes.find((box) => box.id === connector.from);
@@ -149,22 +164,48 @@ export function stackedBracketLayout(tree) {
     const emptySlots = wide.emptySlots.filter((slot) => slot.side === side).map((slot) => ({
       ...slot, column: toLocalColumn(slot.column),
     }));
-    const columns = Array.from({ length: Math.max(0, centreColumn - 1) }, (_, offset) => {
+    const columns = Array.from({ length: Math.max(0, halfColumnCount) }, (_, offset) => {
       const column = offset + 1;
       return { column, round: boxes.find((box) => box.column === column)?.round || null };
     });
     return { side, columns, boxes, connectors, emptySlots };
   });
   const halfBoxIds = new Set(halves.flatMap((half) => half.boxes.map((box) => box.id)));
+  const stackedBoxes = halves.flatMap((half) => half.boxes);
   const finalConnectors = wide.connectors.filter((connector) => connector.to === final.id
-    && halfBoxIds.has(connector.from));
+    && halfBoxIds.has(connector.from)).map((connector) => {
+    const fromBox = stackedBoxes.find((box) => box.id === connector.from);
+    const fromEdge = {
+      column: fromBox.stackedColumn,
+      row: connector.side === 'left'
+        ? fromBox.stackedRowStart + fromBox.rowSpan
+        : fromBox.stackedRowStart,
+    };
+    const toEdge = {
+      column: final.stackedColumn,
+      row: connector.side === 'left'
+        ? final.stackedRowStart
+        : final.stackedRowStart + final.rowSpan,
+    };
+    return {
+      ...connector,
+      column: final.stackedColumn,
+      fromEdge,
+      toEdge,
+      segments: [{
+        column: final.stackedColumn,
+        fromRow: fromEdge.row,
+        toRow: toEdge.row,
+      }],
+    };
+  });
   const boxes = [...halves.flatMap((half) => half.boxes), final];
   const connectors = [...halves.flatMap((half) => half.connectors), ...finalConnectors];
   const emptySlots = halves.flatMap((half) => half.emptySlots);
 
   return {
     columnCount: wide.columnCount,
-    halfColumnCount: centreColumn - 1,
+    halfColumnCount,
     rowCount: wide.rowCount,
     halves,
     final,

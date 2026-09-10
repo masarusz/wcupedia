@@ -1,10 +1,10 @@
-import { buildBracket } from './bracket.js?v=0.2.2';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.2.2';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.2.2';
-import { formatDate, formatMinute, groupLabel, signed, tournamentTitle } from './format.js?v=0.2.2';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.2.2';
-import { VERSION } from './version.js?v=0.2.2';
-import { rubyPlain } from './ruby.js?v=0.2.2';
+import { buildBracket } from './bracket.js?v=0.2.3';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.2.3';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.2.3';
+import { formatDate, formatMinute, groupLabel, signed, tournamentTitle } from './format.js?v=0.2.3';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.2.3';
+import { VERSION } from './version.js?v=0.2.3';
+import { rubyPlain } from './ruby.js?v=0.2.3';
 
 function flag(teams, key) {
   return el('img', {
@@ -171,7 +171,7 @@ function bracketBox(box, state, detail, teams, standaloneFinal = false) {
   ]);
 }
 
-function bracketHalf(half, layout, states, detail, teams) {
+function bracketHalf(half, layout, states, detail, teams, finalConnector) {
   const templateClass = `bracket-half-grid-template bracket-half-columns-${layout.halfColumnCount}`;
   return el('section', { class: `bracket-half bracket-half-${half.side}` }, [
     el('div', { class: `bracket-headings ${templateClass}` }, half.columns.map((column) =>
@@ -185,6 +185,10 @@ function bracketHalf(half, layout, states, detail, teams) {
       })),
       half.boxes.map((box) => bracketBox(box, states.get(box.id), detail, teams)),
     ]),
+    finalConnector ? el('span', {
+      class: `bracket-half-final-leg bracket-half-final-leg-${finalConnector.side} bracket-final-column-${finalConnector.column}`,
+      role: 'presentation',
+    }) : null,
   ]);
 }
 
@@ -200,14 +204,16 @@ function bracketChart(bracket, detail, teams, stepIndex) {
     role: 'presentation',
   });
   return el('div', { class: `bracket chart-cols-${layout.columnCount}` }, [
-    bracketHalf(layout.halves[0], layout, states, detail, teams),
+    bracketHalf(layout.halves[0], layout, states, detail, teams,
+      layout.finalConnectors.find((connector) => connector.side === 'left')),
     finalLink(layout.finalConnectors.find((connector) => connector.side === 'left')),
     el('section', { class: 'bracket-final-stage' }, [
       rubyEl('h3', stageLabel(layout.final.round, detail.year), { class: 'bracket-column-heading' }),
       el('div', { class: 'bracket-final-grid' }, bracketBox(layout.final, states.get(layout.final.id), detail, teams, true)),
     ]),
     finalLink(layout.finalConnectors.find((connector) => connector.side === 'right')),
-    bracketHalf(layout.halves[1], layout, states, detail, teams),
+    bracketHalf(layout.halves[1], layout, states, detail, teams,
+      layout.finalConnectors.find((connector) => connector.side === 'right')),
   ]);
 }
 
