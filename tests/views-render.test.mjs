@@ -135,6 +135,44 @@ function renderedAwardKeys(tree) {
 }
 
 export function register(test, equal, deepEqual) {
+  test('rendered shell has no toggle button', async () => {
+    const previousDocument = globalThis.document;
+    const previousNode = globalThis.Node;
+    const previousWindow = globalThis.window;
+    const previousLocation = globalThis.location;
+    const previousFetch = globalThis.fetch;
+    const appRoot = new FakeElement('div');
+    globalThis.Node = FakeNode;
+    globalThis.document = {
+      createElement: (tagName) => new FakeElement(tagName),
+      createTextNode: (value) => new FakeText(value),
+      querySelector: (selector) => selector === '#app' ? appRoot : null,
+    };
+    globalThis.window = { addEventListener: () => {}, scrollTo: () => {} };
+    globalThis.location = { hash: '' };
+    globalThis.fetch = async (url) => ({
+      ok: true,
+      json: async () => load(String(url).split('?')[0].replace(/^data\//, '')),
+    });
+
+    try {
+      await import(`../public/js/app.js?shell-test=${Date.now()}`);
+      await new Promise((resolvePromise) => setImmediate(resolvePromise));
+      equal(descendants(appRoot).some((node) => node.tagName === 'BUTTON'), false, 'shell buttons');
+    } finally {
+      if (previousDocument === undefined) delete globalThis.document;
+      else globalThis.document = previousDocument;
+      if (previousNode === undefined) delete globalThis.Node;
+      else globalThis.Node = previousNode;
+      if (previousWindow === undefined) delete globalThis.window;
+      else globalThis.window = previousWindow;
+      if (previousLocation === undefined) delete globalThis.location;
+      else globalThis.location = previousLocation;
+      if (previousFetch === undefined) delete globalThis.fetch;
+      else globalThis.fetch = previousFetch;
+    }
+  });
+
   test('real views render every tournament and match', async () => {
     const previousDocument = globalThis.document;
     const previousNode = globalThis.Node;

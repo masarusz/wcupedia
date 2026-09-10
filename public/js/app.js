@@ -1,41 +1,12 @@
 import { loadMeta, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.1.0';
-import { el, replace, rubyEl, rubyNodes, text } from './dom.js?v=0.1.0';
+import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.1.0';
 import { STRINGS } from './strings.js?v=0.1.0';
 import { creditsView, errorView, homeView, matchView, notFoundView, tournamentView } from './views.js?v=0.1.0';
 import { VERSION } from './version.js?v=0.1.0';
 
-const STORAGE_KEY = 'wcupedia.furigana';
 const root = document.querySelector('#app');
 
-function readFurigana() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved === null ? true : saved !== 'off';
-  } catch {
-    return true;
-  }
-}
-
-let furiganaOn = readFurigana();
-
-function setFurigana(enabled) {
-  furiganaOn = enabled;
-  document.documentElement.classList.toggle('furigana-off', !enabled);
-  const button = document.querySelector('#furigana-toggle');
-  if (button) {
-    button.setAttribute('aria-pressed', String(enabled));
-    button.replaceChildren(...rubyNodes(STRINGS.furigana), text(' '), ...rubyNodes(enabled ? STRINGS.on : STRINGS.off));
-  }
-  try {
-    localStorage.setItem(STORAGE_KEY, enabled ? 'on' : 'off');
-  } catch {
-    // The preference remains active for this page when storage is unavailable.
-  }
-}
-
 function shell() {
-  const toggle = rubyEl('button', STRINGS.furigana, { id: 'furigana-toggle', type: 'button', 'aria-pressed': String(furiganaOn) });
-  toggle.addEventListener('click', () => setFurigana(!furiganaOn));
   const main = el('main', { id: 'main', 'aria-live': 'polite' });
   replace(root, [
     el('header', { class: 'site-header' }, el('div', { class: 'header-inner' }, [
@@ -48,7 +19,6 @@ function shell() {
         el('a', { href: '#/' }, rubyNodes(STRINGS.tournaments)),
         el('a', { href: '#/credits' }, rubyNodes(STRINGS.credits)),
       ]),
-      toggle,
     ])),
     main,
     el('footer', { class: 'site-footer' }, [
@@ -56,7 +26,6 @@ function shell() {
       el('a', { href: '#/credits' }, rubyNodes(STRINGS.credits)),
     ]),
   ]);
-  setFurigana(furiganaOn);
   return main;
 }
 

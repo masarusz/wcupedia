@@ -141,6 +141,14 @@ export function register(test, equal, deepEqual) {
     }
   });
 
+  test('public has no persisted or hidden furigana state', () => {
+    for (const file of files(PUBLIC)) {
+      const content = readFileSync(join(PUBLIC, file), 'utf8');
+      equal(content.includes('localStorage'), false, `${file}: localStorage`);
+      equal(content.includes('furigana-off'), false, `${file}: furigana-off`);
+    }
+  });
+
   test('asset imports and footer share VERSION', () => {
     equal(VERSION, '0.1.0');
     const html = readFileSync(join(PUBLIC, 'index.html'), 'utf8');
@@ -187,8 +195,6 @@ export function register(test, equal, deepEqual) {
     equal(html.includes('name="viewport"'), true, 'viewport');
     const app = readFileSync(join(PUBLIC, 'js/app.js'), 'utf8');
     for (const route of ["route === '/'", "route === '/credits'", '/^\\/t\\/', '/^\\/m\\/']) equal(app.includes(route), true, route);
-    equal(app.includes('localStorage.getItem'), true, 'furigana read');
-    equal(app.includes('localStorage.setItem'), true, 'furigana write');
     equal(app.includes('window.scrollTo(0, 0)'), true, 'route scroll');
   });
 
