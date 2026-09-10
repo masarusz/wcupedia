@@ -1,4 +1,4 @@
-import { parseRuby } from './ruby.js?v=0.1.0';
+import { rubyPlain } from './ruby.js?v=0.2.0';
 
 const ALLOWED_ATTRIBUTES = new Set([
   'alt', 'aria-label', 'aria-live', 'aria-pressed', 'class', 'colspan', 'href', 'id',
@@ -24,15 +24,8 @@ export function text(value) {
 }
 
 export function rubyNodes(markup) {
-  return parseRuby(markup).map((part) => {
-    if (!Array.isArray(part)) return text(part);
-    const ruby = document.createElement('ruby');
-    ruby.append(text(part[0]));
-    const rt = document.createElement('rt');
-    rt.textContent = part[1];
-    ruby.append(rt);
-    return ruby;
-  });
+  // Readings are intentionally not displayed.
+  return text(rubyPlain(markup));
 }
 
 export function el(tag, attributes = {}, children = []) {

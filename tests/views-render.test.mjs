@@ -91,30 +91,6 @@ function hasClass(node, name) {
   return (node.getAttribute('class') || '').split(/\s+/).includes(name);
 }
 
-function topLevelRules(css) {
-  const rules = [];
-  let cursor = 0;
-  let depth = 0;
-  let header = '';
-  let bodyStart = 0;
-  for (let index = 0; index < css.length; index += 1) {
-    if (css[index] === '{') {
-      if (depth === 0) {
-        header = css.slice(cursor, index).trim();
-        bodyStart = index + 1;
-      }
-      depth += 1;
-    } else if (css[index] === '}') {
-      depth -= 1;
-      if (depth === 0) {
-        rules.push({ header, body: css.slice(bodyStart, index) });
-        cursor = index + 1;
-      }
-    }
-  }
-  return rules;
-}
-
 function renderedAwardKeys(tree) {
   const labels = [
     ['golden-ball', 'ゴールデンボール'],
@@ -159,6 +135,10 @@ export function register(test, equal, deepEqual) {
       await import(`../public/js/app.js?shell-test=${Date.now()}`);
       await new Promise((resolvePromise) => setImmediate(resolvePromise));
       equal(descendants(appRoot).some((node) => node.tagName === 'BUTTON'), false, 'shell buttons');
+      equal(descendants(appRoot).some((node) => node.tagName === 'RUBY' || node.tagName === 'RT'), false,
+        'shell ruby or rt elements');
+      equal(descendants(appRoot).find((node) => hasClass(node, 'subtitle')).textContent, 'Wカップ大図鑑',
+        'home title without reading');
     } finally {
       if (previousDocument === undefined) delete globalThis.document;
       else globalThis.document = previousDocument;
@@ -184,7 +164,7 @@ export function register(test, equal, deepEqual) {
 
     try {
       const { creditsView, errorView, homeView, matchView, notFoundView, tournamentView } =
-        await import('../public/js/views.js?v=0.1.0');
+        await import('../public/js/views.js?v=0.2.0');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const meta = load('meta.json');
@@ -194,11 +174,19 @@ export function register(test, equal, deepEqual) {
       let tournamentRenders = 0;
       let matchRenders = 0;
       let missingAlt = 0;
+      let readingElementCount = 0;
+      const readingElementSamples = [];
 
       const render = (label, view) => {
         try {
           const tree = view();
           missingAlt += descendants(tree).filter((node) => node.tagName === 'IMG' && !node.hasAttribute('alt')).length;
+          const readingElements = descendants(tree).filter((node) => node.tagName === 'RUBY' || node.tagName === 'RT');
+          readingElementCount += readingElements.length;
+          if (readingElementSamples.length < 3) {
+            readingElementSamples.push(...readingElements.slice(0, 3 - readingElementSamples.length)
+              .map((node) => `${label}: ${node.tagName.toLowerCase()}`));
+          }
           return tree;
         } catch (error) {
           errors.push(`${label}: ${error.message}`);
@@ -269,6 +257,7 @@ export function register(test, equal, deepEqual) {
       equal(tournamentRenders, 23, 'tournament render count');
       equal(matchRenders, 1068, 'match render count');
       equal(missingAlt, 0, 'images missing alt');
+      equal(readingElementCount, 0, `ruby or rt elements rendered: ${readingElementSamples.join(', ')}`);
 
       const homeLinks = descendants(homeTree).filter((node) =>
         node.tagName === 'A' && /^#\/t\/\d{4}$/.test(node.getAttribute('href') || ''));
@@ -301,10 +290,6 @@ export function register(test, equal, deepEqual) {
         'golden-ball', 'golden-boot', 'golden-glove', 'best-young-player',
       ], '2026 award order');
 
-      const rubyRule = topLevelRules(readFileSync(join(ROOT, 'public/css/app.css'), 'utf8')).find(({ header }) =>
-        header.split(',').map((selector) => selector.trim()).includes('ruby'));
-      equal(Boolean(rubyRule && /(?:^|;)\s*ruby-align\s*:\s*center\s*(?:;|$)/.test(rubyRule.body)), true,
-        'top-level ruby alignment');
       equal(/\.bracket-state-button\s*\{[^}]*min-height:\s*44px/s.test(readFileSync(join(ROOT, 'public/css/app.css'), 'utf8')), true,
         'bracket state button tap target');
 
