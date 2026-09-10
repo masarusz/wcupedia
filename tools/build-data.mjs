@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { parseCsv } from './lib/csv.mjs';
 import { SOURCES } from './lib/sources.mjs';
 import { conductScore, rankGroup2026 } from './lib/standings-2026.mjs';
+import { chooseJapaneseNames, matchSquadEntry, parseSquadWikitext, validateJapaneseName } from './lib/players-ja.mjs';
 import { fold, foldCompact } from '../public/js/fold.js';
 import { rubyPlain, rubyReading, parseRuby } from '../public/js/ruby.js';
 
@@ -35,6 +36,9 @@ const stagesJa = await json(join(ROOT, 'curated/stages.json'));
 const aliases2026 = await json(join(ROOT, 'curated/name-aliases-2026.json'));
 const identity2026 = await json(join(ROOT, 'curated/identity-2026.json'));
 const tournament2026 = await json(join(ROOT, 'curated/tournament-2026.json'));
+const teamHeadingsJa = await json(join(ROOT, 'curated/team-headings-ja.json'));
+const playersJaOverrides = await json(join(ROOT, 'curated/players-ja-overrides.json'));
+const playerJaTitles = await json(join(sourceRoot, 'wikipedia/player-ja-titles.json'));
 let standingsOverrides2026 = {};
 try {
   standingsOverrides2026 = await json(join(ROOT, 'curated/standings-2026-overrides.json'));
@@ -139,8 +143,13 @@ const ensurePlayer = (id) => {
 };
 for (const row of menSquads) {
   const player = ensurePlayer(row.player_id);
-  player.teams.add(keyForTeamId(row.team_id));
+  const team = keyForTeamId(row.team_id);
+  player.teams.add(team);
   player.years.add(yearOf(row));
+  if (team === 'KOR') {
+    const source = playerSource.get(row.player_id);
+    if (source.given_name !== 'not applicable') player.name = `${source.family_name} ${source.given_name}`;
+  }
 }
 
 const normalizeMinute = (label) => label.replaceAll("'", '').trim();
@@ -526,6 +535,82 @@ for (const tournament of tournamentDetails) for (const [team, squad] of Object.e
   }
 }
 
+for (const [heading, team] of Object.entries(teamHeadingsJa)) {
+  if (!curatedTeams[team]) throw new Error(`team heading ${JSON.stringify(heading)} maps to unknown team ${team}`);
+}
+for (const id of Object.keys(playersJaOverrides)) {
+  if (!playerData.has(id)) throw new Error(`Japanese player-name override has unknown player ${id}`);
+}
+
+const squadPageYears = [1950, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018, 2022, 2026];
+const japaneseSquadMatches = [];
+const squadMatchProblems = [];
+for (const year of squadPageYears) {
+  const tournament = tournamentDetails.find((item) => item.year === year);
+  const wikitext = await readFile(join(sourceRoot, `wikipedia/squads/squads-${year}.wiki`), 'utf8');
+  const entries = parseSquadWikitext(wikitext, year, teamHeadingsJa);
+  for (const entry of entries) {
+    const candidates = (tournament.squads[entry.team] || []).map((member) => ({
+      id: member.player, no: member.no || null, birthDate: playerData.get(member.player)?.birthDate || null,
+    }));
+    const matched = matchSquadEntry(entry, candidates);
+    if (!matched.id) {
+      squadMatchProblems.push({ ...entry, reason: matched.reason });
+      continue;
+    }
+    japaneseSquadMatches.push({ ...entry, id: matched.id });
+  }
+}
+
+const playersForJapaneseNames = [...playerData].map(([id, player]) => ({
+  id, birthDate: player.birthDate, team: player.teams.has('JPN') ? 'JPN' : [...player.teams].sort(compare)[0],
+}));
+const japaneseNames = chooseJapaneseNames({
+  players: playersForJapaneseNames, matches: japaneseSquadMatches,
+  articleTitles: playerJaTitles, overrides: playersJaOverrides,
+});
+for (const [id, choice] of japaneseNames.chosen) {
+  const player = playerData.get(id);
+  player.ja = choice.ja;
+  player.reading = choice.reading;
+  player.jaSource = choice.source;
+}
+
+const coverageRows = tournamentDetails.map((tournament) => {
+  const ids = Object.values(tournament.squads).flatMap((squad) => squad.map((member) => member.player));
+  return { year: tournament.year, named: ids.filter((id) => playerData.get(id)?.ja).length, total: ids.length };
+});
+const nameDifferences = [];
+for (const [id, matches] of [...Map.groupBy(japaneseSquadMatches, (item) => item.id)].sort(([a], [b]) => compare(a, b))) {
+  const player = playerData.get(id);
+  const names = matches
+    .filter((item) => !validateJapaneseName(item.name, player.teams.has('JPN') ? 'JPN' : item.team))
+    .map((item) => `${item.year}: ${item.name}`);
+  if (new Set(names.map((item) => item.slice(item.indexOf(': ') + 2))).size > 1) nameDifferences.push(`${id} ${player.name} — ${names.join('; ')}`);
+}
+const reviewRows = [...playerData].filter(([, player]) => player.ja && !player.name.includes(' ') && player.ja.includes(' '))
+  .sort(([a], [b]) => compare(a, b)).map(([id, player]) => `${id} ${player.name} — ${player.ja} (${player.jaSource})`);
+const rejectionCounts = Map.groupBy(japaneseNames.rejections, (item) => item.reason);
+const reportLines = [
+  'COVERAGE BY TOURNAMENT',
+  ...coverageRows.map((row) => `${row.year}: ${row.named}/${row.total} (${(row.named / row.total * 100).toFixed(1)}%)`),
+  '', 'COUNTS BY SOURCE',
+  ...Object.entries(japaneseNames.sourceCounts).map(([source, count]) => `${source}: ${count}`),
+  '', 'REJECTION COUNTS BY REASON',
+  ...[...rejectionCounts].sort(([a], [b]) => compare(a, b)).map(([reason, items]) => `${reason}: ${items.length}`),
+  '', 'REJECTIONS',
+  ...japaneseNames.rejections.map((item) => `${item.id}\t${item.source}\t${item.reason}\t${item.value}`),
+  '', 'UNMATCHED OR AMBIGUOUS SQUAD ENTRIES',
+  ...squadMatchProblems.map((item) => `${item.year}\t${item.team}\t${item.birthDate || '-'}\t${item.no ?? '-'}\t${item.reason}\t${item.rawName.replace(/\s+/g, ' ')}`),
+  '', 'PLAYERS WHOSE SQUAD NAME DIFFERS BETWEEN YEARS',
+  ...nameDifferences,
+  '', 'REVIEW: SINGLE-WORD LATIN DISPLAY NAME WITH SPACED JAPANESE NAME',
+  ...reviewRows,
+  '',
+];
+await mkdir(join(ROOT, 'reports'), { recursive: true });
+await writeFile(join(ROOT, 'reports/players-ja.txt'), reportLines.join('\n'));
+
 for (const tournament of tournamentDetails) {
   const referenced = new Set([
     ...tournament.matches.flatMap((match) => match.goals.map((goal) => goal.player)),
@@ -626,7 +711,14 @@ for (const key of allTeamKeys) {
   const team = outputTeams[key];
   search.push({ type: 'team', id: key, label: team.en, keys: unique([fold(team.en), fold(rubyPlain(team.ja)), fold(rubyReading(team.ja))]) });
 }
-for (const id of Object.keys(outputPlayers)) search.push({ type: 'player', id, label: outputPlayers[id].name, keys: [fold(outputPlayers[id].name)] });
+for (const id of Object.keys(outputPlayers)) {
+  const player = outputPlayers[id];
+  const source = playerData.get(id);
+  const values = [fold(player.name), foldCompact(player.name)];
+  if (player.ja) values.push(fold(player.ja), foldCompact(player.ja));
+  if (source.teams.has('JPN') && source.reading) values.push(fold(source.reading), foldCompact(source.reading));
+  search.push({ type: 'player', id, label: player.name, keys: unique(values) });
+}
 for (const tournament of tournamentSummaries) search.push({ type: 'tournament', id: String(tournament.year), label: `${tournament.year}`, keys: [String(tournament.year)] });
 search.sort((a, b) => compare(a.type, b.type) || compare(a.id, b.id));
 
@@ -653,3 +745,5 @@ console.log(`Teams: ${meta.counts.teams}; players: ${meta.counts.players}`);
 console.log(`2026 roster: ${roster2026.length}; linked to Fjelstul: ${linked2026}; new: ${roster2026.length - linked2026}`);
 console.log(`2026 identity decisions: reviewed ${Object.values(identity2026).filter((item) => item.reviewed).length}; unreviewed ${Object.values(identity2026).filter((item) => !item.reviewed).length}`);
 console.log(`Output: ${outputRoot}`);
+console.log('Japanese player-name coverage:');
+for (const row of coverageRows) console.log(`${row.year}: ${row.named}/${row.total} (${(row.named / row.total * 100).toFixed(1)}%)`);

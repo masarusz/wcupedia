@@ -1,10 +1,10 @@
-import { buildBracket } from './bracket.js?v=0.2.4';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.2.4';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.2.4';
-import { formatDate, formatMinute, groupLabel, signed, tournamentTitle } from './format.js?v=0.2.4';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.2.4';
-import { VERSION } from './version.js?v=0.2.4';
-import { rubyPlain } from './ruby.js?v=0.2.4';
+import { buildBracket } from './bracket.js?v=0.2.5';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.2.5';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.2.5';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.2.5';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.2.5';
+import { VERSION } from './version.js?v=0.2.5';
+import { rubyPlain } from './ruby.js?v=0.2.5';
 
 function flag(teams, key) {
   return el('img', {
@@ -17,9 +17,9 @@ function team(teams, key, className = 'team') {
   return el('span', { class: className }, [flag(teams, key), rubyNodes(teams[key].ja)]);
 }
 
-function playerName(detail, id) {
+function playerName(detail, id, teamKey) {
   const person = detail.people[id];
-  return person?.ja ? rubyNodes(person.ja) : text(person?.name || id);
+  return text(person ? playerLabel(person, teamKey) : id);
 }
 
 function badge(markup, className = '') {
@@ -82,7 +82,7 @@ function honours(detail, teams) {
   const scorerRows = detail.topScorers.map((scorer) => {
     const scorerGoal = detail.matches.flatMap((match) => match.goals).find((goal) => goal.player === scorer.player && !goal.ownGoal);
     return el('li', {}, [
-      el('span', { class: 'person' }, playerName(detail, scorer.player)),
+      el('span', { class: 'person' }, playerName(detail, scorer.player, scorerGoal.playerTeam)),
       team(teams, scorerGoal.team),
       el('strong', {}, `${scorer.goals}`), rubyNodes(STRINGS.goals),
     ]);
@@ -92,7 +92,7 @@ function honours(detail, teams) {
     (awardRank.get(a.award) ?? AWARD_ORDER.length) - (awardRank.get(b.award) ?? AWARD_ORDER.length));
   const awardRows = awards.map((award) => el('li', {}, [
     rubyEl('strong', AWARD_LABELS[award.award] || award.award),
-    el('span', { class: 'person' }, playerName(detail, award.player)),
+    el('span', { class: 'person' }, playerName(detail, award.player, award.team)),
     team(teams, award.team),
   ]));
   return el('section', { class: 'panel honours' }, [
@@ -296,7 +296,7 @@ export function matchView(detail, match, teams) {
       rubyEl('h2', STRINGS.goalTimeline),
       goals.length ? el('ol', { class: 'timeline' }, goals.map((goal) => el('li', { class: goal.team === match.home ? 'goal-home' : 'goal-away' }, [
         el('span', { class: 'goal-minute' }, formatMinute(goal.minute)),
-        el('span', { class: 'person' }, playerName(detail, goal.player)),
+        el('span', { class: 'person' }, playerName(detail, goal.player, goal.playerTeam)),
         goal.penalty ? badge('PK') : null,
         goal.ownGoal ? badge(STRINGS.ownGoal, 'own-goal') : null,
         goal.ownGoal ? team(teams, goal.playerTeam, 'player-team') : null,

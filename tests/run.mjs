@@ -7,6 +7,7 @@ import { register as standings2026Tests } from './standings-2026.test.mjs';
 import { register as uiTests } from './ui.test.mjs';
 import { register as viewsRenderTests } from './views-render.test.mjs';
 import { register as bracketLayoutTests } from './bracket-layout.test.mjs';
+import { register as playersJaTests } from './players-ja.test.mjs';
 
 const checks = [];
 const test = (name, run) => checks.push({ name, run });
@@ -24,6 +25,7 @@ standings2026Tests(test, equal, deepEqual);
 dataTests(test, equal, deepEqual);
 uiTests(test, equal, deepEqual);
 bracketLayoutTests(test, equal, deepEqual);
+playersJaTests(test, equal, deepEqual);
 viewsRenderTests(test, equal, deepEqual);
 
 let passed = 0;

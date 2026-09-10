@@ -22,3 +22,8 @@ export function tournamentTitle(tournament, teams) {
 export function signed(value) {
   return value > 0 ? `+${value}` : String(value);
 }
+
+export function playerLabel({ name, ja }, teamKey) {
+  if (!ja) return name;
+  return teamKey === 'JPN' ? ja : `${ja} (${name})`;
+}

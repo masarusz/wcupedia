@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { rubyPlain } from '../public/js/ruby.js?v=0.2.4';
-import { stageLabel } from '../public/js/strings.js?v=0.2.4';
+import { rubyPlain } from '../public/js/ruby.js?v=0.2.5';
+import { stageLabel } from '../public/js/strings.js?v=0.2.5';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -166,7 +166,7 @@ export function register(test, equal, deepEqual) {
 
     try {
       const { creditsView, errorView, homeView, matchView, notFoundView, tournamentView } =
-        await import('../public/js/views.js?v=0.2.4');
+        await import('../public/js/views.js?v=0.2.5');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const meta = load('meta.json');
@@ -179,6 +179,7 @@ export function register(test, equal, deepEqual) {
       let missingAlt = 0;
       let readingElementCount = 0;
       const readingElementSamples = [];
+      const renderedPlayerLabels = [];
 
       const render = (label, view) => {
         try {
@@ -207,6 +208,7 @@ export function register(test, equal, deepEqual) {
       for (const detail of details) {
         const tree = render(`tournament ${detail.year}`, () => tournamentView(detail, teams));
         if (tree) tournamentRenders += 1;
+        renderedPlayerLabels.push(...descendants(tree).filter((node) => hasClass(node, 'person')).map((node) => node.textContent));
         const knockoutRounds = detail.stages.filter((stage) => ['r32', 'r16', 'qf', 'sf', 'final'].includes(stage));
         const chart = descendants(tree).find((node) => hasClass(node, 'bracket'));
         equal(Boolean(chart), knockoutRounds.length > 0, `${detail.year} chart presence`);
@@ -286,6 +288,7 @@ export function register(test, equal, deepEqual) {
         for (const match of detail.matches) {
           const matchTree = render(`match ${match.id}`, () => matchView(detail, match, teams));
           if (matchTree) matchRenders += 1;
+          renderedPlayerLabels.push(...descendants(matchTree).filter((node) => hasClass(node, 'person')).map((node) => node.textContent));
           const breadcrumb = descendants(matchTree).find((node) => hasClass(node, 'breadcrumb'));
           if (breadcrumb.textContent.includes('Group ')) englishGroupLabels.push(`match ${match.id}: ${breadcrumb.textContent}`);
           if (detail.year === 2022 && match.home === 'CAN' && match.away === 'MAR') canadaMoroccoTree = matchTree;
@@ -302,6 +305,15 @@ export function register(test, equal, deepEqual) {
       equal(bracketStateRenders > 0, true, 'all available bracket states rendered');
       equal(missingAlt, 0, 'images missing alt');
       equal(readingElementCount, 0, `ruby or rt elements rendered: ${readingElementSamples.join(', ')}`);
+      for (const [id, expected] of [['P-14758', 'リオネル メッシ (Lionel Messi)'], ['P-33175', '本田圭佑']]) {
+        const references = details.reduce((count, detail) => count
+          + detail.matches.flatMap((match) => match.goals).filter((goal) => goal.player === id).length
+          + detail.topScorers.filter((item) => item.player === id).length
+          + detail.awards.filter((item) => item.player === id).length, 0);
+        equal(references > 0, true, `${id} render references`);
+        equal(renderedPlayerLabels.filter((label) => label === expected).length, references, `${id} rendered labels`);
+      }
+      equal(renderedPlayerLabels.some((label) => label.includes('()') || label.includes('( )')), false, 'empty player-name parentheses');
 
       const homeLinks = descendants(homeTree).filter((node) =>
         node.tagName === 'A' && /^#\/t\/\d{4}$/.test(node.getAttribute('href') || ''));

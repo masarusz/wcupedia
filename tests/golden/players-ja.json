@@ -1,0 +1,37 @@
+{
+  "_about": "Oracle for Japanese player names. Each expected value was read by the orchestrator from the cached ja.wikipedia squad pages or article titles (2026-09-11) and matches the owner's examples (Rodri (ロドリ), Lionel Messi (リオネル メッシ)). Never edit this file to make a test pass.",
+  "byId": {
+    "P-62341": { "ja": "ロドリ", "why": "Spain 2022/2026 squad label [[ロドリゴ・エルナンデス|ロドリ]] beats the article title" },
+    "P-14758": { "ja": "リオネル メッシ", "why": "・ becomes a space" },
+    "P-38906": { "ja": "ペレ" },
+    "P-64077": { "ja": "キリアン エムバペ" },
+    "P-27787": { "ja": "ミロスラフ クローゼ" },
+    "P-58924": { "ja": "ハリー ケイン" },
+    "P-70442": { "ja": "クリスティアーノ ロナウド" },
+    "P-87008": { "ja": "ネイマール" },
+    "P-77335": { "ja": "ソン フンミン", "why": "Korea squad pages write [[孫興ミン|孫興慜]] (ソン・フンミン); the article title 孫興ミン is not katakana and must not be used" },
+    "P-72441": { "ja": "ゲルト ミュラー", "why": "pre-1990 player: article-title fallback" },
+    "P-33175": { "ja": "本田圭佑", "why": "Japan's players keep kanji" },
+    "P-84762": { "ja": "中山雅史", "why": "Japan's players keep kanji" }
+  },
+  "bySquad2026": [
+    { "team": "ESP", "squadName": "Mikel Merino", "ja": "ミケル メリーノ" },
+    { "team": "ESP", "squadName": "Lamine Yamal", "ja": "ラミン ヤマル" },
+    { "team": "ESP", "squadName": "Gavi", "ja": "ガビ", "why": "label of [[ガビ (2004年生のサッカー選手)|ガビ]], qualifier never shown" },
+    { "team": "JPN", "squadName": "Zion Suzuki", "ja": "鈴木彩艶" }
+  ],
+  "display": {
+    "_about": "Owner's rule (2026-09-11): Japan's players kanji only; foreign players カタカナ (Latin); no katakana -> Latin only.",
+    "P-14758": "リオネル メッシ (Lionel Messi)",
+    "P-62341": "ロドリ (Rodri)",
+    "P-77335": "ソン フンミン (Son Heung-min)",
+    "P-33175": "本田圭佑",
+    "P-84762": "中山雅史"
+  },
+  "searchKeys": [
+    { "query": "めっし", "mustFind": "P-14758" },
+    { "query": "ろどり", "mustFind": "P-62341" },
+    { "query": "ほんだ", "mustFind": "P-33175", "why": "Japan players' hiragana reading from 原語表記 feeds search" }
+  ],
+  "neverInAnyJaName": ["(", ")", "（", "）", "年生", "サッカー選手", "[[", "]]", "{{", "・"]
+}
