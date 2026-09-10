@@ -1,0 +1,179 @@
+{
+  "_about": "Oracle facts for the data build. Taken from the published record (official FIFA totals; 2026 from the English Wikipedia articles' raw wikitext and ESPN's 2026-07-19 statistics article, read 2026-09-10) - NOT computed from the build inputs. Never edit this file to make a test pass: a disagreement between the build and this file is a finding to report.",
+  "totals": {
+    "tournaments": 23,
+    "matches": 1068,
+    "goals": 3028,
+    "matches1930to2022": 964,
+    "goals1930to2022": 2720
+  },
+  "tournaments": {
+    "1930": { "teams": 13, "matches": 18, "goals": 70, "hosts": ["URY"], "champion": "URY", "runnerUp": "ARG", "stages": ["group", "sf", "final"] },
+    "1934": { "teams": 16, "matches": 17, "goals": 70, "hosts": ["ITA"], "champion": "ITA", "runnerUp": "CSK", "stages": ["r16", "qf", "sf", "third", "final"] },
+    "1938": { "teams": 15, "matches": 18, "goals": 84, "hosts": ["FRA"], "champion": "ITA", "runnerUp": "HUN", "stages": ["r16", "qf", "sf", "third", "final"] },
+    "1950": { "teams": 13, "matches": 22, "goals": 88, "hosts": ["BRA"], "champion": "URY", "runnerUp": "BRA", "stages": ["group", "final-round"] },
+    "1954": { "teams": 16, "matches": 26, "goals": 140, "hosts": ["CHE"], "champion": "FRG", "runnerUp": "HUN", "stages": ["group", "qf", "sf", "third", "final"] },
+    "1958": { "teams": 16, "matches": 35, "goals": 126, "hosts": ["SWE"], "champion": "BRA", "runnerUp": "SWE", "stages": ["group", "qf", "sf", "third", "final"] },
+    "1962": { "teams": 16, "matches": 32, "goals": 89, "hosts": ["CHL"], "champion": "BRA", "runnerUp": "CSK", "stages": ["group", "qf", "sf", "third", "final"] },
+    "1966": { "teams": 16, "matches": 32, "goals": 89, "hosts": ["ENG"], "champion": "ENG", "runnerUp": "FRG", "stages": ["group", "qf", "sf", "third", "final"] },
+    "1970": { "teams": 16, "matches": 32, "goals": 95, "hosts": ["MEX"], "champion": "BRA", "runnerUp": "ITA", "stages": ["group", "qf", "sf", "third", "final"] },
+    "1974": { "teams": 16, "matches": 38, "goals": 97, "hosts": ["FRG"], "champion": "FRG", "runnerUp": "NLD", "stages": ["group", "second-group", "third", "final"] },
+    "1978": { "teams": 16, "matches": 38, "goals": 102, "hosts": ["ARG"], "champion": "ARG", "runnerUp": "NLD", "stages": ["group", "second-group", "third", "final"] },
+    "1982": { "teams": 24, "matches": 52, "goals": 146, "hosts": ["ESP"], "champion": "ITA", "runnerUp": "FRG", "stages": ["group", "second-group", "sf", "third", "final"] },
+    "1986": { "teams": 24, "matches": 52, "goals": 132, "hosts": ["MEX"], "champion": "ARG", "runnerUp": "FRG", "stages": ["group", "r16", "qf", "sf", "third", "final"] },
+    "1990": { "teams": 24, "matches": 52, "goals": 115, "hosts": ["ITA"], "champion": "FRG", "runnerUp": "ARG", "stages": ["group", "r16", "qf", "sf", "third", "final"] },
+    "1994": { "teams": 24, "matches": 52, "goals": 141, "hosts": ["USA"], "champion": "BRA", "runnerUp": "ITA", "stages": ["group", "r16", "qf", "sf", "third", "final"] },
+    "1998": { "teams": 32, "matches": 64, "goals": 171, "hosts": ["FRA"], "champion": "FRA", "runnerUp": "BRA", "stages": ["group", "r16", "qf", "sf", "third", "final"] },
+    "2002": { "teams": 32, "matches": 64, "goals": 161, "hosts": ["KOR", "JPN"], "champion": "BRA", "runnerUp": "DEU", "stages": ["group", "r16", "qf", "sf", "third", "final"] },
+    "2006": { "teams": 32, "matches": 64, "goals": 147, "hosts": ["DEU"], "champion": "ITA", "runnerUp": "FRA", "stages": ["group", "r16", "qf", "sf", "third", "final"] },
+    "2010": { "teams": 32, "matches": 64, "goals": 145, "hosts": ["ZAF"], "champion": "ESP", "runnerUp": "NLD", "stages": ["group", "r16", "qf", "sf", "third", "final"] },
+    "2014": { "teams": 32, "matches": 64, "goals": 171, "hosts": ["BRA"], "champion": "DEU", "runnerUp": "ARG", "stages": ["group", "r16", "qf", "sf", "third", "final"] },
+    "2018": { "teams": 32, "matches": 64, "goals": 169, "hosts": ["RUS"], "champion": "FRA", "runnerUp": "HRV", "stages": ["group", "r16", "qf", "sf", "third", "final"] },
+    "2022": { "teams": 32, "matches": 64, "goals": 172, "hosts": ["QAT"], "champion": "ARG", "runnerUp": "FRA", "stages": ["group", "r16", "qf", "sf", "third", "final"] },
+    "2026": { "teams": 48, "matches": 104, "goals": 308, "hosts": ["USA", "CAN", "MEX"], "champion": "ESP", "runnerUp": "ARG", "stages": ["group", "r32", "r16", "qf", "sf", "third", "final"] }
+  },
+  "final2026": { "home": "ESP", "away": "ARG", "score": [1, 0], "aet": true, "pens": null },
+  "teams2026": {
+    "r16": ["ARG", "BEL", "BRA", "CAN", "CHE", "COL", "EGY", "ENG", "ESP", "FRA", "MAR", "MEX", "NOR", "PRT", "PRY", "USA"],
+    "qf": ["ARG", "BEL", "CHE", "ENG", "ESP", "FRA", "MAR", "NOR"],
+    "sf": ["ARG", "ENG", "ESP", "FRA"],
+    "thirdPlaceMatch": ["ENG", "FRA"],
+    "groupF": ["NLD", "JPN", "SWE", "TUN"],
+    "groupFThirdAdvanced": true
+  },
+  "groups2026": {
+    "_about": "Official final group orders (positions 1-4) from Wikipedia's Template:2026 FIFA World Cup group tables, read 2026-09-10, FIFA codes mapped to our keys.",
+    "A": ["MEX", "ZAF", "KOR", "CZE"],
+    "B": ["CHE", "CAN", "BIH", "QAT"],
+    "C": ["BRA", "MAR", "SCO", "HTI"],
+    "D": ["USA", "AUS", "PRY", "TUR"],
+    "E": ["DEU", "CIV", "ECU", "CUW"],
+    "F": ["NLD", "JPN", "SWE", "TUN"],
+    "G": ["BEL", "EGY", "IRN", "NZL"],
+    "H": ["ESP", "CPV", "URY", "SAU"],
+    "I": ["FRA", "NOR", "SEN", "IRQ"],
+    "J": ["ARG", "AUT", "DZA", "JOR"],
+    "K": ["COL", "PRT", "COD", "UZB"],
+    "L": ["ENG", "HRV", "GHA", "PAN"]
+  },
+  "thirds2026": {
+    "_about": "Ranking of third-placed teams, best first, same source. The first eight advanced to the round of 32.",
+    "ranked": ["COD", "SWE", "GHA", "ECU", "BIH", "DZA", "PRY", "SEN", "IRN", "KOR", "SCO", "URY"],
+    "advancedCount": 8
+  },
+  "identity2026": {
+    "_about": "Distinct people who share team and date of birth in the pinned inputs, and genuine same-person links whose spellings differ. From general knowledge of these players, not from the build.",
+    "mustBeDifferentPeople": [
+      { "team": "ESP", "squadName": "Mikel Merino", "notLinkedTo": "P-62341", "note": "P-62341 is Rodri", "goals2026": 2 },
+      { "team": "ARG", "squadName": "Nicolás González", "notLinkedTo": "P-84430", "note": "P-84430 is Nahuel Molina" },
+      { "team": "NLD", "squadName": "Ryan Gravenberch", "notLinkedTo": "P-95763", "note": "P-95763 is Kenneth Taylor" },
+      { "team": "NLD", "squadName": "Quinten Timber", "notLinkedTo": "P-74111", "note": "P-74111 is his twin Jurriën Timber" }
+    ],
+    "mustBeSamePerson": [
+      { "team": "ESP", "squadName": "Rodri", "linkedTo": "P-62341", "goals2026": 0, "note": "Wikipedia's 104 match boxes list no Rodri goal; Merino's two were credited to him" },
+      { "team": "ENG", "squadName": "Jude Bellingham", "linkedTo": "P-15674", "goals2026": 7, "note": "ESPN 2026-07-19: Bellingham's 7 most-ever for England" },
+      { "team": "ARG", "squadName": "Lionel Messi", "linkedTo": "P-14758", "goals2026": 8 },
+      { "team": "ARG", "squadName": "Nahuel Molina", "linkedTo": "P-84430" },
+      { "team": "KOR", "squadName": "Son Heung-min", "linkedTo": "P-77335" },
+      { "team": "QAT", "squadName": "Pedro Miguel", "linkedTo": "P-00052", "note": "Ró-Ró" },
+      { "team": "GHA", "squadName": "Abdul Rahman Baba", "linkedTo": "P-94579", "note": "Baba Rahman" },
+      { "team": "GHA", "squadName": "Abdul Fatawu", "linkedTo": "P-62854", "note": "Abdul Fatawu Issahaku" },
+      { "team": "PAN", "squadName": "Yoel Bárcenas", "linkedTo": "P-10561", "note": "Édgar Yoel Bárcenas" }
+    ],
+    "noDuplicatePlayerInAnySquad": true
+  },
+  "matchFixtures": {
+    "_about": "Full goal semantics for matches whose shape is easy to get wrong. familyName is matched against the player's display name with foldCompact containment.",
+    "2022-CAN-MAR": {
+      "year": 2022, "home": "CAN", "away": "MAR", "score": [1, 2], "aet": false, "pens": null,
+      "goals": [
+        { "familyName": "Ziyech", "team": "MAR", "playerTeam": "MAR", "ownGoal": false, "minute": "4" },
+        { "familyName": "En-Nesyri", "team": "MAR", "playerTeam": "MAR", "ownGoal": false, "minute": "23" },
+        { "familyName": "Aguerd", "team": "CAN", "playerTeam": "MAR", "ownGoal": true, "minute": "40" }
+      ]
+    },
+    "2022-final": {
+      "year": 2022, "home": "ARG", "away": "FRA", "score": [3, 3], "aet": true, "pens": [4, 2], "ft90": [2, 2],
+      "goals": [
+        { "familyName": "Messi", "team": "ARG", "penalty": true, "period": "1h", "minute": "23" },
+        { "familyName": "Di María", "team": "ARG", "penalty": false, "period": "1h", "minute": "36" },
+        { "familyName": "Mbappé", "team": "FRA", "penalty": true, "period": "2h", "minute": "80" },
+        { "familyName": "Mbappé", "team": "FRA", "penalty": false, "period": "2h", "minute": "81" },
+        { "familyName": "Messi", "team": "ARG", "penalty": false, "period": "et2", "minute": "108" },
+        { "familyName": "Mbappé", "team": "FRA", "penalty": true, "period": "et2", "minute": "118" }
+      ]
+    },
+    "1938-replays": [
+      { "home": "CHE", "away": "DEU", "first": [1, 1], "replay": [4, 2] },
+      { "home": "CUB", "away": "ROU", "first": [3, 3], "replay": [2, 1] },
+      { "home": "BRA", "away": "CSK", "first": [1, 1], "replay": [2, 1] }
+    ],
+    "1950-final-round": [ ["URY", 5], ["BRA", 4], ["SWE", 2], ["ESP", 1] ],
+    "1966-final": { "home": "ENG", "away": "FRG", "score": [4, 2], "aet": true, "hatTrick": "Hurst" }
+  },
+  "records": {
+    "_about": "Checks on public/data/records.json itself. Sets where ties make order a presentation choice.",
+    "biggestWinsTop3": [ { "year": 1954, "home": "HUN", "away": "KOR" }, { "year": 1974, "home": "YUG", "away": "ZAI" }, { "year": 1982, "home": "HUN", "away": "SLV" } ],
+    "biggestWinsNext3Margin8": [ { "year": 1938, "home": "SWE", "away": "CUB" }, { "year": 1950, "home": "URY", "away": "BOL" }, { "year": 2002, "home": "DEU", "away": "SAU" } ],
+    "highestScoringFirst": { "year": 1954, "home": "AUT", "away": "CHE", "score": [7, 5] },
+    "tournamentScorersFirst2": [ { "player": "P-77939", "year": 1958, "goals": 13 }, { "familyName": "Kocsis", "year": 1954, "goals": 11 } ],
+    "shootoutsTotal": 39,
+    "hatTricksInclude": [
+      { "familyName": "Hurst", "year": 1966, "home": "ENG", "away": "FRG", "goals": 3 },
+      { "player": "P-73354", "year": 1994, "goals": 5 },
+      { "player": "P-64077", "year": 2022, "home": "ARG", "away": "FRA", "goals": 3 },
+      { "familyName": "Kane", "year": 2018, "home": "ENG", "away": "PAN", "goals": 3 }
+    ]
+  },
+  "lineage": { "FRG": "DEU", "ZAI": "COD", "SUN": "RUS", "YUG": "SRB", "SCG": "SRB", "CSK": "CZE" },
+  "titlesOwnKey": { "BRA": 5, "ITA": 4, "FRG": 3, "ARG": 3, "FRA": 2, "URY": 2, "ESP": 2, "ENG": 1, "DEU": 1 },
+  "titlesWithPredecessors": { "BRA": 5, "DEU": 4, "ITA": 4, "ARG": 3, "FRA": 2, "URY": 2, "ESP": 2, "ENG": 1 },
+  "japan": {
+    "key": "JPN",
+    "appearances": [1998, 2002, 2006, 2010, 2014, 2018, 2022, 2026],
+    "bestFinish": "r16",
+    "bestFinishYears": [2002, 2010, 2018, 2022],
+    "finish2026": "r32",
+    "firstGoal": { "player": "P-84762", "year": 1998 }
+  },
+  "players": {
+    "P-27787": { "note": "Miroslav Klose", "goalsByYear": { "2002": 5, "2006": 5, "2010": 4, "2014": 2 }, "total": 16 },
+    "P-77939": { "note": "Just Fontaine", "goalsByYear": { "1958": 13 }, "total": 13 },
+    "P-73354": { "note": "Oleg Salenko", "goalsByYear": { "1994": 6 }, "total": 6, "maxInOneMatch": 5 },
+    "P-84762": { "note": "Masashi Nakayama", "goalsByYear": { "1998": 1 }, "total": 1 },
+    "P-33175": { "note": "Keisuke Honda", "goalsByYear": { "2010": 2, "2014": 1, "2018": 1 }, "total": 4 },
+    "P-72441": { "note": "Gerd Mueller", "goalsByYear": { "1970": 10, "1974": 4 }, "total": 14 },
+    "P-38906": { "note": "Pele", "goalsByYear": { "1958": 6, "1962": 1, "1966": 1, "1970": 4 }, "total": 12 },
+    "P-62722": { "note": "Ronaldo (Brazil)", "goalsByYear": { "1998": 4, "2002": 8, "2006": 3 }, "total": 15 },
+    "P-14758": { "note": "Lionel Messi - 2026 count deliberately not asserted", "goalsByYear": { "2006": 1, "2014": 4, "2018": 1, "2022": 7 } },
+    "P-64077": { "note": "Kylian Mbappe - 2026 goals must be attached to the SAME id", "goalsByYear": { "2018": 4, "2022": 8, "2026": 10 }, "total": 22 }
+  },
+  "allTimeTopScorer": { "player": "P-64077", "goals": 22 },
+  "sources": {
+    "_about": "Repository pages and raw download URLs. Every rawUrls entry was downloaded successfully on 2026-09-10.",
+    "openfootballUrl": "https://github.com/openfootball/worldcup.json",
+    "fjelstulUrl": "https://github.com/jfjelstul/worldcup",
+    "rawUrls": {
+      "openfootball/1930-full.json": "https://raw.githubusercontent.com/openfootball/worldcup.json/516d3825c3bd23fdc298c4014e84bde78f2d4965/1930/worldcup-full.json",
+      "openfootball/2026-full.json": "https://raw.githubusercontent.com/openfootball/worldcup.json/516d3825c3bd23fdc298c4014e84bde78f2d4965/2026/worldcup-full.json",
+      "openfootball/2026-squads.json": "https://raw.githubusercontent.com/openfootball/worldcup.json/516d3825c3bd23fdc298c4014e84bde78f2d4965/2026/worldcup.squads.json",
+      "openfootball/2026-teams.json": "https://raw.githubusercontent.com/openfootball/worldcup.json/516d3825c3bd23fdc298c4014e84bde78f2d4965/2026/worldcup.teams.json",
+      "openfootball/2026-groups.json": "https://raw.githubusercontent.com/openfootball/worldcup.json/516d3825c3bd23fdc298c4014e84bde78f2d4965/2026/worldcup.groups.json",
+      "openfootball/2026-stadiums.json": "https://raw.githubusercontent.com/openfootball/worldcup.json/516d3825c3bd23fdc298c4014e84bde78f2d4965/2026/worldcup.stadiums.json",
+      "fjelstul/goals.csv": "https://raw.githubusercontent.com/jfjelstul/worldcup/35a8667f518b07469182ae16d35574dd0e7a00fb/data-csv/goals.csv"
+    }
+  },
+  "records1930to2022": {
+    "maxMargin": 9,
+    "maxMarginMatches": [
+      { "year": 1954, "home": "HUN", "away": "KOR", "score": [9, 0] },
+      { "year": 1974, "home": "YUG", "away": "ZAI", "score": [9, 0] },
+      { "year": 1982, "home": "HUN", "away": "SLV", "score": [10, 1] }
+    ],
+    "maxGoalsInMatch": 12,
+    "maxGoalsInMatchMatches": [ { "year": 1954, "home": "AUT", "away": "CHE", "score": [7, 5] } ],
+    "penaltyShootouts": 35,
+    "mostGoalsOneTournament": { "player": "P-77939", "year": 1958, "goals": 13 },
+    "mostGoalsOneMatch": { "player": "P-73354", "year": 1994, "goals": 5 }
+  }
+}

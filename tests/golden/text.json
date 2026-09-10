@@ -1,0 +1,47 @@
+{
+  "_about": "Golden cases for public/js/fold.js and public/js/ruby.js. Both the browser and the Node build import those modules; this file is the single oracle for both. Never edit it to make a test pass.",
+  "fold": [
+    ["ムラー", "むらー"],
+    ["ﾑﾗｰ", "むらー"],
+    ["ﾎﾟﾙﾄｶﾞﾙ", "ぽるとがる"],
+    ["ぽ", "ぽ"],
+    ["ぽ", "ぽ"],
+    ["ガ", "が"],
+    ["ヴィニシウス", "ゔぃにしうす"],
+    ["Müller", "muller"],
+    ["MÜLLER", "muller"],
+    ["Ｍｅｓｓｉ", "messi"],
+    ["Côte d'Ivoire", "cote divoire"],
+    ["Côte d’Ivoire", "cote divoire"],
+    ["Bosnia-Herzegovina", "bosnia herzegovina"],
+    ["Søren Lerby", "soren lerby"],
+    ["Łukasz Piszczek", "lukasz piszczek"],
+    ["İlhan Mansız", "ilhan mansiz"],
+    ["Mbappé", "mbappe"],
+    ["Curaçao", "curacao"],
+    ["リオネル・メッシ", "りおねる めっし"],
+    ["リオネル　メッシ", "りおねる めっし"],
+    ["  Ferran   TORRES ", "ferran torres"],
+    ["日本", "日本"],
+    ["Ｗカップ", "wかっぷ"]
+  ],
+  "foldCompact": [
+    ["リオネル・メッシ", "りおねるめっし"],
+    ["Bosnia and Herzegovina", "bosniaandherzegovina"],
+    ["ｸﾘｽﾃｨｱｰﾉ ﾛﾅｳﾄﾞ", "くりすてぃあーのろなうど"]
+  ],
+  "mustNotContain": [
+    { "haystack": "ぽるとがる", "needle": "ほ", "why": "a decomposed-mark strip would turn ぽ into ほ and make ほ match ポルトガル" },
+    { "haystack": "ばいえるん", "needle": "は", "why": "same trap for the dakuten mark" }
+  ],
+  "ruby": {
+    "valid": [
+      { "input": "{西|にし}ドイツ", "parts": [["西", "にし"], "ドイツ"], "plain": "西ドイツ", "reading": "にしドイツ" },
+      { "input": "{日本|にほん}", "parts": [["日本", "にほん"]], "plain": "日本", "reading": "にほん" },
+      { "input": "ブラジル", "parts": ["ブラジル"], "plain": "ブラジル", "reading": "ブラジル" },
+      { "input": "ソ{連|れん}", "parts": ["ソ", ["連", "れん"]], "plain": "ソ連", "reading": "ソれん" },
+      { "input": "{準々決勝|じゅんじゅんけっしょう}", "parts": [["準々決勝", "じゅんじゅんけっしょう"]], "plain": "準々決勝", "reading": "じゅんじゅんけっしょう" }
+    ],
+    "invalid": ["{西|にし", "{西|}", "{|にし}", "{西|nishi}", "西|にし}", "{西|に{し}"]
+  }
+}

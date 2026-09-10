@@ -1,0 +1,11 @@
+{
+  "_source": "2026 FIFA World Cup, English Wikipedia (raw wikitext, read 2026-09-10) and ESPN statistics article of 2026-07-19. Silver and bronze awards are not recorded here yet.",
+  "year": 2026,
+  "hosts": ["USA", "CAN", "MEX"],
+  "awards": [
+    { "award": "golden-ball", "player": { "name": "Rodri", "team": "ESP" } },
+    { "award": "golden-boot", "player": { "name": "Kylian Mbappé", "team": "FRA" }, "goals": 10 },
+    { "award": "golden-glove", "player": { "name": "Unai Simón", "team": "ESP" } },
+    { "award": "best-young-player", "player": { "name": "Pau Cubarsí", "team": "ESP" } }
+  ]
+}
