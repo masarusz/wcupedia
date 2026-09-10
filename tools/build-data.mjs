@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -289,15 +290,20 @@ for (const rosterPlayer of roster2026) {
 }
 for (const key of Object.keys(identity2026)) if (!usedIdentityDecisions.has(key)) identityFailures.push(`${key}: decision has no name-rule failure in the pinned inputs`);
 if (identityFailures.length) throw new Error(`unresolved 2026 identity decisions:\n${identityFailures.sort(compare).join('\n')}`);
-let next2026Id = 1;
 let linked2026 = 0;
+const generated2026Ids = new Map();
 for (const rosterPlayer of roster2026) {
   const linkedId = resolved2026Ids.get(rosterPlayer);
   if (linkedId) {
     rosterPlayer.id = linkedId;
     linked2026 += 1;
   } else {
-    rosterPlayer.id = `P26-${String(next2026Id++).padStart(4, '0')}`;
+    const identity = `${rosterPlayer.team}|${rosterPlayer.date_of_birth}|${foldCompact(rosterPlayer.name)}`;
+    rosterPlayer.id = `P26-${createHash('sha256').update(identity).digest('hex').slice(0, 10)}`;
+    if (generated2026Ids.has(rosterPlayer.id)) {
+      throw new Error(`2026 player id collision ${rosterPlayer.id}: ${generated2026Ids.get(rosterPlayer.id)} and ${identity}`);
+    }
+    generated2026Ids.set(rosterPlayer.id, identity);
     playerData.set(rosterPlayer.id, {
       name: rosterPlayer.name, ja: null, teams: new Set(), years: new Set(), goals: 0, goalsByYear: {}, birthDate: rosterPlayer.date_of_birth,
     });
@@ -517,6 +523,21 @@ for (const tournament of tournamentDetails) for (const [team, squad] of Object.e
   for (const member of squad) {
     if (seen.has(member.player)) throw new Error(`duplicate player ${member.player} in ${tournament.year} ${team} squad`);
     seen.add(member.player);
+  }
+}
+
+for (const tournament of tournamentDetails) {
+  const referenced = new Set([
+    ...tournament.matches.flatMap((match) => match.goals.map((goal) => goal.player)),
+    ...Object.values(tournament.squads).flatMap((squad) => squad.map((member) => member.player)),
+    ...tournament.topScorers.map((scorer) => scorer.player),
+    ...tournament.awards.map((award) => award.player),
+  ]);
+  tournament.people = {};
+  for (const id of [...referenced].sort(compare)) {
+    const player = playerData.get(id);
+    if (!player) throw new Error(`missing display name for ${tournament.year} ${id}`);
+    tournament.people[id] = { name: player.name, ja: player.ja };
   }
 }
 

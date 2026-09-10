@@ -24,7 +24,7 @@ const score = (match) => [match.score.home, match.score.away];
 const matchIndex = new Map(allMatches.map((match) => [match.id, match]));
 
 function recursiveFiles(root, at = root) {
-  return readdirSync(at, { withFileTypes: true }).flatMap((entry) => {
+  return readdirSync(at, { withFileTypes: true }).filter((entry) => !entry.name.startsWith('.')).flatMap((entry) => {
     const path = join(at, entry.name);
     return entry.isDirectory() ? recursiveFiles(root, path) : [relative(root, path)];
   }).sort();

@@ -1,0 +1,42 @@
+{
+  "_about": "Oracle facts for the Phase 3 UI logic, written from the published record of each tournament (not from the build). Team pairs are unordered. A tie is one pairing in a knockout round; a replayed pairing is ONE tie containing two matches. Never edit this file to make a test pass.",
+  "bracket": {
+    "1930": { "ties": { "sf": 2, "final": 1 }, "third": null },
+    "1934": { "ties": { "r16": 8, "qf": 4, "sf": 2, "final": 1 }, "third": ["DEU", "AUT"], "replayTies": [["ITA", "ESP"]] },
+    "1938": {
+      "ties": { "r16": 7, "qf": 4, "sf": 2, "final": 1 }, "third": ["BRA", "SWE"],
+      "replayTies": [["CHE", "DEU"], ["CUB", "ROU"], ["BRA", "CSK"]],
+      "entryWithoutFeeder": [{ "team": "SWE", "round": "qf", "note": "Austria withdrew; Sweden advanced by walkover, which is not a match" }]
+    },
+    "1950": { "ties": {}, "third": null, "note": "no knockout: decided by the final round group" },
+    "1954": { "ties": { "qf": 4, "sf": 2, "final": 1 }, "third": ["AUT", "URY"] },
+    "1974": { "ties": { "final": 1 }, "third": ["BRA", "POL"], "note": "final and third place are fed by the second group stage, so the final has no bracket feeders" },
+    "1978": { "ties": { "final": 1 }, "third": ["BRA", "ITA"] },
+    "1982": { "ties": { "sf": 2, "final": 1 }, "third": ["POL", "FRA"],
+      "feeders": [{ "tie": ["ITA", "FRG"], "from": [["ITA", "POL"], ["FRG", "FRA"]] }] },
+    "2022": {
+      "ties": { "r16": 8, "qf": 4, "sf": 2, "final": 1 }, "third": ["HRV", "MAR"],
+      "feeders": [
+        { "tie": ["ARG", "FRA"], "from": [["ARG", "HRV"], ["FRA", "MAR"]] },
+        { "tie": ["ARG", "HRV"], "from": [["NLD", "ARG"], ["HRV", "BRA"]] },
+        { "tie": ["FRA", "MAR"], "from": [["ENG", "FRA"], ["MAR", "PRT"]] },
+        { "tie": ["NLD", "ARG"], "from": [["NLD", "USA"], ["ARG", "AUS"]] },
+        { "tie": ["HRV", "BRA"], "from": [["JPN", "HRV"], ["BRA", "KOR"]] },
+        { "tie": ["MAR", "PRT"], "from": [["MAR", "ESP"], ["PRT", "CHE"]] },
+        { "tie": ["ENG", "FRA"], "from": [["ENG", "SEN"], ["FRA", "POL"]] }
+      ],
+      "winners": [
+        { "tie": ["JPN", "HRV"], "winner": "HRV", "why": "1-1 after extra time, Croatia won the shootout 3-1" },
+        { "tie": ["ARG", "FRA"], "winner": "ARG", "why": "3-3 after extra time, Argentina won the shootout 4-2" }
+      ]
+    },
+    "2026": {
+      "ties": { "r32": 16, "r16": 8, "qf": 4, "sf": 2, "final": 1 }, "third": ["FRA", "ENG"],
+      "feeders": [{ "tie": ["ESP", "ARG"], "from": [["FRA", "ESP"], ["ENG", "ARG"]] }],
+      "winners": [{ "tie": ["ESP", "ARG"], "winner": "ESP", "why": "1-0 after extra time" }]
+    }
+  },
+  "labels": {
+    "tournamentTitle": { "2022": "2022{年|ねん} カタール{大会|たいかい}", "2002": "2002{年|ねん} {日本|にほん}・{韓国|かんこく}{大会|たいかい}", "2026": "2026{年|ねん} アメリカ・カナダ・メキシコ{大会|たいかい}" }
+  }
+}
