@@ -2,12 +2,12 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import ui from './golden/ui.json' with { type: 'json' };
-import { buildBracket } from '../public/js/bracket.js?v=0.2.6';
+import { buildBracket } from '../public/js/bracket.js?v=0.2.7';
 import { foldCompact } from '../public/js/fold.js';
-import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=0.2.6';
+import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=0.2.7';
 import { parseRuby } from '../public/js/ruby.js';
-import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=0.2.6';
-import { VERSION } from '../public/js/version.js?v=0.2.6';
+import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=0.2.7';
+import { VERSION } from '../public/js/version.js?v=0.2.7';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const PUBLIC = join(ROOT, 'public');
@@ -32,6 +32,28 @@ function allTies(bracket) {
 function findTie(bracket, pair) {
   const key = pairKey(pair);
   return allTies(bracket).find((tie) => pairKey(tie.teams) === key);
+}
+
+function parseCssRules(css, atRules = []) {
+  const rules = [];
+  let cursor = 0;
+  while (cursor < css.length) {
+    const open = css.indexOf('{', cursor);
+    if (open < 0) break;
+    const header = css.slice(cursor, open).trim();
+    let depth = 1;
+    let close = open + 1;
+    while (close < css.length && depth) {
+      if (css[close] === '{') depth += 1;
+      if (css[close] === '}') depth -= 1;
+      close += 1;
+    }
+    const body = css.slice(open + 1, close - 1);
+    if (header.startsWith('@')) rules.push(...parseCssRules(body, [...atRules, header]));
+    else rules.push({ selector: header, body, atRules });
+    cursor = close;
+  }
+  return rules;
 }
 
 function japaneseStrings(value) {
@@ -146,7 +168,7 @@ export function register(test, equal, deepEqual) {
   });
 
   test('asset imports and footer share VERSION', () => {
-    equal(VERSION, '0.2.6');
+    equal(VERSION, '0.2.7');
     const html = readFileSync(join(PUBLIC, 'index.html'), 'utf8');
     for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
       if (/^(?:css|js)\//.test(match[1])) equal(match[1].endsWith(`?v=${VERSION}`), true, match[1]);
@@ -203,6 +225,25 @@ export function register(test, equal, deepEqual) {
     equal(fontSizes.filter((size) => size < 16).every((size) => size === 11 || size === 12 || size === 13 || size === 14 || size === 15), true);
     equal(/button\s*\{[^}]*font-size:\s*16px/s.test(css), true, 'controls font size');
     equal((css.match(/min-height:\s*44px/g) || []).length >= 3, true, '44px tap targets');
+  });
+
+  test('honour award/scorer pill tiers set a themed background', () => {
+    const css = readFileSync(join(PUBLIC, 'css/app.css'), 'utf8');
+    const rules = parseCssRules(css);
+    for (const tier of ['golden', 'silver', 'bronze', 'young', 'scorer']) {
+      const rule = rules.find((entry) => entry.selector === `.honour-pill-${tier}`);
+      equal(Boolean(rule), true, `.honour-pill-${tier} rule exists`);
+      equal(/background\s*:/.test(rule.body), true, `.honour-pill-${tier} sets background`);
+    }
+    const rootRule = rules.find((entry) => entry.selector === ':root' && entry.atRules.length === 0);
+    const darkRule = rules.find((entry) => entry.selector === ':root'
+      && entry.atRules.some((at) => at.includes('prefers-color-scheme: dark')));
+    equal(Boolean(rootRule), true, ':root light theme rule');
+    equal(Boolean(darkRule), true, ':root dark theme rule');
+    for (const prop of ['--silver', '--silver-bg', '--bronze', '--bronze-bg', '--young', '--young-bg', '--teal', '--teal-bg']) {
+      equal(rootRule.body.includes(`${prop}:`), true, `${prop} defined in light theme`);
+      equal(darkRule.body.includes(`${prop}:`), true, `${prop} defined in dark theme`);
+    }
   });
 
   test('credit links use the approved HTTPS hosts', () => {

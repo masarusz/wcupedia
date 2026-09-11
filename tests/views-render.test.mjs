@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { rubyPlain } from '../public/js/ruby.js?v=0.2.6';
-import { stageLabel } from '../public/js/strings.js?v=0.2.6';
+import { rubyPlain } from '../public/js/ruby.js?v=0.2.7';
+import { stageLabel } from '../public/js/strings.js?v=0.2.7';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -166,7 +166,7 @@ export function register(test, equal, deepEqual) {
 
     try {
       const { creditsView, errorView, homeView, matchView, notFoundView, tournamentView } =
-        await import('../public/js/views.js?v=0.2.6');
+        await import('../public/js/views.js?v=0.2.7');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const meta = load('meta.json');
@@ -212,6 +212,26 @@ export function register(test, equal, deepEqual) {
         const knockoutRounds = detail.stages.filter((stage) => ['r32', 'r16', 'qf', 'sf', 'final'].includes(stage));
         const chart = descendants(tree).find((node) => hasClass(node, 'bracket'));
         equal(Boolean(chart), knockoutRounds.length > 0, `${detail.year} chart presence`);
+        const honoursSection = descendants(tree).find((node) => hasClass(node, 'honours'));
+        const honoursLists = honoursSection.childNodes.filter((node) => node instanceof FakeElement && node.tagName === 'UL');
+        const scorerRowEls = honoursLists[0].childNodes.filter((node) => node instanceof FakeElement);
+        const awardRowEls = (honoursLists[1]?.childNodes || []).filter((node) => node instanceof FakeElement);
+        for (const row of scorerRowEls) {
+          const pills = descendants(row).filter((node) => hasClass(node, 'honour-pill-scorer'));
+          const playerEls = row.childNodes.filter((node) => node instanceof FakeElement && hasClass(node, 'honour-player'));
+          equal(pills.length, 1, `${detail.year} scorer row goal pill`);
+          equal(playerEls.length, 1, `${detail.year} scorer row player element`);
+          equal(descendants(playerEls[0]).includes(pills[0]), false, `${detail.year} scorer pill nested in player`);
+        }
+        for (const row of awardRowEls) {
+          const tierPills = descendants(row).filter((node) =>
+            (node.getAttribute('class') || '').split(/\s+/).some((cls) => /^honour-pill-(golden|silver|bronze|young)$/.test(cls)));
+          const playerEls = row.childNodes.filter((node) => node instanceof FakeElement && hasClass(node, 'honour-player'));
+          equal(tierPills.length, 1, `${detail.year} award row tier label`);
+          equal(playerEls.length, 1, `${detail.year} award row player element`);
+          equal(descendants(playerEls[0]).includes(tierPills[0]), false, `${detail.year} award label nested in player`);
+          equal(playerEls[0].textContent.includes(tierPills[0].textContent), false, `${detail.year} award label text leaked into player text`);
+        }
         const stageSections = tree.childNodes.filter((node) =>
           node instanceof FakeElement && hasClass(node, 'stage-section'));
         const groupSections = stageSections.filter((node) =>

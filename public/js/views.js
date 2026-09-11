@@ -1,10 +1,10 @@
-import { buildBracket } from './bracket.js?v=0.2.6';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.2.6';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.2.6';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.2.6';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.2.6';
-import { VERSION } from './version.js?v=0.2.6';
-import { rubyPlain } from './ruby.js?v=0.2.6';
+import { buildBracket } from './bracket.js?v=0.2.7';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.2.7';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.2.7';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.2.7';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.2.7';
+import { VERSION } from './version.js?v=0.2.7';
+import { rubyPlain } from './ruby.js?v=0.2.7';
 
 function flag(teams, key) {
   return el('img', {
@@ -78,22 +78,34 @@ function podium(detail, teams) {
   return el('section', { class: 'panel' }, [rubyEl('h2', STRINGS.podium), el('ol', { class: 'podium' }, rows)]);
 }
 
+function honourPlayerLine(detail, playerId, playerTeamKey, teams, awardTeamKey) {
+  return el('span', { class: 'honour-player' }, [
+    el('span', { class: 'person' }, playerName(detail, playerId, playerTeamKey)),
+    team(teams, awardTeamKey),
+  ]);
+}
+
+function awardTier(award) {
+  if (award.startsWith('golden-')) return 'golden';
+  if (award.startsWith('silver-')) return 'silver';
+  if (award.startsWith('bronze-')) return 'bronze';
+  return 'young';
+}
+
 function honours(detail, teams) {
   const scorerRows = detail.topScorers.map((scorer) => {
     const scorerGoal = detail.matches.flatMap((match) => match.goals).find((goal) => goal.player === scorer.player && !goal.ownGoal);
-    return el('li', {}, [
-      el('span', { class: 'person' }, playerName(detail, scorer.player, scorerGoal.playerTeam)),
-      team(teams, scorerGoal.team),
-      el('strong', {}, `${scorer.goals}`), rubyNodes(STRINGS.goals),
+    return el('li', { class: 'honour-row' }, [
+      honourPlayerLine(detail, scorer.player, scorerGoal.playerTeam, teams, scorerGoal.team),
+      el('strong', { class: 'honour-pill honour-pill-scorer' }, [text(`${scorer.goals}`), rubyNodes(STRINGS.goals)]),
     ]);
   });
   const awardRank = new Map(AWARD_ORDER.map((key, index) => [key, index]));
   const awards = [...detail.awards].sort((a, b) =>
     (awardRank.get(a.award) ?? AWARD_ORDER.length) - (awardRank.get(b.award) ?? AWARD_ORDER.length));
-  const awardRows = awards.map((award) => el('li', {}, [
-    rubyEl('strong', AWARD_LABELS[award.award] || award.award),
-    el('span', { class: 'person' }, playerName(detail, award.player, award.team)),
-    team(teams, award.team),
+  const awardRows = awards.map((award) => el('li', { class: 'honour-row' }, [
+    rubyEl('strong', AWARD_LABELS[award.award] || award.award, { class: `honour-pill honour-pill-${awardTier(award.award)}` }),
+    honourPlayerLine(detail, award.player, award.team, teams, award.team),
   ]));
   return el('section', { class: 'panel honours' }, [
     rubyEl('h2', STRINGS.topScorer), el('ul', {}, scorerRows),
