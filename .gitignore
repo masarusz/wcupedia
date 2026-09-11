@@ -9,3 +9,6 @@
 reports/
 
 node_modules/
+
+# Temporary git worktree used by scripts/deploy.sh to stage the gh-pages branch.
+.publish/
