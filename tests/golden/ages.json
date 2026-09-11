@@ -1,0 +1,256 @@
+{
+ "_about": "Ages oracle, generated 2026-09-11 by the orchestrator from raw Fjelstul players/squads/tournaments CSVs, openfootball 2026 squads and curated/squad-changes-2026.json — never from public/data. Age = whole years on the tournament opening day (Fjelstul tournaments.start_date; 2026-06-11). curated/birth-date-corrections.json is applied first. Youngest/oldest rankings are by squad membership (every era), one row per player (that player's youngest / oldest World Cup), ordered by exact age in days. Players with birth_date \"not available\" have no age. Ids \"2026:TEAM:Name\" are 2026-only players.",
+ "openingDay": {
+  "1930": "1930-07-13",
+  "1934": "1934-05-27",
+  "1938": "1938-06-04",
+  "1950": "1950-06-24",
+  "1954": "1954-06-16",
+  "1958": "1958-06-08",
+  "1962": "1962-05-30",
+  "1966": "1966-07-11",
+  "1970": "1970-05-31",
+  "1974": "1974-06-13",
+  "1978": "1978-06-01",
+  "1982": "1982-06-13",
+  "1986": "1986-05-31",
+  "1990": "1990-06-08",
+  "1994": "1994-06-17",
+  "1998": "1998-06-10",
+  "2002": "2002-05-31",
+  "2006": "2006-06-09",
+  "2010": "2010-06-11",
+  "2014": "2014-06-12",
+  "2018": "2018-06-14",
+  "2022": "2022-11-20",
+  "2026": "2026-06-11"
+ },
+ "samples": {
+  "P-64077": {
+   "birthDate": "1998-12-20",
+   "ageByYear": {
+    "2018": 19,
+    "2022": 23,
+    "2026": 27
+   }
+  },
+  "P-14758": {
+   "birthDate": "1987-06-24",
+   "ageByYear": {
+    "2006": 18,
+    "2010": 22,
+    "2014": 26,
+    "2018": 30,
+    "2022": 35,
+    "2026": 38
+   }
+  },
+  "P-38906": {
+   "birthDate": "1940-10-23",
+   "ageByYear": {
+    "1958": 17,
+    "1962": 21,
+    "1966": 25,
+    "1970": 29
+   }
+  },
+  "P-44328": {
+   "birthDate": "1999-09-30",
+   "ageByYear": {
+    "2022": 23,
+    "2026": 26
+   }
+  },
+  "P-22633": {
+   "birthDate": "1997-05-20",
+   "ageByYear": {
+    "2022": 25
+   }
+  }
+ },
+ "youngestTop10": [
+  {
+   "player": "P-49805",
+   "name": "Edu",
+   "team": "BRA",
+   "year": 1966,
+   "birthDate": "1949-08-06",
+   "age": 16,
+   "ageDays": 6183
+  },
+  {
+   "player": "P-62599",
+   "name": "Norman Whiteside",
+   "team": "NIR",
+   "year": 1982,
+   "birthDate": "1965-05-07",
+   "age": 17,
+   "ageDays": 6246
+  },
+  {
+   "player": "P-24015",
+   "name": "Theo Walcott",
+   "team": "ENG",
+   "year": 2006,
+   "birthDate": "1989-03-16",
+   "age": 17,
+   "ageDays": 6294
+  },
+  {
+   "player": "P-52099",
+   "name": "Femi Opabunmi",
+   "team": "NGA",
+   "year": 2002,
+   "birthDate": "1985-03-03",
+   "age": 17,
+   "ageDays": 6298
+  },
+  {
+   "player": "P-61703",
+   "name": "Samuel Eto'o",
+   "team": "CMR",
+   "year": 1998,
+   "birthDate": "1981-03-10",
+   "age": 17,
+   "ageDays": 6301
+  },
+  {
+   "player": "P-96120",
+   "name": "Walter Brom",
+   "team": "POL",
+   "year": 1938,
+   "birthDate": "1921-02-14",
+   "age": 17,
+   "ageDays": 6319
+  },
+  {
+   "player": "P-84152",
+   "name": "Salomon Olembé",
+   "team": "CMR",
+   "year": 1998,
+   "birthDate": "1980-12-08",
+   "age": 17,
+   "ageDays": 6393
+  },
+  {
+   "player": "P-79551",
+   "name": "Il-gwan Jong",
+   "team": "PRK",
+   "year": 2010,
+   "birthDate": "1992-10-30",
+   "age": 17,
+   "ageDays": 6433
+  },
+  {
+   "player": "P-38906",
+   "name": "Pelé",
+   "team": "BRA",
+   "year": 1958,
+   "birthDate": "1940-10-23",
+   "age": 17,
+   "ageDays": 6437
+  },
+  {
+   "player": "2026:MEX:Gilberto Mora",
+   "name": "Gilberto Mora",
+   "team": "MEX",
+   "year": 2026,
+   "birthDate": "2008-10-14",
+   "age": 17,
+   "ageDays": 6449
+  }
+ ],
+ "oldestTop10": [
+  {
+   "player": "P-32448",
+   "name": "Essam El Hadary",
+   "team": "EGY",
+   "year": 2018,
+   "birthDate": "1973-01-15",
+   "age": 45,
+   "ageDays": 16586
+  },
+  {
+   "player": "2026:SCO:Craig Gordon",
+   "name": "Craig Gordon",
+   "team": "SCO",
+   "year": 2026,
+   "birthDate": "1982-12-31",
+   "age": 43,
+   "ageDays": 15868
+  },
+  {
+   "player": "P-02080",
+   "name": "Faryd Mondragón",
+   "team": "COL",
+   "year": 2014,
+   "birthDate": "1971-06-21",
+   "age": 42,
+   "ageDays": 15697
+  },
+  {
+   "player": "P-58080",
+   "name": "Roger Milla",
+   "team": "CMR",
+   "year": 1994,
+   "birthDate": "1952-05-20",
+   "age": 42,
+   "ageDays": 15368
+  },
+  {
+   "player": "P-70442",
+   "name": "Cristiano Ronaldo",
+   "team": "PRT",
+   "year": 2026,
+   "birthDate": "1985-02-05",
+   "age": 41,
+   "ageDays": 15101
+  },
+  {
+   "player": "P-55794",
+   "name": "Pat Jennings",
+   "team": "NIR",
+   "year": 1986,
+   "birthDate": "1945-06-12",
+   "age": 40,
+   "ageDays": 14963
+  },
+  {
+   "player": "P-80826",
+   "name": "Guillermo Ochoa",
+   "team": "MEX",
+   "year": 2026,
+   "birthDate": "1985-07-13",
+   "age": 40,
+   "ageDays": 14943
+  },
+  {
+   "player": "P-29491",
+   "name": "Luka Modrić",
+   "team": "HRV",
+   "year": 2026,
+   "birthDate": "1985-09-09",
+   "age": 40,
+   "ageDays": 14885
+  },
+  {
+   "player": "P-20640",
+   "name": "Peter Shilton",
+   "team": "ENG",
+   "year": 1990,
+   "birthDate": "1949-09-18",
+   "age": 40,
+   "ageDays": 14873
+  },
+  {
+   "player": "P-09317",
+   "name": "Lev Yashin",
+   "team": "SUN",
+   "year": 1970,
+   "birthDate": "1929-10-22",
+   "age": 40,
+   "ageDays": 14831
+  }
+ ],
+ "squadRowsWithoutBirthDate": 79
+}

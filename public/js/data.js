@@ -1,4 +1,5 @@
-import { VERSION } from './version.js?v=0.4.0';
+import { VERSION } from './version.js?v=0.4.1';
+import { isIsoDate } from './ages.js?v=0.4.1';
 
 const cache = new Map();
 
@@ -8,7 +9,7 @@ function validObject(value) {
 
 const validators = {
   'tournaments.json': (value) => Array.isArray(value) && value.length > 0
-    && value.every((item) => validObject(item) && Number.isInteger(item.year)),
+    && value.every((item) => validObject(item) && Number.isInteger(item.year) && isIsoDate(item.start)),
   'teams.json': (value) => validObject(value) && Object.keys(value).length > 0
     && Object.values(value).every((item) => validObject(item) && typeof item.ja === 'string' && typeof item.flag === 'string'
       && typeof item.region === 'string' && validObject(item.record) && validObject(item.recordOwn)
@@ -17,15 +18,18 @@ const validators = {
     && Object.values(value).every((item) => validObject(item) && typeof item.name === 'string'
       && Array.isArray(item.teams) && Array.isArray(item.years) && Number.isInteger(item.goals)
       && validObject(item.goalsByYear) && Array.isArray(item.awards)
+      && (!Object.hasOwn(item, 'birthDate') || isIsoDate(item.birthDate))
       && ((!Object.hasOwn(item, 'apps') && !Object.hasOwn(item, 'appsByYear'))
         || (Number.isInteger(item.apps) && item.apps >= 0 && validObject(item.appsByYear)))),
   'rankings.json': (value) => validObject(value) && validObject(value.countries) && validObject(value.players)
     && ['titles', 'appearances', 'wins', 'goals'].every((key) => Array.isArray(value.countries[key]))
-    && ['goals', 'tournamentGoals', 'awards', 'squads', 'apps'].every((key) => Array.isArray(value.players[key]))
+    && ['goals', 'tournamentGoals', 'awards', 'squads', 'apps', 'youngest', 'oldest'].every((key) => Array.isArray(value.players[key]))
     && Object.values(value.countries).flat().every((row) => validObject(row) && Number.isInteger(row.rank)
       && typeof row.team === 'string' && typeof row.name === 'string' && typeof row.ja === 'string' && Number.isInteger(row.value))
     && Object.values(value.players).flat().every((row) => validObject(row) && Number.isInteger(row.rank)
-      && typeof row.player === 'string' && typeof row.name === 'string' && typeof row.team === 'string' && Number.isInteger(row.value)),
+      && typeof row.player === 'string' && typeof row.name === 'string' && typeof row.team === 'string' && Number.isInteger(row.value))
+    && ['youngest', 'oldest'].every((key) => value.players[key].every((row) => Number.isInteger(row.year)
+      && Number.isInteger(row.age) && Number.isInteger(row.ageDays))),
   'search.json': (value) => Array.isArray(value) && value.length > 0
     && value.every((item) => validObject(item) && ['team', 'player', 'tournament'].includes(item.type)
       && typeof item.id === 'string' && typeof item.label === 'string' && Array.isArray(item.keys)
@@ -34,7 +38,7 @@ const validators = {
         && Array.isArray(item.years) && item.years.length === 2 && item.years.every(Number.isInteger)
         && Array.isArray(item.fame) && item.fame.length === 3 && item.fame.every(Number.isInteger)))),
   'meta.json': (value) => validObject(value) && validObject(value.sources),
-  tournament: (value) => validObject(value) && Number.isInteger(value.year)
+  tournament: (value) => validObject(value) && Number.isInteger(value.year) && isIsoDate(value.start)
     && Array.isArray(value.matches) && Array.isArray(value.groups) && validObject(value.people) && validObject(value.teamDisplay),
 };
 

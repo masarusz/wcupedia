@@ -36,6 +36,19 @@ async function helperMutant(name, before, after, probe) {
   return probe(module);
 }
 
+async function ageMutant(name, before, after, probe) {
+  const root = join(work, name.replaceAll(' ', '-'));
+  const path = join(root, 'ages.mjs');
+  cpSync(join(ROOT, 'public/js/ages.js'), path);
+  writeFileSync(path, mutate(readFileSync(path, 'utf8'), before, after, name));
+  return probe(await import(`${pathToFileURL(path).href}?mutation=${encodeURIComponent(name)}`));
+}
+
+async function sourceMutant(name, relativePath, before, after, probe) {
+  const source = readFileSync(join(ROOT, relativePath), 'utf8');
+  return probe(mutate(source, before, after, name));
+}
+
 async function run(name, execute) {
   let killed = false;
   try { killed = !(await execute()); } catch { killed = true; }
@@ -87,6 +100,40 @@ try {
     'const TYPE_ORDER', 'const TYPE_ORDER', ({ prepareIndex, search }) =>
       search(prepareIndex([make('team', 'PRT', 'Portugal', ['ぽるとがる'])]), 'ほ').length === 0,
     [".normalize('NFC')\n    .replace(/[øæœßłđðþı]/g", ".normalize('NFC')\n    .replace(/ぽ/g, 'ほ')\n    .replace(/[øæœßłđðþı]/g"]));
+  await run('age computed from Jan 1', () => ageMutant('age computed from Jan 1',
+    "return onYear - birthYear - (onMonth < birthMonth || (onMonth === birthMonth && onDay < birthDay) ? 1 : 0);",
+    'return onYear - birthYear;', ({ ageInYears }) => ageInYears('1998-12-20', '2018-06-14') === 19));
+  await run('birth-date corrections ignored', () => sourceMutant('birth-date corrections ignored', 'tools/build-data.mjs',
+    'birthDates.set(id, correction.birthDate);', '// correction ignored', (source) => source.includes('birthDates.set(id, correction.birthDate);')));
+  await run('squad age guard removed', () => sourceMutant('squad age guard removed', 'tools/build-data.mjs',
+    "if (ageGuardOffenders.length) throw new Error(`squad age outside 15..46:\\n${ageGuardOffenders.sort(compare).join('\\n')}`);",
+    '// age guard removed', (source) => source.includes('squad age outside 15..46')));
+  await run('youngest ranked by whole years', () => sourceMutant('youngest ranked by whole years', 'tools/build-data.mjs',
+    'values: (row) => [-row.ageDays]', 'values: (row) => [-row.age]', (source) => source.includes('values: (row) => [-row.ageDays]')));
+  await run('age ranking emits one row per squad', () => sourceMutant('age ranking emits one row per squad', 'tools/build-data.mjs',
+    ".map(([id]) => ageRankingRow(id, (value, best) => value < best))", ".flatMap(([id, player]) => player.years.map(() => ageRankingRow(id, (value, best) => value < best)))",
+    (source) => source.includes(".map(([id]) => ageRankingRow(id, (value, best) => value < best))")));
+  await run('もどる shown on home', () => sourceMutant('もどる shown on home', 'public/js/app.js',
+    "backSlot.replaceChildren(...(route === '/' ? [] : [backButton]));", 'backSlot.replaceChildren(backButton);',
+    (source) => source.includes("route === '/' ? [] : [backButton]")));
+  await run('search replaceState null restored', () => sourceMutant('search replaceState null restored', 'public/js/app.js',
+    "history.replaceState(history.state, '', `#${path}${suffix}`);", "history.replaceState(null, '', `#${path}${suffix}`);",
+    (source) => source.includes("history.replaceState(history.state, '', `#${path}${suffix}`)")));
+  await run('match header country link removed', () => sourceMutant('match header country link removed', 'public/js/views.js',
+    "countryLink(teams, match.home, 'country-link score-team')", "team(teams, match.home, 'score-team')",
+    (source) => source.slice(source.indexOf('export function matchView'), source.indexOf('const REGION_SECTIONS'))
+      .includes("countryLink(teams, match.home, 'country-link score-team')")));
+  await run('player tournaments ordered ascending', () => sourceMutant('player tournaments ordered ascending', 'public/js/views.js',
+    '[...details].sort((a, b) => b.year - a.year)', '[...details].sort((a, b) => a.year - b.year)',
+    (source) => source.includes('[...details].sort((a, b) => b.year - a.year)')));
+  await run('player tournament heading hosts omitted', () => sourceMutant('player tournament heading hosts omitted', 'public/js/views.js',
+    "el('h2', {}, [\n        el('a', { href: `#/t/${detail.year}` }, rubyNodes(tournamentTitle(detail, teams))),",
+    "el('h2', {}, [\n        el('a', { href: `#/t/${detail.year}` }, `${detail.year}年大会`),",
+    (source) => source.slice(source.indexOf('export function playerView'), source.indexOf('const COUNTRY_METRICS'))
+      .includes('rubyNodes(tournamentTitle(detail, teams))')));
+  await run('standings min-width restored', () => sourceMutant('standings min-width restored', 'public/css/app.css',
+    '.standings { width: 100%;', '.standings { min-width: 820px; width: 100%;',
+    (source) => !/\.standings\s*\{[^}]*min-width\s*:\s*(?:[6-9]\d\d|\d{4,})px/s.test(source)));
 } finally {
   rmSync(work, { recursive: true, force: true });
 }

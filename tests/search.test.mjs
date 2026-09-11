@@ -1,4 +1,4 @@
-import { prepareIndex, search } from '../public/js/search.js?v=0.4.0';
+import { prepareIndex, search } from '../public/js/search.js?v=0.4.1';
 
 const entry = (type, id, label, keys) => ({ type, id, label, keys });
 

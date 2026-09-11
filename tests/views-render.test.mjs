@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { rubyPlain } from '../public/js/ruby.js?v=0.4.0';
-import { stageLabel } from '../public/js/strings.js?v=0.4.0';
+import { rubyPlain } from '../public/js/ruby.js?v=0.4.1';
+import { stageLabel } from '../public/js/strings.js?v=0.4.1';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -118,6 +118,7 @@ export function register(test, equal, deepEqual) {
     const previousNode = globalThis.Node;
     const previousWindow = globalThis.window;
     const previousLocation = globalThis.location;
+    const previousHistory = globalThis.history;
     const previousFetch = globalThis.fetch;
     const appRoot = new FakeElement('div');
     const listeners = new Map();
@@ -130,6 +131,15 @@ export function register(test, equal, deepEqual) {
     };
     globalThis.window = { addEventListener: (type, listener) => listeners.set(type, listener), scrollTo: () => {} };
     globalThis.location = { hash: '' };
+    globalThis.history = {
+      state: null,
+      backCalls: 0,
+      replaceState(state, _title, url) {
+        this.state = state;
+        if (url) globalThis.location.hash = url;
+      },
+      back() { this.backCalls += 1; },
+    };
     globalThis.fetch = async (url) => {
       requested.push(String(url).split('?')[0]);
       return { ok: true, json: async () => load(String(url).split('?')[0].replace(/^data\//, '')) };
@@ -153,19 +163,28 @@ export function register(test, equal, deepEqual) {
       equal(marks[0].tagName, 'IMG', 'brand-mark is an img element');
       equal(brand.childNodes[0], marks[0], 'brand-mark is the first child of .brand');
       equal(marks[0].getAttribute('alt'), '', 'brand-mark has empty alt text');
-      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=0.4.0', 'brand-mark versioned resource');
+      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=0.4.1', 'brand-mark versioned resource');
       equal(marks[0].getAttribute('width'), '34', 'brand-mark width');
       equal(marks[0].getAttribute('height'), '34', 'brand-mark height');
       requested.length = 0;
-      for (const hash of ['#/c', '#/c/JPN', '#/r', '#/r/p/goals']) {
+      for (const hash of ['#/c', '#/c/JPN', '#/r', '#/r/p/goals', '#/r/p/youngest', '#/r/p/oldest', '#/credits', '#/missing']) {
         globalThis.location.hash = hash;
+        globalThis.history.state = null;
         await listeners.get('hashchange')();
+        const headerBack = descendants(appRoot).filter((node) => hasClass(node, 'header-back'));
+        equal(headerBack.length, 1, `${hash} header back count`);
+        equal(headerBack[0].textContent, '‹ もどる', `${hash} header back label`);
       }
+      const navigatedBack = descendants(appRoot).find((node) => hasClass(node, 'header-back'));
+      navigatedBack.listeners.get('click')[0]();
+      equal(globalThis.history.backCalls, 1, 'header back uses history after in-app navigation');
       equal(requested.some((path) => path.endsWith('players.json') || path.endsWith('search.json')), false,
         `country/ranking loader requests: ${requested.join(', ')}`);
       requested.length = 0;
       globalThis.location.hash = '#/p/P-14758';
+      globalThis.history.state = null;
       await listeners.get('hashchange')();
+      equal(descendants(appRoot).filter((node) => hasClass(node, 'header-back')).length, 1, 'player header back');
       equal(requested.includes('data/players.json'), true, 'player route loads players.json');
       deepEqual(requested.filter((path) => path.startsWith('data/t/')).sort(),
         [2006, 2010, 2014, 2018, 2022, 2026].map((year) => `data/t/${year}.json`), 'player route tournament requests');
@@ -173,21 +192,31 @@ export function register(test, equal, deepEqual) {
       requested.length = 0;
       for (const hash of ['#/t/2022', '#/m/M-2022-64']) {
         globalThis.location.hash = hash;
+        globalThis.history.state = null;
         await listeners.get('hashchange')();
+        equal(descendants(appRoot).filter((node) => hasClass(node, 'header-back')).length, 1, `${hash} header back`);
       }
       equal(requested.includes('data/search.json'), false, 'tournament/match routes do not load search.json');
       globalThis.location.hash = '#/';
+      globalThis.history.state = null;
       await listeners.get('hashchange')();
+      equal(descendants(appRoot).some((node) => hasClass(node, 'header-back')), false, 'home has no back button');
       requested.length = 0;
       const homeInput = descendants(appRoot).find((node) => node.tagName === 'INPUT');
       await homeInput.listeners.get('focus')[0]();
       equal(requested.includes('data/search.json'), true, 'home focus loads search.json');
       globalThis.location.hash = '#/s?q=%E3%82%81%E3%81%A3%E3%81%97';
+      globalThis.history.state = null;
       await listeners.get('hashchange')();
       await new Promise((resolvePromise) => setImmediate(resolvePromise));
       const routeInput = descendants(appRoot).find((node) => node.tagName === 'INPUT');
+      equal(descendants(appRoot).filter((node) => hasClass(node, 'header-back')).length, 1, 'search header back');
       equal(routeInput.value, 'めっし', 'search route restores query');
       equal(descendants(appRoot).some((node) => node.getAttribute('href') === '#/p/P-14758'), true, 'search route restores results');
+      const visitState = globalThis.history.state;
+      routeInput.value = 'ぺれ';
+      routeInput.listeners.get('input')[0]();
+      equal(globalThis.history.state, visitState, 'search replaceState preserves visit state object');
     } finally {
       if (previousDocument === undefined) delete globalThis.document;
       else globalThis.document = previousDocument;
@@ -197,6 +226,8 @@ export function register(test, equal, deepEqual) {
       else globalThis.window = previousWindow;
       if (previousLocation === undefined) delete globalThis.location;
       else globalThis.location = previousLocation;
+      if (previousHistory === undefined) delete globalThis.history;
+      else globalThis.history = previousHistory;
       if (previousFetch === undefined) delete globalThis.fetch;
       else globalThis.fetch = previousFetch;
     }
@@ -214,7 +245,7 @@ export function register(test, equal, deepEqual) {
     try {
       const { countriesView, countryView, creditsView, errorView, homeView, matchView, notFoundView,
         playerView, rankingsView, teamName, tournamentView } =
-        await import('../public/js/views.js?v=0.4.0');
+        await import('../public/js/views.js?v=0.4.1');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const players = load('players.json');
@@ -230,6 +261,7 @@ export function register(test, equal, deepEqual) {
       let readingElementCount = 0;
       const readingElementSamples = [];
       const renderedPlayerLabels = [];
+      const nestedLinks = [];
 
       const render = (label, view) => {
         try {
@@ -240,6 +272,9 @@ export function register(test, equal, deepEqual) {
           if (readingElementSamples.length < 3) {
             readingElementSamples.push(...readingElements.slice(0, 3 - readingElementSamples.length)
               .map((node) => `${label}: ${node.tagName.toLowerCase()}`));
+          }
+          for (const link of descendants(tree).filter((node) => node.tagName === 'A')) {
+            if (descendants(link).slice(1).some((node) => node.tagName === 'A')) nestedLinks.push(`${label}: ${link.getAttribute('href')}`);
           }
           return tree;
         } catch (error) {
@@ -350,7 +385,19 @@ export function register(test, equal, deepEqual) {
         for (const panel of descendants(tree).filter((node) => hasClass(node, 'group-panel'))) {
           const heading = panel.childNodes.find((node) => node instanceof FakeElement && node.tagName === 'H3');
           if (heading.textContent.includes('Group ')) englishGroupLabels.push(`tournament ${detail.year}: ${heading.textContent}`);
+          const table = descendants(panel).find((node) => hasClass(node, 'standings'));
+          deepEqual(descendants(table).filter((node) => node.tagName === 'TH').map((node) => node.textContent),
+            ['順位', '国', '試合', '勝', '分', '敗', '得点', '失点', '差', '勝ち点'], `${detail.year} standings headers`);
         }
+        const hostLinks = descendants(tree).filter((node) => hasClass(node, 'host-country-link'));
+        deepEqual(hostLinks.map((node) => node.getAttribute('href')), detail.hosts.slice().sort((a, b) => a === 'JPN' ? -1 : b === 'JPN' ? 1 : 0)
+          .map((key) => `#/c/${key}`), `${detail.year} host country links`);
+        const podiumLinks = descendants(tree).filter((node) => hasClass(node, 'podium-country-link'));
+        deepEqual(podiumLinks.map((node) => node.getAttribute('href')),
+          Object.values(detail.placings).filter(Boolean).map((key) => `#/c/${key}`), `${detail.year} podium country links`);
+        const standingLinks = descendants(tree).filter((node) => hasClass(node, 'standings-country-link'));
+        equal(standingLinks.length, detail.groups.reduce((sum, group) => sum + group.standings.length, 0), `${detail.year} standings country link count`);
+        equal(standingLinks.every((node) => /^#\/c\/[A-Z]{3}$/.test(node.getAttribute('href') || '')), true, `${detail.year} standings country targets`);
         if (detail.year === 1950) tournament1950Tree = tree;
         if (detail.year === 2022) tournament2022Tree = tree;
         if (detail.year === 2026) tournament2026Tree = tree;
@@ -360,6 +407,8 @@ export function register(test, equal, deepEqual) {
           if (matchTree) matchRenders += 1;
           renderedPlayerLabels.push(...descendants(matchTree).filter((node) => hasClass(node, 'person')).map((node) => node.textContent));
           const breadcrumb = descendants(matchTree).find((node) => hasClass(node, 'breadcrumb'));
+          deepEqual(descendants(matchTree).filter((node) => hasClass(node, 'score-team')).map((node) => node.getAttribute('href')),
+            [`#/c/${match.home}`, `#/c/${match.away}`], `${match.id} score country links`);
           if (breadcrumb.textContent.includes('Group ')) englishGroupLabels.push(`match ${match.id}: ${breadcrumb.textContent}`);
           if (detail.year === 2022 && match.home === 'CAN' && match.away === 'MAR') canadaMoroccoTree = matchTree;
         }
@@ -373,7 +422,7 @@ export function register(test, equal, deepEqual) {
       equal(descendants(countriesTree).filter((node) => hasClass(node, 'country-tile')).length, 84, 'country root tile count');
       for (const key of Object.keys(teams)) render(`country ${key}`, () => countryView(key, teams));
       let rankingRenders = 0;
-      for (const [kind, metrics] of [['c', ['titles', 'appearances', 'wins', 'goals']], ['p', ['goals', 'tournamentGoals', 'awards', 'squads', 'apps']]]) {
+      for (const [kind, metrics] of [['c', ['titles', 'appearances', 'wins', 'goals']], ['p', ['goals', 'tournamentGoals', 'awards', 'squads', 'apps', 'youngest', 'oldest']]]) {
         for (const metric of metrics) {
           const tree = render(`ranking ${kind}/${metric}`, () => rankingsView(rankings, teams, kind, metric));
           rankingRenders += Boolean(tree);
@@ -389,9 +438,29 @@ export function register(test, equal, deepEqual) {
           equal((tree.textContent.match(/1970年より前の出場試合の記録はありません/g) || []).length, 1, `${id} pre-1970 note`);
           equal(/出場試合数 \d/.test(tree.textContent), false, `${id} no partial appearance count`);
         }
+        if (!player.birthDate) {
+          equal(descendants(tree).some((node) => hasClass(node, 'player-birth-date') || hasClass(node, 'player-age')), false, `${id} no unknown birth date or age`);
+        } else {
+          equal(descendants(tree).filter((node) => hasClass(node, 'player-birth-date')).length, 1, `${id} birth date shown once`);
+          equal(descendants(tree).filter((node) => hasClass(node, 'player-age')).length, player.years.length, `${id} tournament ages`);
+        }
+        if (id === 'P-14758') {
+          const headings = descendants(tree).filter((node) => hasClass(node, 'player-tournament')).map((node) => {
+            const heading = node.childNodes.find((child) => child instanceof FakeElement && child.tagName === 'H2');
+            const tournamentLink = descendants(heading).find((child) => child.tagName === 'A');
+            return { href: tournamentLink.getAttribute('href'), text: heading.textContent };
+          });
+          deepEqual(headings.map(({ href }) => Number(href.slice(-4))),
+            [2026, 2022, 2018, 2014, 2010, 2006], 'Messi World Cups descending');
+          equal(headings.find(({ href }) => href === '#/t/2018').text.includes('2018年 ロシア大会'), true,
+            'Messi 2018 tournament heading includes full title');
+          equal(['2026年', 'アメリカ', 'カナダ', 'メキシコ'].every((part) =>
+            headings.find(({ href }) => href === '#/t/2026').text.includes(part)), true,
+          'Messi 2026 tournament heading includes year and every host');
+        }
       }
       equal(playerRenders, Object.keys(players).length, 'all player pages rendered');
-      equal(rankingRenders, 9, 'all ranking views rendered');
+      equal(rankingRenders, 11, 'all ranking views rendered');
       equal(rootCountries.length, 84, 'country list roots');
       for (const name of ['ボスニア・ヘルツェゴビナ', 'セルビア・モンテネグロ']) {
         const markup = teamName(name);
@@ -399,13 +468,14 @@ export function register(test, equal, deepEqual) {
         equal(markup.textContent, name, `${name} text preserved`);
       }
 
-      console.log(`views render counts: tournaments=${tournamentRenders} matches=${matchRenders} bracket-states=${bracketStateRenders} exceptions=${errors.length}`);
+      console.log(`views render counts: tournaments=${tournamentRenders} matches=${matchRenders} countries=${Object.keys(teams).length} rankings=${rankingRenders} players=${playerRenders} bracket-states=${bracketStateRenders} exceptions=${errors.length}`);
       if (errors.length) throw new Error(`render exceptions: ${errors.slice(0, 3).join('; ')}`);
       equal(tournamentRenders, 23, 'tournament render count');
       equal(matchRenders, 1068, 'match render count');
       equal(bracketStateRenders > 0, true, 'all available bracket states rendered');
       equal(missingAlt, 0, 'images missing alt');
       equal(readingElementCount, 0, `ruby or rt elements rendered: ${readingElementSamples.join(', ')}`);
+      equal(nestedLinks.length, 0, `nested links: ${nestedLinks.slice(0, 3).join('; ')}`);
       for (const [id, expected] of [['P-14758', 'リオネル メッシ (Lionel Messi)'], ['P-33175', '本田圭佑']]) {
         const references = details.reduce((count, detail) => count
           + detail.matches.flatMap((match) => match.goals).filter((goal) => goal.player === id).length
@@ -478,6 +548,11 @@ export function register(test, equal, deepEqual) {
         node.tagName === 'A' && node.getAttribute('href') === '#/m/M-2022-64');
       equal(final2022, true, '2022 final link');
       equal(canadaMoroccoTree.textContent.includes('オウンゴール'), true, 'Canada–Morocco own-goal label');
+      const css = readFileSync(join(ROOT, 'public/css/app.css'), 'utf8');
+      equal(/\.standings\s*\{[^}]*min-width\s*:\s*(?:[6-9]\d\d|\d{4,})px/s.test(css), false, 'standings has no wide min-width');
+      equal(/\.standings\s*\{[^}]*font-size:\s*15px/s.test(css), true, 'standings number text is at least 15px');
+      equal(/\.header-back\s*\{[^}]*min-height:\s*44px/s.test(css), true, 'header back tap height');
+      equal(/\.country-link\s*\{[^}]*min-height:\s*44px/s.test(css), true, 'country link tap height');
     } finally {
       if (previousDocument === undefined) delete globalThis.document;
       else globalThis.document = previousDocument;

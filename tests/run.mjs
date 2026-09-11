@@ -14,6 +14,8 @@ import { register as lazyKidTests } from './lazy-kid.test.mjs';
 import { register as searchBuildTests } from './search-build.test.mjs';
 import { register as searchUiTests } from './search-ui.test.mjs';
 import { register as mutationTests } from './mutation.test.mjs';
+import { register as agesTests } from './ages.test.mjs';
+import { register as navigationTests } from './navigation.test.mjs';
 
 const checks = [];
 const test = (name, run) => checks.push({ name, run });
@@ -38,6 +40,8 @@ searchBuildTests(test, equal, deepEqual);
 lazyKidTests(test, equal, deepEqual);
 searchUiTests(test, equal, deepEqual);
 mutationTests(test, equal, deepEqual);
+agesTests(test, equal, deepEqual);
+navigationTests(test, equal, deepEqual);
 viewsRenderTests(test, equal, deepEqual);
 
 let passed = 0;

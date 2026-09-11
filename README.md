@@ -66,6 +66,23 @@ confirms that unpublished paths return 404.
 
 ## Changelog
 
+### v0.4.1 — 2026-09-11
+
+Changes from the children's first session on the iPad.
+
+- 「‹ もどる」 back button in the header, because the Home Screen web app has no
+  browser back button. It returns to the previous page, or to the natural parent
+  when a page was opened directly.
+- Player ages: birth date on the player page, the age at each World Cup (on the
+  tournament's opening day), and new rankings for the youngest and oldest players
+  in a World Cup squad. One wrong source birth date is corrected, and the build
+  now refuses impossible ages.
+- Countries on the match page, podium, host list and group tables link to their
+  country page.
+- Group tables fit iPad portrait with all columns visible, including 勝ち点.
+- Player pages list the most recent World Cup first, headed with the full
+  tournament name (e.g. 2018年 ロシア大会).
+
 ### v0.4.0 — 2026-09-11
 
 - Search (検索): one box, in the menu and at the top of the home page, that finds

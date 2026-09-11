@@ -1,13 +1,14 @@
-import { buildBracket } from './bracket.js?v=0.4.0';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.4.0';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.4.0';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.4.0';
-import { search as runSearch } from './search.js?v=0.4.0';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.4.0';
-import { VERSION } from './version.js?v=0.4.0';
-import { rubyPlain } from './ruby.js?v=0.4.0';
-import { rubyReading } from './ruby.js?v=0.4.0';
-import { fold } from './fold.js?v=0.4.0';
+import { buildBracket } from './bracket.js?v=0.4.1';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.4.1';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.4.1';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.4.1';
+import { search as runSearch } from './search.js?v=0.4.1';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.4.1';
+import { VERSION } from './version.js?v=0.4.1';
+import { rubyPlain } from './ruby.js?v=0.4.1';
+import { rubyReading } from './ruby.js?v=0.4.1';
+import { fold } from './fold.js?v=0.4.1';
+import { ageInYears } from './ages.js?v=0.4.1';
 
 function flag(teams, key) {
   return el('img', {
@@ -27,6 +28,10 @@ export function teamName(markup, className = 'team-name') {
 
 function team(teams, key, className = 'team') {
   return el('span', { class: className }, [flag(teams, key), teamName(teams[key].ja)]);
+}
+
+function countryLink(teams, key, className = 'country-link') {
+  return el('a', { class: className, href: `#/c/${key}` }, [flag(teams, key), teamName(teams[key].ja)]);
 }
 
 function playerName(detail, id, teamKey, linked = false) {
@@ -64,7 +69,7 @@ function hostList(detail, teams) {
   const hosts = [...detail.hosts];
   const japan = hosts.indexOf('JPN');
   if (japan > 0) hosts.unshift(...hosts.splice(japan, 1));
-  return el('div', { class: 'team-list' }, hosts.map((key) => team(teams, key)));
+  return el('div', { class: 'team-list' }, hosts.map((key) => countryLink(teams, key, 'country-link host-country-link')));
 }
 
 function searchResultRow(result, context) {
@@ -176,7 +181,10 @@ export function searchView(searchOptions) {
 function podium(detail, teams) {
   const labels = { '1': STRINGS.champion, '2': STRINGS.runnerUp, '3': STRINGS.third, '4': STRINGS.fourth };
   const rows = Object.keys(labels).filter((place) => detail.placings[place]).map((place) =>
-    el('li', { class: place === '1' ? 'podium-first' : '' }, [rubyEl('strong', labels[place]), team(teams, detail.placings[place])]));
+    el('li', { class: place === '1' ? 'podium-first' : '' }, [
+      rubyEl('strong', labels[place]),
+      countryLink(teams, detail.placings[place], 'country-link podium-country-link'),
+    ]));
   return el('section', { class: 'panel' }, [rubyEl('h2', STRINGS.podium), el('ol', { class: 'podium' }, rows)]);
 }
 
@@ -217,13 +225,12 @@ function honours(detail, teams) {
 }
 
 function standingsTable(group, teams, showAdvanceMark = true) {
-  const headers = [STRINGS.rank, STRINGS.country, STRINGS.played, STRINGS.wins, STRINGS.draws, STRINGS.losses,
-    STRINGS.goalsFor, STRINGS.goalsAgainst, STRINGS.goalDifference, STRINGS.points];
+  const headers = ['順位', '国', '試合', '勝', '分', '敗', '得点', '失点', '差', '勝ち点'];
   return el('div', { class: 'table-scroll', role: 'region', 'aria-label': 'standings' }, el('table', { class: 'standings' }, [
-    el('thead', {}, el('tr', {}, headers.map((label) => rubyEl('th', label, { scope: 'col' })))),
+    el('thead', {}, el('tr', {}, headers.map((label) => el('th', { scope: 'col' }, label)))),
     el('tbody', {}, group.standings.map((row) => el('tr', { class: row.advanced ? 'advanced' : '' }, [
       el('td', {}, [String(row.pos), row.advanced && showAdvanceMark ? rubyEl('span', STRINGS.advanced, { class: 'advanced-mark' }) : null]),
-      el('td', {}, team(teams, row.team)),
+      el('td', {}, countryLink(teams, row.team, 'country-link standings-country-link')),
       ...[row.p, row.w, row.d, row.l, row.gf, row.ga].map((value) => el('td', {}, String(value))),
       el('td', {}, signed(row.gd)), el('td', {}, el('strong', {}, String(row.pts))),
     ]))),
@@ -388,13 +395,13 @@ export function matchView(detail, match, teams) {
     ]),
     rubyEl('h1', STRINGS.matchDetails),
     el('section', { class: 'score-card' }, [
-      team(teams, match.home, 'score-team'),
+      countryLink(teams, match.home, 'country-link score-team'),
       el('div', { class: 'score-centre' }, [
         el('strong', { class: 'big-score' }, `${match.score.home}–${match.score.away}`),
         el('div', { class: 'match-badges' }, scoreBadges(match)),
         match.score.ht ? el('p', {}, [rubyNodes(STRINGS.firstHalf), text(` ${match.score.ht[0]}–${match.score.ht[1]}`)]) : null,
       ]),
-      team(teams, match.away, 'score-team'),
+      countryLink(teams, match.away, 'country-link score-team'),
     ]),
     el('dl', { class: 'match-meta panel' }, [
       rubyEl('dt', STRINGS.date), el('dd', {}, `${formatDate(match.date)}${match.time ? ` ${match.time}` : ''}`),
@@ -512,7 +519,7 @@ const POSITION_LABELS = { GK: 'ゴールキーパー', DF: 'ディフェンダ�
 
 export function playerView(id, player, details, suppliedTeams = null) {
   const teams = Object.assign({}, ...details.map((detail) => detail.teamDisplay || {}), suppliedTeams || {});
-  const tournamentRows = details.map((detail) => {
+  const tournamentRows = [...details].sort((a, b) => b.year - a.year).map((detail) => {
     let squadTeam = null;
     let member = null;
     for (const [teamKey, squad] of Object.entries(detail.squads)) {
@@ -524,7 +531,10 @@ export function playerView(id, player, details, suppliedTeams = null) {
       .filter((goal) => goal.player === id)
       .map((goal) => ({ ...goal, match })));
     return el('section', { class: 'player-tournament panel' }, [
-      el('h2', {}, el('a', { href: `#/t/${detail.year}` }, `${detail.year}年大会`)),
+      el('h2', {}, [
+        el('a', { href: `#/t/${detail.year}` }, rubyNodes(tournamentTitle(detail, teams))),
+        player.birthDate ? el('span', { class: 'player-age' }, `${ageInYears(player.birthDate, detail.start)}さい`) : null,
+      ]),
       el('p', { class: 'player-squad-line' }, [team(teams, squadTeam), text(` 背番号${member.no}・${POSITION_LABELS[member.pos] || member.pos}`)]),
       Object.hasOwn(player, 'appsByYear') ? el('p', {}, `出場試合数 ${player.appsByYear[detail.year]}試合`) : null,
       el('p', {}, `ゴール ${player.goalsByYear[detail.year] || 0}点`),
@@ -538,6 +548,7 @@ export function playerView(id, player, details, suppliedTeams = null) {
     el('header', { class: 'player-header panel' }, [
       el('div', { class: 'player-flags' }, player.teams.map((teamKey) => flag(teams, teamKey))),
       el('h1', {}, playerLabel(player, player.teams.includes('JPN') ? 'JPN' : player.teams.at(-1))),
+      player.birthDate ? el('p', { class: 'player-birth-date' }, `${Number(player.birthDate.slice(0, 4))}年${Number(player.birthDate.slice(5, 7))}月${Number(player.birthDate.slice(8, 10))}日うまれ`) : null,
       el('p', {}, `通算ゴール ${player.goals}点`),
       Object.hasOwn(player, 'apps') ? el('p', {}, `出場試合数 ${player.apps}試合`) :
         el('p', { class: 'appearance-note' }, '1970年より前の出場試合の記録はありません'),
@@ -558,7 +569,7 @@ const COUNTRY_METRICS = [
 ];
 const PLAYER_METRICS = [
   ['goals', '通算ゴール'], ['tournamentGoals', '1大会のゴール'], ['awards', '大会賞の数'],
-  ['squads', '出場大会数'], ['apps', '出場試合数'],
+  ['squads', '出場大会数'], ['apps', '出場試合数'], ['youngest', '最年少'], ['oldest', '最年長'],
 ];
 
 function rankingValue(kind, metric, row) {
@@ -572,6 +583,7 @@ function rankingValue(kind, metric, row) {
   if (metric === 'tournamentGoals') return `${row.value}点（${row.year}年）`;
   if (metric === 'awards') return `大会賞 ${row.value}回`;
   if (metric === 'squads') return `出場大会数 ${row.value}大会`;
+  if (metric === 'youngest' || metric === 'oldest') return `${row.age}さい（${row.year}年）`;
   return `出場試合数 ${row.value}試合`;
 }
 
@@ -597,7 +609,7 @@ export function rankingsView(rankings, teams, kind = 'c', metric = 'titles') {
       kind === 'c'
         ? el('a', { class: 'ranking-name', href: `#/c/${row.team}` }, teamName(row.ja))
         : el('a', { class: 'ranking-name person', href: `#/p/${row.player}` }, playerLabel(row, row.team)),
-      metric === 'tournamentGoals' ? el('a', { class: 'ranking-value', href: `#/t/${row.year}` }, rankingValue(kind, metric, row))
+      ['tournamentGoals', 'youngest', 'oldest'].includes(metric) ? el('a', { class: 'ranking-value', href: `#/t/${row.year}` }, rankingValue(kind, metric, row))
         : el('strong', { class: 'ranking-value' }, rankingValue(kind, metric, row)),
     ]))),
   ]);

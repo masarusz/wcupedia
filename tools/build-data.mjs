@@ -11,17 +11,20 @@ import { applySquadChanges, playerTieOrder, rankRows, resolveLineups2026 } from 
 import { addTournamentHostKeys, mergeSearchAliases } from './lib/search-data.mjs';
 import { fold, foldCompact } from '../public/js/fold.js';
 import { rubyPlain, rubyReading, parseRuby } from '../public/js/ruby.js';
+import { ageInDays, ageInYears, isIsoDate } from '../public/js/ages.js';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const args = process.argv.slice(2);
 let sourceRoot = '.cache/sources';
 let outputRoot = 'public/data';
 let searchAliasesPath = join(ROOT, 'curated/search-aliases.json');
+let birthDateCorrectionsPath = join(ROOT, 'curated/birth-date-corrections.json');
 for (let index = 0; index < args.length; index += 1) {
   if (args[index] === '--src' && args[index + 1]) sourceRoot = args[++index];
   else if (args[index] === '--out' && args[index + 1]) outputRoot = args[++index];
   else if (args[index] === '--search-aliases' && args[index + 1]) searchAliasesPath = resolve(args[++index]);
-  else throw new Error('usage: node tools/build-data.mjs [--src DIR] [--out DIR] [--search-aliases FILE]');
+  else if (args[index] === '--birth-date-corrections' && args[index + 1]) birthDateCorrectionsPath = resolve(args[++index]);
+  else throw new Error('usage: node tools/build-data.mjs [--src DIR] [--out DIR] [--search-aliases FILE] [--birth-date-corrections FILE]');
 }
 sourceRoot = resolve(sourceRoot);
 outputRoot = resolve(outputRoot);
@@ -45,6 +48,7 @@ const confederationFallbacks = await json(join(ROOT, 'curated/confederations.jso
 const teamHeadingsJa = await json(join(ROOT, 'curated/team-headings-ja.json'));
 const playersJaOverrides = await json(join(ROOT, 'curated/players-ja-overrides.json'));
 const searchAliases = await json(searchAliasesPath);
+const birthDateCorrections = await json(birthDateCorrectionsPath);
 const playerJaTitles = await json(join(sourceRoot, 'wikipedia/player-ja-titles.json'));
 let standingsOverrides2026 = {};
 try {
@@ -137,6 +141,16 @@ const displayName = (row) => row.given_name === 'not applicable'
   ? row.family_name : `${row.given_name} ${row.family_name}`;
 
 const playerSource = new Map(playerRows.map((row) => [row.player_id, row]));
+const birthDates = new Map(playerRows.map((row) => [row.player_id, row.birth_date === 'not available' ? null : row.birth_date]));
+for (const [id, correction] of Object.entries(birthDateCorrections)) {
+  if (id === '_about') continue;
+  if (!playerSource.has(id)) throw new Error(`birth-date correction has unknown player ${id}`);
+  if (!correction || !isIsoDate(correction.birthDate) || typeof correction.source !== 'string' || !correction.source.trim()) {
+    throw new Error(`invalid birth-date correction ${id}`);
+  }
+  if (birthDates.get(id) === correction.birthDate) throw new Error(`birth-date correction equals source value for ${id}`);
+  birthDates.set(id, correction.birthDate);
+}
 const playerData = new Map();
 const ensurePlayer = (id) => {
   if (!playerData.has(id)) {
@@ -144,7 +158,7 @@ const ensurePlayer = (id) => {
     if (!row) throw new Error(`missing Fjelstul player ${id}`);
     playerData.set(id, {
       name: displayName(row), ja: null, teams: new Set(), years: new Set(),
-      goals: 0, goalsByYear: {}, awards: [], appsByYear: {}, birthDate: row.birth_date,
+      goals: 0, goalsByYear: {}, awards: [], appsByYear: {}, birthDate: birthDates.get(id),
     });
   }
   return playerData.get(id);
@@ -251,6 +265,9 @@ for (const team of squads2026Source) {
   for (const sourcePlayer of team.players) roster2026.push({ ...sourcePlayer, team: teamKey });
 }
 roster2026 = applySquadChanges(roster2026, squadChanges2026.changes);
+for (const player of roster2026) if (!isIsoDate(player.date_of_birth)) {
+  throw new Error(`invalid 2026 birth date ${player.team} ${player.name}: ${player.date_of_birth}`);
+}
 roster2026.sort((a, b) => compare(a.team, b.team) || compare(foldCompact(a.name), foldCompact(b.name)) || compare(a.name, b.name));
 const rosterByTeam = new Map();
 for (const player of roster2026) {
@@ -554,6 +571,17 @@ for (const tournament of tournamentDetails) for (const [team, squad] of Object.e
   }
 }
 
+const ageGuardOffenders = [];
+for (const tournament of tournamentDetails) for (const [team, squad] of Object.entries(tournament.squads)) {
+  for (const member of squad) {
+    const birthDate = playerData.get(member.player)?.birthDate;
+    if (!birthDate) continue;
+    const age = ageInYears(birthDate, tournament.start);
+    if (age < 15 || age > 46) ageGuardOffenders.push(`${tournament.year} ${team} ${member.player} ${birthDate}: ${age}`);
+  }
+}
+if (ageGuardOffenders.length) throw new Error(`squad age outside 15..46:\n${ageGuardOffenders.sort(compare).join('\n')}`);
+
 for (const [heading, team] of Object.entries(teamHeadingsJa)) {
   if (!curatedTeams[team]) throw new Error(`team heading ${JSON.stringify(heading)} maps to unknown team ${team}`);
 }
@@ -759,6 +787,7 @@ for (const id of [...playerData.keys()].sort(compare)) {
   const years = [...player.years].sort((a, b) => a - b);
   const output = { name: player.name, ja: player.ja, teams: [...player.teams].sort(compare), years, goals: player.goals, goalsByYear,
     awards: player.awards.slice().sort((a, b) => a[0] - b[0] || compare(a[1], b[1])) };
+  if (player.birthDate) output.birthDate = player.birthDate;
   // Absence means the appearance source cannot provide a complete career total.
   // Zero is retained for eligible squad years in which the player never played.
   if (years.every((year) => year >= 1970)) {
@@ -796,6 +825,20 @@ const rankedPlayerRow = (player, value, extra = {}) => {
   return { player, value, name: data.name, ja: data.ja, team: playerYearTeam.get(`${player}\0${recentYear}`) || data.teams.at(-1), recentYear, ...extra };
 };
 const playerRanking = (rows) => rankRows(rows, { secondary: playerTieOrder, limit: 50 });
+const openingDayByYear = new Map(tournamentSummaries.map((tournament) => [tournament.year, tournament.start]));
+const ageRankingRow = (id, pick) => {
+  const player = outputPlayers[id];
+  const appearances = player.years.map((year) => ({
+    year,
+    age: ageInYears(player.birthDate, openingDayByYear.get(year)),
+    ageDays: ageInDays(player.birthDate, openingDayByYear.get(year)),
+  }));
+  const selected = appearances.reduce((best, item) => !best || pick(item.ageDays, best.ageDays) ? item : best, null);
+  return rankedPlayerRow(id, selected.age, {
+    year: selected.year, age: selected.age, ageDays: selected.ageDays,
+    team: playerYearTeam.get(`${id}\0${selected.year}`) || player.teams.at(-1),
+  });
+};
 const playerRankings = {
   goals: playerRanking(Object.entries(outputPlayers).filter(([, player]) => player.goals > 0)
     .map(([id, player]) => rankedPlayerRow(id, player.goals))),
@@ -806,6 +849,14 @@ const playerRankings = {
   squads: playerRanking(Object.entries(outputPlayers).map(([id, player]) => rankedPlayerRow(id, player.years.length))),
   apps: playerRanking(Object.entries(outputPlayers).filter(([, player]) => Object.hasOwn(player, 'apps'))
     .map(([id, player]) => rankedPlayerRow(id, player.apps))),
+  youngest: rankRows(Object.entries(outputPlayers).filter(([, player]) => player.birthDate)
+    .map(([id]) => ageRankingRow(id, (value, best) => value < best)), {
+    values: (row) => [-row.ageDays], secondary: playerTieOrder, limit: 50,
+  }),
+  oldest: rankRows(Object.entries(outputPlayers).filter(([, player]) => player.birthDate)
+    .map(([id]) => ageRankingRow(id, (value, best) => value > best)), {
+    values: (row) => [row.ageDays], secondary: playerTieOrder, limit: 50,
+  }),
 };
 for (const rows of Object.values(playerRankings)) for (const row of rows) delete row.recentYear;
 const appearanceTotalsByYear = {};

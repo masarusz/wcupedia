@@ -1,0 +1,7 @@
+{
+  "_about": "Birth dates in the pinned Fjelstul players.csv that are provably wrong, with the source that settles each. Applied by the build before any age is computed. Checked 2026-09-11 by the orchestrator for every player in the youngest and oldest top-10 lists against English Wikipedia; where English Wikipedia disagreed with the data, a second source decided (Walter Brom, POL 1938: English Wikipedia says 1921-01-14, Polish Wikipedia and the data say 1921-02-14 — kept, no correction).",
+  "P-76869": {
+    "birthDate": "1936-11-22",
+    "source": "English Wikipedia, 'Alex Scott (footballer, born 1936)' (infobox birth date; the article covers Scotland's 1958 World Cup squad). The data's 1984-10-14 belongs to Alex Scott the English women's footballer, a different person, which made him −27 years old in 1958."
+  }
+}

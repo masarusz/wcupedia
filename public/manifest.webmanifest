@@ -8,7 +8,7 @@
   "theme_color": "#17653a",
   "lang": "ja",
   "icons": [
-    { "src": "assets/icon-512.png?v=0.4.0", "sizes": "512x512", "type": "image/png" },
-    { "src": "assets/apple-touch-icon.png?v=0.4.0", "sizes": "180x180", "type": "image/png" }
+    { "src": "assets/icon-512.png?v=0.4.1", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/apple-touch-icon.png?v=0.4.1", "sizes": "180x180", "type": "image/png" }
   ]
 }
