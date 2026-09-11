@@ -92,8 +92,13 @@ done
 touch "$WORKTREE/.nojekyll"
 
 # The published tree must be EXACTLY the allowlist plus .nojekyll.
+# Stage the allowlist by name, never `git add -A`: measured 2026-09-11, macOS
+# wrote .DS_Store into the fresh worktree between the copy and the add (the
+# gh-pages branch has no .gitignore), `add -A` staged it, and the check below
+# refused the deploy. Untracked junk now stays out of the commit; the exact-tree
+# check still catches anything that does get staged.
 ( cd "$WORKTREE"
-  git add -A
+  git add -- "${FILES[@]}" .nojekyll
   EXPECTED=$(printf '%s\n' "${FILES[@]}" .nojekyll | sort)
   ACTUAL=$(git ls-files | sort)
   if [[ "$EXPECTED" != "$ACTUAL" ]]; then
