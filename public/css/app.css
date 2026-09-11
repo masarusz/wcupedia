@@ -178,6 +178,10 @@ h3 { font-size: 21px; }
 .stat span, .stat strong { display: block; }
 .stat strong { font-size: 28px; }
 .two-column { display: grid; grid-template-columns: 1fr 1.4fr; gap: 20px; margin-bottom: 38px; }
+/* Stack 大会結果 and 得点王/大会賞 up to 900px: measured 2026-09-11 at 768px the
+   podium panel was 292px wide and 36 country names broke mid-word in its name
+   column. Must stay after the base rule above (same specificity). */
+@media (max-width: 900px) { .two-column { grid-template-columns: 1fr; } }
 .podium, .honours ul { list-style: none; margin: 0; padding: 0; }
 .podium li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 9px 0; border-bottom: 1px solid var(--border); }
 .podium-first { color: var(--gold); background: var(--gold-bg); border-radius: 10px; padding-inline: 10px !important; }

@@ -2,12 +2,12 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import ui from './golden/ui.json' with { type: 'json' };
-import { buildBracket } from '../public/js/bracket.js?v=0.2.10';
+import { buildBracket } from '../public/js/bracket.js?v=0.2.11';
 import { foldCompact } from '../public/js/fold.js';
-import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=0.2.10';
+import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=0.2.11';
 import { parseRuby } from '../public/js/ruby.js';
-import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=0.2.10';
-import { VERSION } from '../public/js/version.js?v=0.2.10';
+import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=0.2.11';
+import { VERSION } from '../public/js/version.js?v=0.2.11';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const PUBLIC = join(ROOT, 'public');
@@ -168,7 +168,7 @@ export function register(test, equal, deepEqual) {
   });
 
   test('asset imports and footer share VERSION', () => {
-    equal(VERSION, '0.2.10');
+    equal(VERSION, '0.2.11');
     const html = readFileSync(join(PUBLIC, 'index.html'), 'utf8');
     for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
       if (/^(?:css|js)\//.test(match[1])) equal(match[1].endsWith(`?v=${VERSION}`), true, match[1]);

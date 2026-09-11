@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import golden from './golden/players-ja.json' with { type: 'json' };
-import { fold } from '../public/js/fold.js?v=0.2.10';
-import { playerLabel } from '../public/js/format.js?v=0.2.10';
+import { fold } from '../public/js/fold.js?v=0.2.11';
+import { playerLabel } from '../public/js/format.js?v=0.2.11';
 import {
   articleJapaneseName, chooseJapaneseNames, extractSquadName, matchSquadEntry, normalizeJapaneseName,
   parseSquadWikitext, validateJapaneseName,
