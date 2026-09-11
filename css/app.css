@@ -673,6 +673,19 @@ h3 { font-size: 21px; }
 .credit-block { margin-bottom: 18px; overflow-wrap: anywhere; }
 .credit-block h3 { margin-top: 0; }
 .credits-page a { min-height: 44px; display: inline-flex; align-items: center; }
+.meikan-entry-link, .country-meikan-link {
+  min-height: 44px;
+  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--primary-ink);
+  background: var(--primary);
+  border-radius: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.meikan-entry-link { margin: 0 0 10px; }
+.country-meikan-link { grid-column: 1 / -1; justify-self: start; margin-top: 6px; }
 
 .country-region { margin-top: 34px; }
 .country-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px; }
@@ -717,7 +730,8 @@ h3 { font-size: 21px; }
 .country-scorers ol { margin: 0; padding-left: 1.6em; }
 .country-scorers li { min-height: 44px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; }
 .lineage-links { display: flex; flex-wrap: wrap; gap: 18px; }
-.player-header { margin-bottom: 20px; }
+.player-header { margin-bottom: 20px; display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 22px; align-items: start; }
+.player-header-copy { min-width: 0; }
 .player-header h1 { word-break: keep-all; overflow-wrap: normal; }
 .player-birth-date { margin-top: -8px; color: var(--muted); }
 .player-tournament h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
@@ -730,6 +744,99 @@ h3 { font-size: 21px; }
 .player-awards { margin-bottom: 20px; }
 .player-awards ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 10px 18px; }
 .player-awards li { min-height: 44px; display: flex; align-items: center; gap: 8px; }
+.player-portrait { width: 180px; margin: 0; }
+.player-portrait img { display: block; width: 180px; height: 240px; object-fit: cover; border-radius: 14px; }
+.player-portrait figcaption { margin-top: 6px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.photo-credit { margin: 0; overflow-wrap: anywhere; }
+.photo-credit a { min-height: 44px; display: inline-flex; align-items: center; }
+
+.meikan-controls { margin: 0 0 24px; }
+.meikan-controls > label { margin-right: 10px; font-weight: 800; }
+.meikan-tournament-picker {
+  min-height: 44px;
+  padding: 6px 38px 6px 12px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 2px solid var(--primary);
+  border-radius: 10px;
+  font-size: 16px;
+}
+.meikan-team-chips, .meikan-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.meikan-team-chips { margin: 18px 0; }
+.meikan-team-chips a, .meikan-filter {
+  min-height: 44px;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.meikan-team-chips a[aria-current="page"], .meikan-filter[aria-pressed="true"] {
+  color: var(--primary-ink);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.meikan-team-chips a[aria-current="page"] .flag { border-color: rgb(255 255 255 / 65%); }
+.meikan-filter { cursor: pointer; }
+.meikan-country-heading { display: flex; align-items: center; gap: 10px; }
+.meikan-country-heading .flag { width: 36px; height: 27px; }
+.meikan-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.meikan-card {
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  text-decoration: none;
+}
+.meikan-photo, .meikan-silhouette {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  margin-bottom: 9px;
+  border-radius: 10px;
+}
+.meikan-photo { display: block; height: auto; object-fit: cover; background: var(--surface-strong); }
+.meikan-silhouette {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  place-items: center;
+  padding: 14px;
+  color: var(--muted);
+  background: var(--surface-strong);
+}
+.silhouette-person { align-self: end; font-size: clamp(52px, 9vw, 86px); line-height: 1; filter: grayscale(1); }
+.silhouette-number { align-self: start; font-size: 28px; font-variant-numeric: tabular-nums; }
+.meikan-name { min-width: 0; font-size: 17px; line-height: 1.4; overflow-wrap: anywhere; }
+.meikan-shirt, .meikan-age, .meikan-club, .meikan-career { font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+.meikan-shirt, .meikan-career { font-weight: 700; }
+.meikan-age, .meikan-club { color: var(--muted); }
+.meikan-career { margin-top: auto; padding-top: 7px; color: var(--primary); }
+
+.photo-credit-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.photo-credit-row {
+  min-width: 0;
+  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: minmax(180px, .8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 8px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.photo-credit-player, .photo-credit-details a { min-height: 44px; display: inline-flex; align-items: center; }
+.photo-credit-player { min-width: 0; font-weight: 800; overflow-wrap: anywhere; }
+.photo-credit-details { min-width: 0; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
 .ranking-tabs, .ranking-metrics { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .ranking-tabs a, .ranking-metrics a {
   min-height: 44px;
@@ -841,6 +948,10 @@ h3 { font-size: 21px; }
   .record-stats { grid-template-columns: repeat(3, 1fr); }
 }
 
+@media (min-width: 700px) { .meikan-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .meikan-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1180px) { .meikan-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+
 @media (max-width: 420px) {
   body { font-size: 17px; }
   .subtitle { display: none; }
@@ -854,4 +965,11 @@ h3 { font-size: 21px; }
   .ranking-value { grid-column: 3; justify-self: start; text-align: left; }
   .opponents-panel { overflow-x: auto; }
   .opponents-table { min-width: 390px; }
+}
+
+@media (max-width: 560px) {
+  .player-header { grid-template-columns: 1fr; }
+  .player-portrait { width: min(240px, 100%); }
+  .player-portrait img { width: 100%; height: auto; }
+  .photo-credit-row { grid-template-columns: 1fr; gap: 0; }
 }

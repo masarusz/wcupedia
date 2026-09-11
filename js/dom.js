@@ -1,9 +1,10 @@
-import { rubyPlain } from './ruby.js?v=0.4.1';
+import { rubyPlain } from './ruby.js?v=0.5.0';
 
 const ALLOWED_ATTRIBUTES = new Set([
-  'alt', 'aria-current', 'aria-label', 'aria-live', 'aria-pressed', 'class', 'colspan', 'href', 'id',
+  'alt', 'aria-current', 'aria-hidden', 'aria-label', 'aria-live', 'aria-pressed', 'class', 'colspan', 'href', 'id',
   'role', 'scope', 'src', 'title', 'type', 'width', 'height', 'for', 'placeholder',
-  'enterkeyhint', 'autocomplete', 'autocorrect', 'autocapitalize', 'spellcheck',
+  'enterkeyhint', 'autocomplete', 'autocorrect', 'autocapitalize', 'spellcheck', 'loading', 'value', 'selected',
+  'data-year',
 ]);
 
 const APPROVED_HTTPS_HOSTS = new Set([
