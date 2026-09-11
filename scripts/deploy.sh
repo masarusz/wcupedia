@@ -64,16 +64,22 @@ fi
 echo "== staging $BRANCH"
 git worktree remove --force "$WORKTREE" 2>/dev/null || true
 rm -rf "$WORKTREE"
+git worktree prune
 if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
   git worktree add "$WORKTREE" "$BRANCH" >/dev/null
+elif git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+  git fetch -q origin "$BRANCH:$BRANCH"
+  git worktree add "$WORKTREE" "$BRANCH" >/dev/null
 else
-  git worktree add --detach "$WORKTREE" >/dev/null
-  ( cd "$WORKTREE" && git checkout -q --orphan "$BRANCH" )
+  # First publish: an EMPTY worktree on a new unborn branch. Measured 2026-09-11:
+  # `worktree add --detach` + `checkout --orphan` keeps every file of main staged,
+  # and `git rm` then refuses ("files have changes staged in the index").
+  git worktree add --orphan -b "$BRANCH" "$WORKTREE" >/dev/null
 fi
 # Remove everything tracked, then lay down exactly the allowlist. The error from
 # `git rm` is not suppressed: a partial cleanup must not leave a stray file.
 if [[ -n "$( cd "$WORKTREE" && git ls-files )" ]]; then
-  ( cd "$WORKTREE" && git rm -rq . ) || fail "could not clear the $BRANCH worktree"
+  ( cd "$WORKTREE" && git rm -rfq . ) || fail "could not clear the $BRANCH worktree"
 fi
 ( cd "$WORKTREE" && git clean -fdq ) || fail "could not clean the $BRANCH worktree"
 for f in "${FILES[@]}"; do
