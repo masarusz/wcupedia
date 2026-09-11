@@ -176,6 +176,14 @@ h3 { font-size: 21px; }
 .podium, .honours ul { list-style: none; margin: 0; padding: 0; }
 .podium li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 9px 0; border-bottom: 1px solid var(--border); }
 .podium-first { color: var(--gold); background: var(--gold-bg); border-radius: 10px; padding-inline: 10px !important; }
+/* 大会結果 rows as fixed columns: centred place label, centred flag, then the name
+   (owner, 2026-09-11, option B). Must stay AFTER the `.podium li` rule above: same
+   specificity, so source order decides. Every row gets the first row's inline
+   padding so the columns line up across the highlighted 優勝 row and the others. */
+.podium li { display: grid; grid-template-columns: 5em 2.5em minmax(0, 1fr); column-gap: 8px; padding-inline: 10px; }
+.podium li > strong { text-align: center; }
+.podium li .team { display: contents; }
+.podium li .flag { justify-self: center; }
 .person { overflow-wrap: anywhere; }
 
 .honour-row { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--border); }
