@@ -1,0 +1,933 @@
+{
+ "_about": "Phase 4 oracle, generated 2026-09-11 by an orchestrator script from the raw Fjelstul CSVs (pinned SHA), openfootball 2026 files, curated/*.json, and English Wikipedia 2026 match line-ups — never from public/data. Conventions: a penalty shoot-out is a draw (FIFA); country figures in rankings are aggregated over the lineage; ranking groups list tied members sorted by id (order inside a tie is a separate rule, not asserted here). Player ids starting \"2026:TEAM:Name\" are 2026-only players, identified here by team and squad name.",
+ "countryRankings": {
+  "titles": {
+   "rows": 8,
+   "top": [
+    {
+     "rank": 1,
+     "members": [
+      "BRA"
+     ],
+     "value": [
+      5,
+      2
+     ]
+    },
+    {
+     "rank": 2,
+     "members": [
+      "DEU"
+     ],
+     "value": [
+      4,
+      4
+     ]
+    },
+    {
+     "rank": 3,
+     "members": [
+      "ITA"
+     ],
+     "value": [
+      4,
+      2
+     ]
+    },
+    {
+     "rank": 4,
+     "members": [
+      "ARG"
+     ],
+     "value": [
+      3,
+      4
+     ]
+    },
+    {
+     "rank": 5,
+     "members": [
+      "FRA"
+     ],
+     "value": [
+      2,
+      2
+     ]
+    },
+    {
+     "rank": 6,
+     "members": [
+      "ESP",
+      "URY"
+     ],
+     "value": [
+      2,
+      0
+     ]
+    },
+    {
+     "rank": 8,
+     "members": [
+      "ENG"
+     ],
+     "value": [
+      1,
+      0
+     ]
+    }
+   ]
+  },
+  "appearances": {
+   "rows": 84,
+   "top": [
+    {
+     "rank": 1,
+     "members": [
+      "BRA"
+     ],
+     "value": 23
+    },
+    {
+     "rank": 2,
+     "members": [
+      "DEU"
+     ],
+     "value": 21
+    },
+    {
+     "rank": 3,
+     "members": [
+      "ARG"
+     ],
+     "value": 19
+    },
+    {
+     "rank": 4,
+     "members": [
+      "ITA",
+      "MEX"
+     ],
+     "value": 18
+    },
+    {
+     "rank": 6,
+     "members": [
+      "ENG",
+      "ESP",
+      "FRA"
+     ],
+     "value": 17
+    },
+    {
+     "rank": 9,
+     "members": [
+      "BEL",
+      "URY"
+     ],
+     "value": 15
+    }
+   ],
+   "JPN": {
+    "rank": 25,
+    "value": 8
+   }
+  },
+  "wins": {
+   "rows": 63,
+   "top": [
+    {
+     "rank": 1,
+     "members": [
+      "BRA"
+     ],
+     "value": 79
+    },
+    {
+     "rank": 2,
+     "members": [
+      "DEU"
+     ],
+     "value": 70
+    },
+    {
+     "rank": 3,
+     "members": [
+      "ARG"
+     ],
+     "value": 54
+    },
+    {
+     "rank": 4,
+     "members": [
+      "FRA",
+      "ITA"
+     ],
+     "value": 45
+    },
+    {
+     "rank": 6,
+     "members": [
+      "ENG",
+      "ESP"
+     ],
+     "value": 38
+    },
+    {
+     "rank": 8,
+     "members": [
+      "NLD"
+     ],
+     "value": 32
+    },
+    {
+     "rank": 9,
+     "members": [
+      "URY"
+     ],
+     "value": 25
+    },
+    {
+     "rank": 10,
+     "members": [
+      "BEL"
+     ],
+     "value": 24
+    }
+   ],
+   "JPN": {
+    "rank": 26,
+    "value": 8
+   }
+  },
+  "goals": {
+   "rows": 81,
+   "top": [
+    {
+     "rank": 1,
+     "members": [
+      "BRA"
+     ],
+     "value": 247
+    },
+    {
+     "rank": 2,
+     "members": [
+      "DEU"
+     ],
+     "value": 243
+    },
+    {
+     "rank": 3,
+     "members": [
+      "ARG"
+     ],
+     "value": 171
+    },
+    {
+     "rank": 4,
+     "members": [
+      "FRA"
+     ],
+     "value": 156
+    },
+    {
+     "rank": 5,
+     "members": [
+      "ITA"
+     ],
+     "value": 128
+    },
+    {
+     "rank": 6,
+     "members": [
+      "ENG"
+     ],
+     "value": 124
+    },
+    {
+     "rank": 7,
+     "members": [
+      "ESP"
+     ],
+     "value": 122
+    },
+    {
+     "rank": 8,
+     "members": [
+      "NLD"
+     ],
+     "value": 107
+    },
+    {
+     "rank": 9,
+     "members": [
+      "URY"
+     ],
+     "value": 92
+    },
+    {
+     "rank": 10,
+     "members": [
+      "HUN",
+      "SWE"
+     ],
+     "value": 87
+    }
+   ],
+   "JPN": {
+    "rank": 26,
+    "value": 33
+   }
+  }
+ },
+ "regions": {
+  "counts": {
+   "AFC": 14,
+   "CAF": 14,
+   "CONCACAF": 12,
+   "CONMEBOL": 9,
+   "OFC": 1,
+   "UEFA": 34
+  },
+  "sample": {
+   "JPN": "AFC",
+   "AUS": "AFC",
+   "ISR": "UEFA",
+   "DEU": "UEFA",
+   "RUS": "UEFA",
+   "SRB": "UEFA",
+   "CZE": "UEFA",
+   "COD": "CAF",
+   "NZL": "OFC",
+   "USA": "CONCACAF",
+   "BRA": "CONMEBOL"
+  },
+  "roots": 84
+ },
+ "countries": {
+  "JPN": {
+   "tournaments": [
+    "1998",
+    "2002",
+    "2006",
+    "2010",
+    "2014",
+    "2018",
+    "2022",
+    "2026"
+   ],
+   "bestFinishFjelstul": "round of 16",
+   "record": {
+    "p": 29,
+    "w": 8,
+    "d": 8,
+    "l": 13,
+    "gf": 33,
+    "ga": 38
+   },
+   "opponents": {
+    "ARG": {
+     "p": 1,
+     "w": 0,
+     "d": 0,
+     "l": 1
+    },
+    "AUS": {
+     "p": 1,
+     "w": 0,
+     "d": 0,
+     "l": 1
+    },
+    "BEL": {
+     "p": 2,
+     "w": 0,
+     "d": 1,
+     "l": 1
+    },
+    "BRA": {
+     "p": 2,
+     "w": 0,
+     "d": 0,
+     "l": 2
+    },
+    "CIV": {
+     "p": 1,
+     "w": 0,
+     "d": 0,
+     "l": 1
+    },
+    "CMR": {
+     "p": 1,
+     "w": 1,
+     "d": 0,
+     "l": 0
+    },
+    "COL": {
+     "p": 2,
+     "w": 1,
+     "d": 0,
+     "l": 1
+    },
+    "CRI": {
+     "p": 1,
+     "w": 0,
+     "d": 0,
+     "l": 1
+    },
+    "DEU": {
+     "p": 1,
+     "w": 1,
+     "d": 0,
+     "l": 0
+    },
+    "DNK": {
+     "p": 1,
+     "w": 1,
+     "d": 0,
+     "l": 0
+    },
+    "ESP": {
+     "p": 1,
+     "w": 1,
+     "d": 0,
+     "l": 0
+    },
+    "GRC": {
+     "p": 1,
+     "w": 0,
+     "d": 1,
+     "l": 0
+    },
+    "HRV": {
+     "p": 3,
+     "w": 0,
+     "d": 2,
+     "l": 1
+    },
+    "JAM": {
+     "p": 1,
+     "w": 0,
+     "d": 0,
+     "l": 1
+    },
+    "NLD": {
+     "p": 2,
+     "w": 0,
+     "d": 1,
+     "l": 1
+    },
+    "POL": {
+     "p": 1,
+     "w": 0,
+     "d": 0,
+     "l": 1
+    },
+    "PRY": {
+     "p": 1,
+     "w": 0,
+     "d": 1,
+     "l": 0
+    },
+    "RUS": {
+     "p": 1,
+     "w": 1,
+     "d": 0,
+     "l": 0
+    },
+    "SEN": {
+     "p": 1,
+     "w": 0,
+     "d": 1,
+     "l": 0
+    },
+    "SWE": {
+     "p": 1,
+     "w": 0,
+     "d": 1,
+     "l": 0
+    },
+    "TUN": {
+     "p": 2,
+     "w": 2,
+     "d": 0,
+     "l": 0
+    },
+    "TUR": {
+     "p": 1,
+     "w": 0,
+     "d": 0,
+     "l": 1
+    }
+   }
+  },
+  "DEU": {
+   "titlesWithPredecessors": 4,
+   "appearancesWithPredecessors": 21,
+   "recordWithPredecessors": {
+    "p": 116,
+    "w": 70,
+    "d": 22,
+    "l": 24,
+    "gf": 243,
+    "ga": 135
+   },
+   "recordOwn": {
+    "p": 54,
+    "w": 34,
+    "d": 8,
+    "l": 12,
+    "gf": 112,
+    "ga": 58
+   }
+  },
+  "FRG": {
+   "titles": 3,
+   "recordOwn": {
+    "p": 62,
+    "w": 36,
+    "d": 14,
+    "l": 12,
+    "gf": 131,
+    "ga": 77
+   },
+   "successor": "DEU"
+  },
+  "BRA": {
+   "appearances": 23,
+   "titles": 5,
+   "record": {
+    "p": 119,
+    "w": 79,
+    "d": 20,
+    "l": 20,
+    "gf": 247,
+    "ga": 112
+   }
+  }
+ },
+ "playerRankings": {
+  "allTimeGoals": {
+   "top": [
+    {
+     "rank": 1,
+     "members": [
+      "P-64077"
+     ],
+     "value": 22
+    },
+    {
+     "rank": 2,
+     "members": [
+      "P-14758"
+     ],
+     "value": 21
+    },
+    {
+     "rank": 3,
+     "members": [
+      "P-27787"
+     ],
+     "value": 16
+    },
+    {
+     "rank": 4,
+     "members": [
+      "P-62722"
+     ],
+     "value": 15
+    },
+    {
+     "rank": 5,
+     "members": [
+      "P-58924",
+      "P-72441"
+     ],
+     "value": 14
+    },
+    {
+     "rank": 7,
+     "members": [
+      "P-77939"
+     ],
+     "value": 13
+    },
+    {
+     "rank": 8,
+     "members": [
+      "P-38906"
+     ],
+     "value": 12
+    },
+    {
+     "rank": 9,
+     "members": [
+      "P-07028",
+      "P-70442",
+      "P-91373"
+     ],
+     "value": 11
+    }
+   ]
+  },
+  "tournamentGoals": {
+   "top": [
+    {
+     "rank": 1,
+     "members": [
+      "P-77939@1958"
+     ],
+     "value": 13
+    },
+    {
+     "rank": 2,
+     "members": [
+      "P-07028@1954"
+     ],
+     "value": 11
+    },
+    {
+     "rank": 3,
+     "members": [
+      "P-64077@2026",
+      "P-72441@1970"
+     ],
+     "value": 10
+    },
+    {
+     "rank": 5,
+     "members": [
+      "P-49381@1950",
+      "P-74747@1966"
+     ],
+     "value": 9
+    }
+   ]
+  },
+  "awards": {
+   "top": [
+    {
+     "rank": 1,
+     "members": [
+      "P-14758",
+      "P-64077"
+     ],
+     "value": 5
+    },
+    {
+     "rank": 3,
+     "members": [
+      "P-28154",
+      "P-62722"
+     ],
+     "value": 4
+    },
+    {
+     "rank": 5,
+     "members": [
+      "P-80404",
+      "P-91717",
+      "P-96979"
+     ],
+     "value": 3
+    }
+   ]
+  },
+  "squads": {
+   "top": [
+    {
+     "rank": 1,
+     "members": [
+      "P-14758",
+      "P-70442",
+      "P-80826"
+     ],
+     "value": 6
+    },
+    {
+     "rank": 4,
+     "members": [
+      "P-10014",
+      "P-11392",
+      "P-19408",
+      "P-26303",
+      "P-29491",
+      "P-40312",
+      "P-44763",
+      "P-49502",
+      "P-69496"
+     ],
+     "value": 5
+    }
+   ]
+  },
+  "appearances": {
+   "top": [
+    {
+     "rank": 1,
+     "members": [
+      "P-14758"
+     ],
+     "value": 34
+    },
+    {
+     "rank": 2,
+     "members": [
+      "P-70442"
+     ],
+     "value": 27
+    },
+    {
+     "rank": 3,
+     "members": [
+      "P-49502"
+     ],
+     "value": 25
+    },
+    {
+     "rank": 4,
+     "members": [
+      "P-27787"
+     ],
+     "value": 24
+    },
+    {
+     "rank": 5,
+     "members": [
+      "P-19408",
+      "P-29491",
+      "P-43222"
+     ],
+     "value": 23
+    },
+    {
+     "rank": 8,
+     "members": [
+      "P-64077"
+     ],
+     "value": 22
+    },
+    {
+     "rank": 9,
+     "members": [
+      "P-09658",
+      "P-48883",
+      "P-49114",
+      "P-80404",
+      "P-93884"
+     ],
+     "value": 21
+    }
+   ]
+  }
+ },
+ "players": {
+  "P-14758": {
+   "name": "Lionel Messi",
+   "squadYears": [
+    2006,
+    2010,
+    2014,
+    2018,
+    2022,
+    2026
+   ],
+   "goals": 21,
+   "goalsByYear": {
+    "2006": 1,
+    "2014": 4,
+    "2018": 1,
+    "2022": 7,
+    "2026": 8
+   },
+   "appearances": 34,
+   "appearancesByYear": {
+    "2006": 3,
+    "2010": 5,
+    "2014": 7,
+    "2018": 4,
+    "2022": 7,
+    "2026": 8
+   },
+   "awards": [
+    [
+     2014,
+     "golden-ball"
+    ],
+    [
+     2022,
+     "golden-ball"
+    ],
+    [
+     2022,
+     "silver-boot"
+    ],
+    [
+     2026,
+     "silver-ball"
+    ],
+    [
+     2026,
+     "silver-boot"
+    ]
+   ]
+  },
+  "P-64077": {
+   "name": "Kylian Mbappé",
+   "squadYears": [
+    2018,
+    2022,
+    2026
+   ],
+   "goals": 22,
+   "goalsByYear": {
+    "2018": 4,
+    "2022": 8,
+    "2026": 10
+   },
+   "appearances": 22,
+   "appearancesByYear": {
+    "2018": 7,
+    "2022": 7,
+    "2026": 8
+   },
+   "awards": [
+    [
+     2018,
+     "best-young-player"
+    ],
+    [
+     2022,
+     "golden-boot"
+    ],
+    [
+     2022,
+     "silver-ball"
+    ],
+    [
+     2026,
+     "bronze-ball"
+    ],
+    [
+     2026,
+     "golden-boot"
+    ]
+   ]
+  },
+  "P-44328": {
+   "name": "Shuto Machino",
+   "squadYears": [
+    2022,
+    2026
+   ],
+   "goals": 0,
+   "goalsByYear": {},
+   "appearances": 1,
+   "appearancesByYear": {
+    "2022": 0,
+    "2026": 1
+   },
+   "awards": [],
+   "number2026": 6
+  },
+  "P-53282": {
+   "name": "Wataru Endo",
+   "squadYears": [
+    2018,
+    2022
+   ],
+   "goals": 0,
+   "goalsByYear": {},
+   "appearances": 4,
+   "appearancesByYear": {
+    "2018": 0,
+    "2022": 4
+   },
+   "awards": []
+  },
+  "P-38906": {
+   "name": "Pelé",
+   "squadYears": [
+    1958,
+    1962,
+    1966,
+    1970
+   ],
+   "goals": 12,
+   "goalsByYear": {
+    "1958": 6,
+    "1962": 1,
+    "1966": 1,
+    "1970": 4
+   },
+   "appearances": null,
+   "appearancesByYear": null,
+   "awards": [
+    [
+     1958,
+     "best-young-player"
+    ],
+    [
+     1958,
+     "silver-boot"
+    ]
+   ]
+  },
+  "P-72864": {
+   "name": "Franz Beckenbauer",
+   "squadYears": [
+    1966,
+    1970,
+    1974
+   ],
+   "goals": 5,
+   "goalsByYear": {
+    "1966": 4,
+    "1970": 1
+   },
+   "appearances": null,
+   "appearancesByYear": null,
+   "awards": [
+    [
+     1966,
+     "best-young-player"
+    ],
+    [
+     1966,
+     "bronze-boot"
+    ]
+   ]
+  }
+ },
+ "tinoLivramento2026": "not a player",
+ "appearanceTotalsByYear": {
+  "1970": 808,
+  "1974": 936,
+  "1978": 952,
+  "1982": 1308,
+  "1986": 1333,
+  "1990": 1334,
+  "1994": 1343,
+  "1998": 1745,
+  "2002": 1756,
+  "2006": 1774,
+  "2010": 1763,
+  "2014": 1781,
+  "2018": 1790,
+  "2022": 1995,
+  "2026": 3288
+ },
+ "crossCheck2026AppearancesVsWikipedia": {
+  "JPN": {
+   "matchesChecked": 4,
+   "players": 24,
+   "appearances": 64,
+   "mismatches": []
+  },
+  "ARG": {
+   "matchesChecked": 8,
+   "players": 24,
+   "appearances": 130,
+   "mismatches": []
+  }
+ }
+}

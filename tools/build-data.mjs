@@ -7,6 +7,7 @@ import { parseCsv } from './lib/csv.mjs';
 import { SOURCES } from './lib/sources.mjs';
 import { conductScore, rankGroup2026 } from './lib/standings-2026.mjs';
 import { chooseJapaneseNames, matchSquadEntry, parseSquadWikitext, validateJapaneseName } from './lib/players-ja.mjs';
+import { applySquadChanges, playerTieOrder, rankRows, resolveLineups2026 } from './lib/phase4.mjs';
 import { fold, foldCompact } from '../public/js/fold.js';
 import { rubyPlain, rubyReading, parseRuby } from '../public/js/ruby.js';
 
@@ -36,6 +37,8 @@ const stagesJa = await json(join(ROOT, 'curated/stages.json'));
 const aliases2026 = await json(join(ROOT, 'curated/name-aliases-2026.json'));
 const identity2026 = await json(join(ROOT, 'curated/identity-2026.json'));
 const tournament2026 = await json(join(ROOT, 'curated/tournament-2026.json'));
+const squadChanges2026 = await json(join(ROOT, 'curated/squad-changes-2026.json'));
+const confederationFallbacks = await json(join(ROOT, 'curated/confederations.json'));
 const teamHeadingsJa = await json(join(ROOT, 'curated/team-headings-ja.json'));
 const playersJaOverrides = await json(join(ROOT, 'curated/players-ja-overrides.json'));
 const playerJaTitles = await json(join(sourceRoot, 'wikipedia/player-ja-titles.json'));
@@ -77,11 +80,11 @@ const keyForTeamName = (name) => {
 
 const [
   tournamentsRows, matchesRows, goalsRows, groupRows, hostRows, playerRows, teamRows,
-  squadRows, qualifiedRows, standingRows, stageRows, awardRows,
+  squadRows, qualifiedRows, standingRows, stageRows, awardRows, appearanceRows,
 ] = await Promise.all([
   csv('tournaments.csv'), csv('matches.csv'), csv('goals.csv'), csv('group_standings.csv'),
   csv('host_countries.csv'), csv('players.csv'), csv('teams.csv'), csv('squads.csv'), csv('qualified_teams.csv'),
-  csv('tournament_standings.csv'), csv('tournament_stages.csv'), csv('award_winners.csv'),
+  csv('tournament_standings.csv'), csv('tournament_stages.csv'), csv('award_winners.csv'), csv('player_appearances.csv'),
 ]);
 const menTournaments = tournamentsRows.filter(isMen).sort((a, b) => number(a.year) - number(b.year));
 const menIds = new Set(menTournaments.map((row) => row.tournament_id));
@@ -94,6 +97,7 @@ const menQualified = qualifiedRows.filter((row) => menIds.has(row.tournament_id)
 const menStandings = standingRows.filter((row) => menIds.has(row.tournament_id));
 const menStages = stageRows.filter((row) => menIds.has(row.tournament_id));
 const menAwards = awardRows.filter((row) => menIds.has(row.tournament_id));
+const menAppearances = appearanceRows.filter((row) => menIds.has(row.tournament_id));
 for (const row of teamRows.filter((team) => team.mens_team === '1' && teamIdToKey.has(team.team_id))) {
   const key = keyForTeamId(row.team_id);
   const expectedKey = row.team_id === 'T-86' ? 'FRG' : row.team_id === 'T-88' ? 'ZAI' : row.team_code;
@@ -136,7 +140,7 @@ const ensurePlayer = (id) => {
     if (!row) throw new Error(`missing Fjelstul player ${id}`);
     playerData.set(id, {
       name: displayName(row), ja: null, teams: new Set(), years: new Set(),
-      goals: 0, goalsByYear: {}, birthDate: row.birth_date,
+      goals: 0, goalsByYear: {}, awards: [], appsByYear: {}, birthDate: row.birth_date,
     });
   }
   return playerData.get(id);
@@ -151,6 +155,12 @@ for (const row of menSquads) {
     if (source.given_name !== 'not applicable') player.name = `${source.family_name} ${source.given_name}`;
   }
 }
+for (const row of menAppearances) {
+  const player = ensurePlayer(row.player_id);
+  const year = yearOf(row);
+  player.appsByYear[year] = (player.appsByYear[year] || 0) + 1;
+}
+for (const row of menAwards) ensurePlayer(row.player_id).awards.push([yearOf(row), awardKey(row.award_name)]);
 
 const normalizeMinute = (label) => label.replaceAll("'", '').trim();
 const matchesByYear = new Map();
@@ -231,11 +241,12 @@ for (const team of teams2026Source) {
 for (const group of groups2026Source.groups) for (const name of group.teams) keyForTeamName(name);
 for (const match of full2026.matches) { keyForTeamName(match.team1); keyForTeamName(match.team2); }
 
-const roster2026 = [];
+let roster2026 = [];
 for (const team of squads2026Source) {
   const teamKey = keyForTeamName(team.name);
   for (const sourcePlayer of team.players) roster2026.push({ ...sourcePlayer, team: teamKey });
 }
+roster2026 = applySquadChanges(roster2026, squadChanges2026.changes);
 roster2026.sort((a, b) => compare(a.team, b.team) || compare(foldCompact(a.name), foldCompact(b.name)) || compare(a.name, b.name));
 const rosterByTeam = new Map();
 for (const player of roster2026) {
@@ -314,7 +325,7 @@ for (const rosterPlayer of roster2026) {
     }
     generated2026Ids.set(rosterPlayer.id, identity);
     playerData.set(rosterPlayer.id, {
-      name: rosterPlayer.name, ja: null, teams: new Set(), years: new Set(), goals: 0, goalsByYear: {}, birthDate: rosterPlayer.date_of_birth,
+      name: rosterPlayer.name, ja: null, teams: new Set(), years: new Set(), goals: 0, goalsByYear: {}, awards: [], appsByYear: {}, birthDate: rosterPlayer.date_of_birth,
     });
   }
   const player = playerData.get(rosterPlayer.id);
@@ -349,7 +360,10 @@ for (const match of full2026.matches) {
   for (const goal of match.goals2 || []) resolve2026Player(goal.name, goal.owngoal ? home : away);
 }
 for (const item of tournament2026.awards) resolve2026Player(item.player.name, item.player.team);
+const apps2026 = resolveLineups2026(full2026.matches, keyForTeamName, resolve2026Player);
 if (unresolved.size) throw new Error(`unresolved 2026 player names:\n${[...unresolved].sort(compare).join('\n')}`);
+
+for (const [id, apps] of apps2026) playerData.get(id).appsByYear[2026] = apps;
 
 const utcKickoff = (match) => {
   const parsed = /^(\d{2}):(\d{2}) UTC([+-])(\d{1,2})$/.exec(match.time);
@@ -503,6 +517,7 @@ const awards2026 = tournament2026.awards.map((item) => {
   const player = resolve2026Player(item.player.name, item.player.team);
   return { award: item.award, player: player.id, team: item.player.team };
 }).sort((a, b) => compare(a.award, b.award));
+for (const award of awards2026) playerData.get(award.player).awards.push([2026, award.award]);
 const dates2026 = matches2026.map((match) => match.date).sort(compare);
 const summary2026 = {
   year: 2026, hosts: tournament2026.hosts, start: dates2026[0], end: dates2026.at(-1), teams: rosterByTeam.size,
@@ -632,36 +647,103 @@ const allMatches = tournamentDetails.flatMap((tournament) => tournament.matches.
 const outputTeams = {};
 const allTeamKeys = Object.keys(curatedTeams).sort(compare);
 const titleCounts = new Map(allTeamKeys.map((key) => [key, 0]));
+const runnerUpCounts = new Map(allTeamKeys.map((key) => [key, 0]));
 for (const tournament of tournamentSummaries) titleCounts.set(tournament.placings['1'], titleCounts.get(tournament.placings['1']) + 1);
+for (const tournament of tournamentSummaries) runnerUpCounts.set(tournament.placings['2'], runnerUpCounts.get(tournament.placings['2']) + 1);
 const predecessorMap = new Map(allTeamKeys.map((key) => [key, []]));
 for (const key of allTeamKeys) if (curatedTeams[key].successor) predecessorMap.get(curatedTeams[key].successor).push(key);
 const allPredecessors = (key, seen = new Set()) => {
   for (const predecessor of predecessorMap.get(key) || []) if (!seen.has(predecessor)) { seen.add(predecessor); allPredecessors(predecessor, seen); }
   return [...seen].sort(compare);
 };
+const lineageRoot = (key) => curatedTeams[key].successor ? lineageRoot(curatedTeams[key].successor) : key;
+const confederationsByTeamId = new Map(teamRows.map((row) => [row.team_id, row.confederation_code]));
+const regions = new Map();
 for (const key of allTeamKeys) {
-  const team = curatedTeams[key];
-  const tournaments = [];
-  for (const summary of tournamentSummaries) {
-    const finish = finishByTeamYear.get(`${key}\0${summary.year}`);
-    if (finish) tournaments.push({ year: summary.year, finish });
-  }
+  const root = lineageRoot(key);
+  const region = curatedTeams[root].fjelstulTeamId
+    ? confederationsByTeamId.get(curatedTeams[root].fjelstulTeamId)
+    : confederationFallbacks[root];
+  if (!region) throw new Error(`missing region for ${key} (lineage root ${root})`);
+  regions.set(key, region);
+}
+const resultFor = (match, key) => {
+  const home = match.home === key;
+  const gf = home ? match.score.home : match.score.away;
+  const ga = home ? match.score.away : match.score.home;
+  const shootout = Boolean(match.score.pens);
+  return { gf, ga, w: !shootout && gf > ga ? 1 : 0, d: shootout || gf === ga ? 1 : 0, l: !shootout && gf < ga ? 1 : 0 };
+};
+const ownRecordFor = (key) => {
   const record = { p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0 };
   for (const match of allMatches) {
-    const home = match.home === key;
-    if (!home && match.away !== key) continue;
-    const gf = home ? match.score.home : match.score.away;
-    const ga = home ? match.score.away : match.score.home;
-    record.p += 1; record.gf += gf; record.ga += ga;
-    if (gf > ga) record.w += 1; else if (gf < ga) record.l += 1; else record.d += 1;
+    if (match.home !== key && match.away !== key) continue;
+    const result = resultFor(match, key);
+    record.p += 1; record.gf += result.gf; record.ga += result.ga;
+    record.w += result.w; record.d += result.d; record.l += result.l;
   }
+  return record;
+};
+const finishOrder = ['champion', 'runner-up', 'third', 'fourth', 'sf', 'qf', 'r16', 'r32', 'second-group', 'final-round', 'group'];
+for (const key of allTeamKeys) {
+  const team = curatedTeams[key];
+  const ownTournaments = [];
+  for (const summary of tournamentSummaries) {
+    const finish = finishByTeamYear.get(`${key}\0${summary.year}`);
+    if (finish) ownTournaments.push({ year: summary.year, finish, team: key });
+  }
+  const recordOwn = ownRecordFor(key);
   const predecessors = allPredecessors(key);
+  const lineage = [key, ...predecessors];
+  const tournaments = lineage.flatMap((member) => tournamentSummaries.flatMap((summary) => {
+    const finish = finishByTeamYear.get(`${member}\0${summary.year}`);
+    return finish ? [{ year: summary.year, finish, team: member }] : [];
+  })).sort((a, b) => a.year - b.year || compare(a.team, b.team));
+  const record = lineage.reduce((total, member) => {
+    const value = member === key ? recordOwn : ownRecordFor(member);
+    for (const field of Object.keys(total)) total[field] += value[field];
+    return total;
+  }, { p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0 });
+  const opponentsByKey = new Map();
+  for (const match of allMatches) {
+    const member = lineage.find((item) => match.home === item || match.away === item);
+    if (!member) continue;
+    const opponent = match.home === member ? match.away : match.home;
+    if (!opponentsByKey.has(opponent)) opponentsByKey.set(opponent, { team: opponent, p: 0, w: 0, d: 0, l: 0, matches: [] });
+    const row = opponentsByKey.get(opponent);
+    const result = resultFor(match, member);
+    row.p += 1; row.w += result.w; row.d += result.d; row.l += result.l;
+    row.matches.push({ id: match.id, year: match.year, home: match.home, away: match.away, homeGoals: match.score.home, awayGoals: match.score.away });
+  }
+  const scorerCounts = new Map();
+  for (const goal of allMatches.flatMap((match) => match.goals)) {
+    if (!goal.ownGoal && lineage.includes(goal.playerTeam)) scorerCounts.set(goal.player, (scorerCounts.get(goal.player) || 0) + 1);
+  }
+  const topScorers = [...scorerCounts].map(([player, goals]) => {
+    const person = playerData.get(player);
+    const playerTeam = [...person.teams].find((item) => lineage.includes(item)) || [...person.teams].sort(compare)[0];
+    return { player, name: person.name, ja: person.ja, team: playerTeam, goals };
+  }).sort((a, b) => b.goals - a.goals || compare(foldCompact(a.name), foldCompact(b.name)) || compare(a.player, b.player)).slice(0, 10);
+  const titles = lineage.reduce((sum, member) => sum + titleCounts.get(member), 0);
+  const runnerUps = lineage.reduce((sum, member) => sum + runnerUpCounts.get(member), 0);
   outputTeams[key] = {
     en: team.en, ja: team.ja, flag: team.flag, successor: team.successor,
     fjelstulTeamId: team.fjelstulTeamId, sourceNames: team.sourceNames,
-    tournaments, record, titles: titleCounts.get(key),
-    titlesWithPredecessors: titleCounts.get(key) + predecessors.reduce((sum, predecessor) => sum + titleCounts.get(predecessor), 0),
-    predecessors,
+    region: regions.get(key), tournaments, ownTournaments, record, recordOwn,
+    titles: titleCounts.get(key), titlesWithPredecessors: titles, runnerUpsWithPredecessors: runnerUps,
+    bestFinish: tournaments.slice().sort((a, b) => finishOrder.indexOf(a.finish) - finishOrder.indexOf(b.finish) || a.year - b.year)[0]?.finish || null,
+    predecessors, opponents: [...opponentsByKey.values()], topScorers,
+  };
+}
+for (const tournament of tournamentDetails) {
+  const keys = new Set([
+    ...tournament.hosts,
+    ...tournament.matches.flatMap((match) => [match.home, match.away]),
+    ...Object.keys(tournament.squads),
+  ]);
+  tournament.teamDisplay = {};
+  for (const key of [...keys].sort(compare)) tournament.teamDisplay[key] = {
+    ja: outputTeams[key].ja, flag: outputTeams[key].flag,
   };
 }
 
@@ -670,8 +752,66 @@ for (const id of [...playerData.keys()].sort(compare)) {
   const player = playerData.get(id);
   const goalsByYear = {};
   for (const year of Object.keys(player.goalsByYear).map(Number).sort((a, b) => a - b)) goalsByYear[year] = player.goalsByYear[year];
-  outputPlayers[id] = { name: player.name, ja: player.ja, teams: [...player.teams].sort(compare), years: [...player.years].sort((a, b) => a - b), goals: player.goals, goalsByYear };
+  const years = [...player.years].sort((a, b) => a - b);
+  const output = { name: player.name, ja: player.ja, teams: [...player.teams].sort(compare), years, goals: player.goals, goalsByYear,
+    awards: player.awards.slice().sort((a, b) => a[0] - b[0] || compare(a[1], b[1])) };
+  // Absence means the appearance source cannot provide a complete career total.
+  // Zero is retained for eligible squad years in which the player never played.
+  if (years.every((year) => year >= 1970)) {
+    output.appsByYear = {};
+    for (const year of years) output.appsByYear[year] = player.appsByYear[year] || 0;
+    output.apps = Object.values(output.appsByYear).reduce((sum, value) => sum + value, 0);
+  }
+  outputPlayers[id] = output;
 }
+
+const countryTieOrder = (left, right) => compare(
+  fold(rubyReading(outputTeams[left.team].ja)), fold(rubyReading(outputTeams[right.team].ja)),
+) || compare(left.team, right.team);
+const countryRoots = allTeamKeys.filter((key) => !curatedTeams[key].successor);
+const countryRow = (team, value, extra = {}) => ({ team, name: outputTeams[team].en, ja: outputTeams[team].ja, value, ...extra });
+const countryRankings = {
+  titles: rankRows(countryRoots.filter((team) => outputTeams[team].titlesWithPredecessors > 0)
+    .map((team) => countryRow(team, outputTeams[team].titlesWithPredecessors, { runnerUp: outputTeams[team].runnerUpsWithPredecessors })), {
+    values: (row) => [row.value, row.runnerUp], secondary: countryTieOrder,
+  }),
+  appearances: rankRows(countryRoots.map((team) => countryRow(team, outputTeams[team].tournaments.length)), { secondary: countryTieOrder }),
+  wins: rankRows(countryRoots.filter((team) => outputTeams[team].record.w > 0)
+    .map((team) => countryRow(team, outputTeams[team].record.w)), { secondary: countryTieOrder }),
+  goals: rankRows(countryRoots.filter((team) => outputTeams[team].record.gf > 0)
+    .map((team) => countryRow(team, outputTeams[team].record.gf)), { secondary: countryTieOrder }),
+};
+
+const playerYearTeam = new Map();
+for (const tournament of tournamentDetails) for (const [team, squad] of Object.entries(tournament.squads)) {
+  for (const member of squad) playerYearTeam.set(`${member.player}\0${tournament.year}`, team);
+}
+const rankedPlayerRow = (player, value, extra = {}) => {
+  const data = outputPlayers[player];
+  const recentYear = data.years.at(-1);
+  return { player, value, name: data.name, ja: data.ja, team: playerYearTeam.get(`${player}\0${recentYear}`) || data.teams.at(-1), recentYear, ...extra };
+};
+const playerRanking = (rows) => rankRows(rows, { secondary: playerTieOrder, limit: 50 });
+const playerRankings = {
+  goals: playerRanking(Object.entries(outputPlayers).filter(([, player]) => player.goals > 0)
+    .map(([id, player]) => rankedPlayerRow(id, player.goals))),
+  tournamentGoals: playerRanking(Object.entries(outputPlayers).flatMap(([id, player]) => Object.entries(player.goalsByYear)
+    .map(([year, goals]) => rankedPlayerRow(id, goals, { year: number(year), team: playerYearTeam.get(`${id}\0${year}`) || player.teams.at(-1) })))),
+  awards: playerRanking(Object.entries(outputPlayers).filter(([, player]) => player.awards.length > 0)
+    .map(([id, player]) => rankedPlayerRow(id, player.awards.length))),
+  squads: playerRanking(Object.entries(outputPlayers).map(([id, player]) => rankedPlayerRow(id, player.years.length))),
+  apps: playerRanking(Object.entries(outputPlayers).filter(([, player]) => Object.hasOwn(player, 'apps'))
+    .map(([id, player]) => rankedPlayerRow(id, player.apps))),
+};
+for (const rows of Object.values(playerRankings)) for (const row of rows) delete row.recentYear;
+const appearanceTotalsByYear = {};
+for (const row of menAppearances) {
+  const year = yearOf(row);
+  appearanceTotalsByYear[year] = (appearanceTotalsByYear[year] || 0) + 1;
+}
+appearanceTotalsByYear[2026] = full2026.matches.reduce((total, match) => total + match.lineup.reduce((sideTotal, lineup) =>
+  sideTotal + new Set([...(lineup.starter || []).map((item) => item.name), ...(lineup.subs || []).map((item) => item.on)]).size, 0), 0);
+const rankings = { countries: countryRankings, players: playerRankings, appearanceTotalsByYear };
 
 const compactMatches = allMatches.map((match) => [
   match.id, match.year, match.date, match.stage, match.home, match.away,
@@ -737,7 +877,7 @@ const writeJson = (name, value) => writeFile(join(outputRoot, name), `${JSON.str
 await Promise.all([
   writeJson('meta.json', meta), writeJson('tournaments.json', tournamentSummaries),
   writeJson('teams.json', outputTeams), writeJson('players.json', outputPlayers),
-  writeJson('matches.json', compactMatches), writeJson('records.json', records), writeJson('search.json', search),
+  writeJson('matches.json', compactMatches), writeJson('records.json', records), writeJson('rankings.json', rankings), writeJson('search.json', search),
   ...tournamentDetails.map((tournament) => writeJson(`t/${tournament.year}.json`, tournament)),
 ]);
 

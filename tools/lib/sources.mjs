@@ -29,7 +29,7 @@ export const SOURCES = {
     attribution: '© 2023 Joshua C. Fjelstul, Ph.D.',
     files: [
       'award_winners.csv', 'awards.csv', 'goals.csv', 'group_standings.csv',
-      'host_countries.csv', 'matches.csv', 'players.csv', 'qualified_teams.csv',
+      'host_countries.csv', 'matches.csv', 'player_appearances.csv', 'players.csv', 'qualified_teams.csv',
       'squads.csv', 'teams.csv', 'tournament_stages.csv',
       'tournament_standings.csv', 'tournaments.csv',
     ].map(fjelstulFile),

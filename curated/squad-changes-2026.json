@@ -1,0 +1,13 @@
+{
+  "_about": "Late squad replacements missing from openfootball's 2026 squads file, which still lists the injured players. Source: Japanese Wikipedia, 2026 FIFAワールドカップ参加チーム (each team's announcement paragraph and player template: shirt number, position, date of birth), read 2026-09-11. The six who played also appear under these names in openfootball's 2026 line-ups.",
+  "changes": [
+    { "team": "BIH", "date": "2026-06-11", "out": { "name": "Nidal Čelik", "dateOfBirth": "2006-07-17" }, "in": { "name": "Arjan Malić", "dateOfBirth": "2005-08-28", "number": 24, "pos": "DF" } },
+    { "team": "HTI", "date": "2026-06-11", "out": { "name": "Leverton Pierre", "dateOfBirth": "1998-03-09" }, "in": { "name": "Garven Metusala", "dateOfBirth": "1999-12-31", "number": 14, "pos": "DF" } },
+    { "team": "MAR", "date": "2026-06-10", "out": { "name": "Nayef Aguerd", "dateOfBirth": "1996-03-30" }, "in": { "name": "Marwane Saadane", "dateOfBirth": "1992-01-17", "number": 5, "pos": "DF" } },
+    { "team": "MAR", "date": "2026-06-10", "out": { "name": "Abde Ezzalzouli", "dateOfBirth": "2001-12-17" }, "in": { "name": "Amine Sbai", "dateOfBirth": "2000-11-05", "number": 17, "pos": "FW" } },
+    { "team": "JPN", "date": "2026-06-11", "out": { "name": "Wataru Endo", "dateOfBirth": "1993-02-09" }, "in": { "name": "Shuto Machino", "dateOfBirth": "1999-09-30", "number": 6, "pos": "FW" } },
+    { "team": "NZL", "date": "2026-06-15", "out": { "name": "Matthew Garbett", "dateOfBirth": "2002-04-13" }, "in": { "name": "Logan Rogerson", "dateOfBirth": "1998-05-28", "number": 7, "pos": "MF" } },
+    { "team": "UZB", "date": "2026-06-15", "out": { "name": "Jaloliddin Masharipov", "dateOfBirth": "1993-09-01" }, "in": { "name": "Ruslanbek Jiyanov", "dateOfBirth": "2001-06-05", "number": 10, "pos": "MF" } },
+    { "team": "ENG", "date": "2026-06-16", "out": { "name": "Tino Livramento", "dateOfBirth": "2002-11-12" }, "in": { "name": "Trevoh Chalobah", "dateOfBirth": "1999-07-05", "number": 12, "pos": "DF" } }
+  ]
+}

@@ -1,10 +1,14 @@
 {
-  "_source": "2026 FIFA World Cup, English Wikipedia (raw wikitext, read 2026-09-10) and ESPN statistics article of 2026-07-19. Silver and bronze awards are not recorded here yet.",
+  "_source": "2026 FIFA World Cup, English Wikipedia (raw wikitext, read 2026-09-10; awards table with Silver/Bronze Ball and Boot re-read 2026-09-11) and ESPN statistics article of 2026-07-19.",
   "year": 2026,
   "hosts": ["USA", "CAN", "MEX"],
   "awards": [
     { "award": "golden-ball", "player": { "name": "Rodri", "team": "ESP" } },
+    { "award": "silver-ball", "player": { "name": "Lionel Messi", "team": "ARG" } },
+    { "award": "bronze-ball", "player": { "name": "Kylian Mbappé", "team": "FRA" } },
     { "award": "golden-boot", "player": { "name": "Kylian Mbappé", "team": "FRA" }, "goals": 10 },
+    { "award": "silver-boot", "player": { "name": "Lionel Messi", "team": "ARG" }, "goals": 8 },
+    { "award": "bronze-boot", "player": { "name": "Jude Bellingham", "team": "ENG" }, "goals": 7 },
     { "award": "golden-glove", "player": { "name": "Unai Simón", "team": "ESP" } },
     { "award": "best-young-player", "player": { "name": "Pau Cubarsí", "team": "ESP" } }
   ]

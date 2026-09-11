@@ -1,4 +1,4 @@
-import { VERSION } from './version.js?v=0.2.12';
+import { VERSION } from './version.js?v=0.3.0';
 
 const cache = new Map();
 
@@ -10,10 +10,25 @@ const validators = {
   'tournaments.json': (value) => Array.isArray(value) && value.length > 0
     && value.every((item) => validObject(item) && Number.isInteger(item.year)),
   'teams.json': (value) => validObject(value) && Object.keys(value).length > 0
-    && Object.values(value).every((item) => validObject(item) && typeof item.ja === 'string' && typeof item.flag === 'string'),
+    && Object.values(value).every((item) => validObject(item) && typeof item.ja === 'string' && typeof item.flag === 'string'
+      && typeof item.region === 'string' && validObject(item.record) && validObject(item.recordOwn)
+      && Array.isArray(item.tournaments) && Array.isArray(item.opponents) && Array.isArray(item.topScorers)),
+  'players.json': (value) => validObject(value) && Object.keys(value).length > 0
+    && Object.values(value).every((item) => validObject(item) && typeof item.name === 'string'
+      && Array.isArray(item.teams) && Array.isArray(item.years) && Number.isInteger(item.goals)
+      && validObject(item.goalsByYear) && Array.isArray(item.awards)
+      && ((!Object.hasOwn(item, 'apps') && !Object.hasOwn(item, 'appsByYear'))
+        || (Number.isInteger(item.apps) && item.apps >= 0 && validObject(item.appsByYear)))),
+  'rankings.json': (value) => validObject(value) && validObject(value.countries) && validObject(value.players)
+    && ['titles', 'appearances', 'wins', 'goals'].every((key) => Array.isArray(value.countries[key]))
+    && ['goals', 'tournamentGoals', 'awards', 'squads', 'apps'].every((key) => Array.isArray(value.players[key]))
+    && Object.values(value.countries).flat().every((row) => validObject(row) && Number.isInteger(row.rank)
+      && typeof row.team === 'string' && typeof row.name === 'string' && typeof row.ja === 'string' && Number.isInteger(row.value))
+    && Object.values(value.players).flat().every((row) => validObject(row) && Number.isInteger(row.rank)
+      && typeof row.player === 'string' && typeof row.name === 'string' && typeof row.team === 'string' && Number.isInteger(row.value)),
   'meta.json': (value) => validObject(value) && validObject(value.sources),
   tournament: (value) => validObject(value) && Number.isInteger(value.year)
-    && Array.isArray(value.matches) && Array.isArray(value.groups) && validObject(value.people),
+    && Array.isArray(value.matches) && Array.isArray(value.groups) && validObject(value.people) && validObject(value.teamDisplay),
 };
 
 async function load(path, validator) {
@@ -35,3 +50,5 @@ export const loadTournaments = () => load('data/tournaments.json', validators['t
 export const loadTeams = () => load('data/teams.json', validators['teams.json']);
 export const loadMeta = () => load('data/meta.json', validators['meta.json']);
 export const loadTournament = (year) => load(`data/t/${year}.json`, validators.tournament);
+export const loadPlayers = () => load('data/players.json', validators['players.json']);
+export const loadRankings = () => load('data/rankings.json', validators['rankings.json']);

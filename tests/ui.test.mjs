@@ -2,14 +2,16 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { inflateSync } from 'node:zlib';
+import { crc32, inflateSync } from 'node:zlib';
 import ui from './golden/ui.json' with { type: 'json' };
-import { buildBracket } from '../public/js/bracket.js?v=0.2.12';
+import { buildBracket } from '../public/js/bracket.js?v=0.3.0';
 import { foldCompact } from '../public/js/fold.js';
-import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=0.2.12';
+import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=0.3.0';
 import { parseRuby } from '../public/js/ruby.js';
-import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=0.2.12';
-import { VERSION } from '../public/js/version.js?v=0.2.12';
+import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=0.3.0';
+import { VERSION } from '../public/js/version.js?v=0.3.0';
+import { applySquadChanges } from '../tools/lib/phase4.mjs';
+import { awardTier } from '../public/js/views.js?v=0.3.0';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const PUBLIC = join(ROOT, 'public');
@@ -64,6 +66,7 @@ function decodePng(path) {
   // node:zlib (a Node builtin, not an installed dependency) to inflate the
   // IDAT stream, then reverses the PNG per-scanline filters by hand.
   const buf = readFileSync(path);
+  deepPngSignature(buf, path);
   let offset = 8; // past the 8-byte PNG signature
   let width;
   let height;
@@ -76,6 +79,9 @@ function decodePng(path) {
     const type = buf.toString('ascii', offset + 4, offset + 8);
     const dataStart = offset + 8;
     const data = buf.subarray(dataStart, dataStart + length);
+    const expectedCrc = buf.readUInt32BE(dataStart + length);
+    const actualCrc = crc32(buf.subarray(offset + 4, dataStart + length)) >>> 0;
+    if (actualCrc !== expectedCrc) throw new Error(`decodePng: invalid ${type} CRC in ${path}`);
     if (type === 'IHDR') {
       width = data.readUInt32BE(0);
       height = data.readUInt32BE(4);
@@ -124,6 +130,28 @@ function decodePng(path) {
     rawOffset += stride;
   }
   return { width, height, channels, pixels };
+}
+
+function deepPngSignature(buffer, path) {
+  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+  if (buffer.length < 8 || !buffer.subarray(0, 8).equals(signature)) throw new Error(`invalid PNG signature: ${path}`);
+}
+
+function polygonArea(points) {
+  return Math.abs(points.reduce((sum, point, index) => {
+    const next = points[(index + 1) % points.length];
+    return sum + point[0] * next[1] - next[0] * point[1];
+  }, 0)) / 2;
+}
+
+function contrastRatio(left, right) {
+  const luminance = (hex) => {
+    const channels = hex.slice(1).match(/../g).map((value) => Number.parseInt(value, 16) / 255)
+      .map((value) => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+    return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+  };
+  const a = luminance(left), b = luminance(right);
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 }
 
 function pixelAt(png, x, y) {
@@ -284,12 +312,17 @@ export function register(test, equal, deepEqual) {
 
   test('2026 generated player ids are stable hashes', () => {
     const source = JSON.parse(readFileSync(join(ROOT, '.cache/sources/openfootball/2026-squads.json'), 'utf8'));
+    const changes = JSON.parse(readFileSync(join(ROOT, 'curated/squad-changes-2026.json'), 'utf8')).changes;
+    const flattened = source.flatMap((sourceTeam) => sourceTeam.players.map((player) => ({
+      ...player, team: Object.keys(teams).find((key) => teams[key].sourceNames.includes(sourceTeam.name)),
+    })));
+    const adjusted = applySquadChanges(flattened, changes);
     const detail = details.get(2026);
     for (const [teamKey, squad] of Object.entries(detail.squads)) {
-      const sourceTeam = source.find((item) => teams[teamKey].sourceNames.includes(item.name));
-      equal(Boolean(sourceTeam), true, teamKey);
+      const sourceTeam = adjusted.filter((item) => item.team === teamKey);
+      equal(sourceTeam.length > 0, true, teamKey);
       for (const member of squad.filter((item) => item.player.startsWith('P26-'))) {
-        const candidates = sourceTeam.players.filter((item) => item.number === member.no);
+        const candidates = sourceTeam.filter((item) => item.number === member.no);
         equal(candidates.length, 1, `${teamKey} shirt ${member.no}`);
         const player = candidates[0];
         const identity = `${teamKey}|${player.date_of_birth}|${foldCompact(player.name)}`;
@@ -333,10 +366,14 @@ export function register(test, equal, deepEqual) {
   });
 
   test('asset imports and footer share VERSION', () => {
-    equal(VERSION, '0.2.12');
+    equal(VERSION, '0.3.0');
     const html = readFileSync(join(PUBLIC, 'index.html'), 'utf8');
     for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
-      if (/^(?:css|js)\//.test(match[1])) equal(match[1].endsWith(`?v=${VERSION}`), true, match[1]);
+      const url = match[1];
+      if (/^(?:https?:|#)/.test(url)) continue;
+      const isTouchIcon = url === 'assets/apple-touch-icon.png';
+      if (!isTouchIcon) equal(url.endsWith(`?v=${VERSION}`), true, url);
+      equal(existsSync(join(PUBLIC, url.split('?')[0])), true, `${url} exists`);
     }
     for (const file of files(join(PUBLIC, 'js')).filter((name) => name.endsWith('.js'))) {
       const source = readFileSync(join(PUBLIC, 'js', file), 'utf8');
@@ -350,6 +387,11 @@ export function register(test, equal, deepEqual) {
     equal(data.includes('?v=${VERSION}'), true, 'fetch version');
     const views = readFileSync(join(PUBLIC, 'js/views.js'), 'utf8');
     equal(views.includes('.svg?v=${VERSION}'), true, 'flag version');
+    const manifest = JSON.parse(readFileSync(join(PUBLIC, 'manifest.webmanifest'), 'utf8'));
+    for (const icon of manifest.icons) {
+      equal(icon.src.endsWith(`?v=${VERSION}`), true, `manifest ${icon.src}`);
+      equal(existsSync(join(PUBLIC, icon.src.split('?')[0])), true, `${icon.src} exists`);
+    }
   });
 
   test('data loader rejects invalid top-level shapes without throwing to the view', async () => {
@@ -377,7 +419,9 @@ export function register(test, equal, deepEqual) {
     }
     equal(html.includes('name="viewport"'), true, 'viewport');
     const app = readFileSync(join(PUBLIC, 'js/app.js'), 'utf8');
-    for (const route of ["route === '/'", "route === '/credits'", '/^\\/t\\/', '/^\\/m\\/']) equal(app.includes(route), true, route);
+    for (const route of ["route === '/'", "route === '/credits'", "route === '/c'", "route === '/r'", '/^\\/t\\/', '/^\\/m\\/', '/^\\/c\\/', '/^\\/p\\/', '/^\\/r\\/']) equal(app.includes(route), true, route);
+    const playerBranch = app.slice(app.indexOf('} else if (playerMatch)'), app.indexOf('} else if (rankingMatch)'));
+    equal(playerBranch.includes('loadTeams'), false, 'player route loads only players and its tournament files');
     equal(app.includes('window.scrollTo(0, 0)'), true, 'route scroll');
   });
 
@@ -409,6 +453,24 @@ export function register(test, equal, deepEqual) {
       equal(rootRule.body.includes(`${prop}:`), true, `${prop} defined in light theme`);
       equal(darkRule.body.includes(`${prop}:`), true, `${prop} defined in dark theme`);
     }
+    const expectedTiers = {
+      'golden-ball': 'golden', 'golden-boot': 'golden', 'golden-glove': 'golden',
+      'silver-ball': 'silver', 'silver-boot': 'silver', 'bronze-ball': 'bronze', 'bronze-boot': 'bronze',
+      'best-young-player': 'young',
+    };
+    for (const [award, tier] of Object.entries(expectedTiers)) equal(awardTier(award), tier, award);
+    const variables = (rule) => Object.fromEntries([...rule.body.matchAll(/(--[\w-]+):\s*(#[0-9a-f]{6})/gi)].map((match) => [match[1], match[2]]));
+    for (const themeRule of [rootRule, darkRule]) {
+      const tokens = variables(themeRule);
+      for (const tier of ['golden', 'silver', 'bronze', 'young', 'scorer']) {
+        const rule = rules.find((entry) => entry.selector === `.honour-pill-${tier}`);
+        const foregroundToken = /color:\s*var\((--[\w-]+)\)/.exec(rule.body)?.[1];
+        const backgroundToken = /background:\s*var\((--[\w-]+)\)/.exec(rule.body)?.[1];
+        equal(Boolean(backgroundToken && tokens[backgroundToken]), true, `${tier} non-transparent background token`);
+        equal(contrastRatio(tokens[foregroundToken], tokens[backgroundToken]) >= 4.5, true,
+          `${tier} contrast ${contrastRatio(tokens[foregroundToken], tokens[backgroundToken]).toFixed(2)}`);
+      }
+    }
   });
 
   test('credit links use the approved HTTPS hosts', () => {
@@ -419,6 +481,7 @@ export function register(test, equal, deepEqual) {
   });
 
   test('icon PNGs have the required dimensions and colour type', () => {
+    for (const name of ['apple-touch-icon.png', 'icon-512.png', 'ball-mark.png']) decodePng(join(PUBLIC, 'assets', name));
     deepEqual(pngHeader(join(PUBLIC, 'assets/apple-touch-icon.png')),
       { width: 180, height: 180, colorType: 2 }, 'apple-touch-icon.png (RGB, no alpha)');
     deepEqual(pngHeader(join(PUBLIC, 'assets/icon-512.png')),
@@ -468,6 +531,11 @@ export function register(test, equal, deepEqual) {
     // must be circular, not lumpy.
     equal(maxRadius - medianRadius <= 2, true,
       `outline is not round: typical outer radius ${medianRadius}px, but some ray reaches ${maxRadius}px`);
+    equal(medianRadius >= size * 0.35 && medianRadius <= size * 0.49, true, `plausible ball radius ${medianRadius}px`);
+    let foregroundPixels = 0;
+    for (let y = 0; y < size; y += 1) for (let x = 0; x < size; x += 1) if (!isBackground(x, y)) foregroundPixels += 1;
+    equal(foregroundPixels >= size * size * 0.2 && foregroundPixels <= size * size * 0.75, true,
+      `plausible foreground pixel count ${foregroundPixels}`);
 
     // Independently, exhaustively confirm every pixel further out than that
     // clear radius is pure background - not just the single outermost pixel
@@ -496,6 +564,15 @@ export function register(test, equal, deepEqual) {
       { name: 'central', points: geometry.central },
       ...geometry.outer.map((points, i) => ({ name: `outer[${i}]`, points })),
     ];
+    equal(geometry.outer.length, 5, 'five outer pentagons');
+    const centre = geometry.diameter / 2;
+    const centroidRadii = geometry.outer.map((points) => {
+      equal(polygonArea(points) >= geometry.diameter ** 2 * 0.01, true, `non-degenerate outer pentagon area ${polygonArea(points)}`);
+      const centroid = points.reduce((sum, point) => [sum[0] + point[0] / points.length, sum[1] + point[1] / points.length], [0, 0]);
+      return Math.hypot(centroid[0] - centre, centroid[1] - centre);
+    });
+    equal(Math.min(...centroidRadii) >= geometry.diameter * 0.3, true, `outer pentagon placement radii ${centroidRadii}`);
+    equal(Math.max(...centroidRadii) - Math.min(...centroidRadii) <= geometry.diameter * 0.02, true, `outer pentagon ring ${centroidRadii}`);
     let worst = Infinity;
     let worstPair = null;
     for (let i = 0; i < polygons.length; i += 1) {
@@ -513,20 +590,30 @@ export function register(test, equal, deepEqual) {
     const touchIcon = /<link rel="apple-touch-icon" sizes="180x180" href="([^"]+)">/.exec(html);
     equal(Boolean(touchIcon), true, 'apple-touch-icon link present');
     equal(touchIcon[1].includes('?'), false, 'apple-touch-icon href has no query string (iOS ignores it)');
-    equal(html.includes('<link rel="icon" type="image/png" href="assets/icon-512.png">'), true, 'favicon link');
-    equal(html.includes('<link rel="manifest" href="manifest.webmanifest">'), true, 'manifest link');
-    equal(html.includes('name="apple-mobile-web-app-capable" content="yes"'), true, 'apple-mobile-web-app-capable meta');
-    equal(html.includes('name="mobile-web-app-capable" content="yes"'), true, 'mobile-web-app-capable meta');
-    equal(html.includes('name="apple-mobile-web-app-title" content="Wcupedia"'), true, 'apple-mobile-web-app-title meta');
+    equal(existsSync(join(PUBLIC, touchIcon[1])), true, 'linked touch icon exists');
+    deepEqual(pngHeader(join(PUBLIC, touchIcon[1])), { width: 180, height: 180, colorType: 2 }, 'linked touch icon dimensions');
+    equal(html.includes(`<link rel="icon" type="image/png" href="assets/icon-512.png?v=${VERSION}">`), true, 'favicon link');
+    equal(html.includes(`<link rel="manifest" href="manifest.webmanifest?v=${VERSION}">`), true, 'manifest link');
+    equal(html.includes('name="apple-mobile-web-app-capable" CONTENT="yes"'), true, 'apple-mobile-web-app-capable meta');
+    equal(html.includes('name="mobile-web-app-capable" CONTENT="yes"'), true, 'mobile-web-app-capable meta');
+    equal(html.includes('name="apple-mobile-web-app-title" CONTENT="Wcupedia"'), true, 'apple-mobile-web-app-title meta');
   });
 
   test('manifest.webmanifest parses and its icons exist with matching dimensions', () => {
     const manifest = JSON.parse(readFileSync(join(PUBLIC, 'manifest.webmanifest'), 'utf8'));
     equal(manifest.name, 'Wcupedia（Wカップ大図鑑）');
     equal(manifest.short_name, 'Wcupedia');
+    equal(manifest.start_url, './', 'start_url');
+    equal(manifest.scope, './', 'scope');
+    equal(manifest.display, 'standalone', 'display');
+    equal(manifest.lang, 'ja', 'lang');
+    equal(manifest.background_color, '#fffdf7', 'background colour');
+    equal(manifest.theme_color, '#17653a', 'theme colour');
+    const manifestUrl = 'https://masarusz.github.io/wcupedia/manifest.webmanifest';
+    for (const field of ['start_url', 'scope']) equal(new URL(manifest[field], manifestUrl).pathname.startsWith('/wcupedia/'), true, `${field} project prefix`);
     equal(Array.isArray(manifest.icons) && manifest.icons.length > 0, true, 'manifest has icons');
     for (const icon of manifest.icons) {
-      const path = join(PUBLIC, icon.src);
+      const path = join(PUBLIC, icon.src.split('?')[0]);
       equal(existsSync(path), true, `${icon.src} exists`);
       const [width, height] = icon.sizes.split('x').map(Number);
       const header = pngHeader(path);
@@ -536,7 +623,10 @@ export function register(test, equal, deepEqual) {
 
   test('deploy.sh allowlist ships the manifest and PNG assets', () => {
     const script = readFileSync(join(ROOT, 'scripts/deploy.sh'), 'utf8');
-    equal(script.includes('"manifest.webmanifest"'), true, 'manifest.webmanifest in PATTERNS');
-    equal(script.includes('"assets/*.png"'), true, 'assets/*.png in PATTERNS');
+    const block = /PATTERNS=\(([^]*?)\n\)/.exec(script)?.[1];
+    const patterns = block.split('\n').map((line) => line.replace(/#.*/, '').trim()).filter(Boolean)
+      .map((line) => /^"([^"]+)"$/.exec(line)?.[1]);
+    deepEqual(patterns, ['index.html', 'manifest.webmanifest', 'css/*.css', 'js/*.js', 'data/*.json', 'data/t/*.json',
+      'assets/*.png', 'assets/flags/*.svg', 'assets/flags/LICENSE-flag-icons.txt'], 'active PATTERNS allowlist');
   });
 }

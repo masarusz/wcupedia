@@ -8,6 +8,7 @@ import { register as uiTests } from './ui.test.mjs';
 import { register as viewsRenderTests } from './views-render.test.mjs';
 import { register as bracketLayoutTests } from './bracket-layout.test.mjs';
 import { register as playersJaTests } from './players-ja.test.mjs';
+import { register as phase4Tests } from './phase4.test.mjs';
 
 const checks = [];
 const test = (name, run) => checks.push({ name, run });
@@ -26,6 +27,7 @@ dataTests(test, equal, deepEqual);
 uiTests(test, equal, deepEqual);
 bracketLayoutTests(test, equal, deepEqual);
 playersJaTests(test, equal, deepEqual);
+phase4Tests(test, equal, deepEqual);
 viewsRenderTests(test, equal, deepEqual);
 
 let passed = 0;
