@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { rubyPlain } from '../public/js/ruby.js?v=0.2.7';
-import { stageLabel } from '../public/js/strings.js?v=0.2.7';
+import { rubyPlain } from '../public/js/ruby.js?v=0.2.8';
+import { stageLabel } from '../public/js/strings.js?v=0.2.8';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -166,7 +166,7 @@ export function register(test, equal, deepEqual) {
 
     try {
       const { creditsView, errorView, homeView, matchView, notFoundView, tournamentView } =
-        await import('../public/js/views.js?v=0.2.7');
+        await import('../public/js/views.js?v=0.2.8');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const meta = load('meta.json');

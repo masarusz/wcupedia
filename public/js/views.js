@@ -1,10 +1,10 @@
-import { buildBracket } from './bracket.js?v=0.2.7';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.2.7';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.2.7';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.2.7';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.2.7';
-import { VERSION } from './version.js?v=0.2.7';
-import { rubyPlain } from './ruby.js?v=0.2.7';
+import { buildBracket } from './bracket.js?v=0.2.8';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.2.8';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.2.8';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.2.8';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.2.8';
+import { VERSION } from './version.js?v=0.2.8';
+import { rubyPlain } from './ruby.js?v=0.2.8';
 
 function flag(teams, key) {
   return el('img', {

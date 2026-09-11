@@ -195,6 +195,8 @@ h3 { font-size: 21px; }
 .honour-pill-bronze { color: var(--bronze); background: var(--bronze-bg); }
 .honour-pill-young { color: var(--young); background: var(--young-bg); }
 .honour-pill-scorer { color: var(--teal); background: var(--teal-bg); }
+/* Space between the 得点王 list and the 大会賞 heading (owner, 2026-09-11). */
+.honours ul + h2 { margin-top: 36px; }
 
 .stage-section { margin-top: 42px; }
 .group-panel { padding: 18px; margin-bottom: 24px; }
