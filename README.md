@@ -1,59 +1,87 @@
 # Wcupedia（ワールドカップペディア）
 
-**Wカップ大図鑑** — 1930年から2026年まで、男子FIFAワールドカップ全23大会の
-試合・ゴール・国・選手を、子どもが日本語で調べて読めるウェブ図鑑です。
+**Wカップ大図鑑** — a kid-friendly encyclopedia of every men's football World Cup,
+1930–2026, in Japanese: tournaments, knockout charts, matches, goals and players.
+Built for two children (aged 8 and 10) to browse on an iPad.
 
-A Japanese-language, kid-friendly encyclopedia of every men's FIFA World Cup,
-1930–2026. Static site, no tracking, no accounts.
+**Live site:** https://masarusz.github.io/wcupedia/
 
-> 状態: 開発中（データ層と、大会・試合・クレジットの画面ができました。国・選手・検索は次の段階です）
+A static site: no accounts, no tracking, no server.
 
-## Features（予定を含む）
+> Status: in development. Tournament, match and credits pages are done; country
+> pages, player pages and search come next.
 
-- 大会ごとの結果・グループ順位・トーナメント表
-- 試合ごとのスコア（延長・PK）とゴール経過
-- 国ごとの出場歴・成績、選手ごとのゴール記録
-- ひらがな・カタカナ・英字で探せる検索、ふりがな表示
+## Features
+
+- Every tournament from 1930 to 2026: podium, top scorers and awards, group
+  tables, and a TV-style knockout chart (final in the centre, both halves of the
+  draw joined by lines) that can be stepped through round by round.
+- Every match: score with extra time and penalty shoot-outs, and a goal timeline
+  marking penalties and own goals.
+- Japanese player names: Japan's players in kanji, other players in katakana with
+  the Latin name in brackets, Latin only when no katakana is known.
+- iPad-first layout with no horizontal scrolling; the knockout chart stacks its
+  two halves when the screen is narrow.
 
 ## Data
 
-`public/data/` は次のデータから生成しています。
+The files in `public/data/` are generated from:
 
 | Source | Years | License |
 |---|---|---|
 | [Fjelstul World Cup Database](https://github.com/jfjelstul/worldcup) v1.2.0, © 2023 Joshua C. Fjelstul, Ph.D. | 1930–2022 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) |
 | [openfootball/worldcup.json](https://github.com/openfootball/worldcup.json) | 2026 | CC0 1.0 |
+| Japanese Wikipedia squad pages and article titles (player names in Japanese) | 1950, 1990–2026, plus article titles | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) |
 
-Modifications: the sources are filtered to men's tournaments, merged by year,
+Modifications: the sources are filtered to men's tournaments, combined by year,
 re-keyed, given Japanese names, and restructured into per-tournament JSON. The
-generated data in `public/data/` is therefore distributed under **CC BY-SA 4.0**
-— see [DATA-LICENSE.md](DATA-LICENSE.md). Code is MIT — see [LICENSE](LICENSE).
+generated data is therefore distributed under **CC BY-SA 4.0** — see
+[DATA-LICENSE.md](DATA-LICENSE.md). Flags: [flag-icons](https://github.com/lipis/flag-icons)
+(MIT) and public-domain historical flags from Wikimedia Commons. Code is MIT —
+see [LICENSE](LICENSE).
 
 ## Development
 
-Node.js 24 以上。依存パッケージはありません。
+Node.js 24 or later. No package dependencies.
 
 ```bash
-node tools/fetch-sources.mjs     # 固定コミットのソースを .cache/sources に取得
-node tools/build-data.mjs        # public/data を生成（決定的: 同じ入力なら同じ出力）
-node tests/run.mjs               # テスト
-node tools/diff-sources.mjs      # 2つのソースの突き合わせレポート（reports/）
+node tools/fetch-sources.mjs     # download the pinned sources into .cache/sources
+node tools/build-data.mjs        # generate public/data (deterministic)
+node tests/run.mjs               # run the test suite
+node tools/diff-sources.mjs      # cross-check the two match sources (reports/)
+python3 -m http.server 4182 --directory public   # serve locally
 ```
 
-## 変更履歴 / Changelog
+## Deploy
+
+```bash
+./scripts/deploy.sh --dry-run    # show what would be published
+./scripts/deploy.sh              # publish public/ to gh-pages and verify the live site
+```
+
+Only allowlisted files from `public/` are published. The script refuses to
+deploy on a failing test suite, checks that the published branch contains
+exactly the allowlist, verifies every file on the live site by checksum, and
+confirms that unpublished paths return 404.
+
+## Changelog
 
 ### v0.2.11 — 2026-09-11
 
-最初の公開版（GitHub Pages）。
+First public release on GitHub Pages.
 
-- データ層: 全23大会・1068試合・3028ゴールを検証済みJSONとして生成
-- 日本語テキストの正規化（かな・全角半角・アクセント）と、ふりがな記法パーサー
-- 画面: ホーム（全23大会）、大会ページ（結果・得点王・賞・グループ順位・トーナメント表）、試合ページ（スコア・延長・PK・ゴールの流れ）、クレジット
-- iPad向けレイアウト、国旗（flag-icons MIT / 歴史的国旗はパブリックドメイン）
-- 決勝トーナメントをテレビ風のトーナメント表で表示（決勝が中央、左右の山を線でつなぐ）。「はじまり」から各ラウンドのあとまで、状況を切り替えて見られる
-- 画面が狭いときはトーナメント表の左右の山を上下に並べ、チーム名を14px以上・横スクロールなしで表示
-- トーナメント表の線を修正（準決勝から決勝への線が箱の上を通らない・途切れない／決勝の箱が縦に伸びない）
-- 決勝トーナメントをグループリーグより上に表示
-- 選手名: 日本の選手は漢字、外国の選手は「カタカナ (アルファベット)」、カタカナがなければアルファベットのみ
-- 得点王・大会賞: 賞の名前と得点数を色付きラベルにして、選手名と区別しやすく
-- 読みがなは表示しない（漢字のみ）。読みはカナ検索用にデータ内に保持
+- Data: all 23 tournaments, 1,068 matches and 3,028 goals generated as verified JSON.
+- Japanese text normalisation (kana, full/half width, accents) and a furigana
+  markup parser (readings are kept in the data for kana search and not displayed).
+- Pages: home (all 23 tournaments), tournament (results, top scorers, awards,
+  group tables, knockout chart), match (score, extra time, penalties, goal
+  timeline) and credits.
+- iPad layout; flags (flag-icons MIT, historical flags public domain).
+- TV-style knockout chart with round-by-round states ("before any match" through
+  "after the final"); the two halves stack when the screen is narrow, with team
+  names at 14 px or larger and no horizontal scrolling.
+- Knockout stage shown above the group stages.
+- Player names: Japan's players in kanji, other players as katakana (Latin),
+  Latin only when no katakana is known.
+- Top scorers and awards: award names and goal counts shown as coloured labels,
+  distinct from player names.
