@@ -222,6 +222,15 @@ export function chooseJapaneseNames({ players, matches, articleTitles, overrides
       else candidates.push({ name: parsed.name, source: 'article-title', year: null });
     }
     for (const candidate of candidates) {
+      if (candidate.source === 'article-title'
+        && !/\s/u.test(String(player.name || '').trim())
+        && candidate.name.includes(' ')) {
+        rejections.push({
+          id: player.id, source: candidate.source, value: candidate.name,
+          reason: 'formal-name-for-one-name-player',
+        });
+        continue;
+      }
       const reason = validateJapaneseName(candidate.name, player.team);
       if (reason) {
         rejections.push({ id: player.id, source: candidate.source, value: candidate.name, reason });

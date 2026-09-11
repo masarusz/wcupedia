@@ -12,7 +12,11 @@
     "P-77335": { "ja": "ソン フンミン", "why": "Korea squad pages write [[孫興ミン|孫興慜]] (ソン・フンミン); the article title 孫興ミン is not katakana and must not be used" },
     "P-72441": { "ja": "ゲルト ミュラー", "why": "pre-1990 player: article-title fallback" },
     "P-33175": { "ja": "本田圭佑", "why": "Japan's players keep kanji" },
-    "P-84762": { "ja": "中山雅史", "why": "Japan's players keep kanji" }
+    "P-84762": { "ja": "中山雅史", "why": "Japan's players keep kanji" },
+    "P-27005": { "ja": null, "why": "Dida: one-word Latin name, only katakana is the formal article title エジヴァウド アウヴェス デ サンタ ローザ -> Latin only (owner's decision)" },
+    "P-04354": { "ja": null, "why": "Gérson: formal article title ジェルソン デ オリヴェイラ ヌーネス -> Latin only" },
+    "P-07056": { "ja": null, "why": "Gilmar: formal article title ジウマール ドス サントス ネヴェス -> Latin only" },
+    "P-29415": { "ja": "シャビ エルナンデス", "why": "Xavi: the multi-part name comes from a squad page, so it stays" }
   },
   "bySquad2026": [
     { "team": "ESP", "squadName": "Mikel Merino", "ja": "ミケル メリーノ" },

@@ -563,7 +563,8 @@ for (const year of squadPageYears) {
 }
 
 const playersForJapaneseNames = [...playerData].map(([id, player]) => ({
-  id, birthDate: player.birthDate, team: player.teams.has('JPN') ? 'JPN' : [...player.teams].sort(compare)[0],
+  id, name: player.name, birthDate: player.birthDate,
+  team: player.teams.has('JPN') ? 'JPN' : [...player.teams].sort(compare)[0],
 }));
 const japaneseNames = chooseJapaneseNames({
   players: playersForJapaneseNames, matches: japaneseSquadMatches,

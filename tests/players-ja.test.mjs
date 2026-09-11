@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import golden from './golden/players-ja.json' with { type: 'json' };
-import { fold } from '../public/js/fold.js?v=0.2.5';
-import { playerLabel } from '../public/js/format.js?v=0.2.5';
+import { fold } from '../public/js/fold.js?v=0.2.6';
+import { playerLabel } from '../public/js/format.js?v=0.2.6';
 import {
-  articleJapaneseName, extractSquadName, matchSquadEntry, normalizeJapaneseName,
+  articleJapaneseName, chooseJapaneseNames, extractSquadName, matchSquadEntry, normalizeJapaneseName,
   parseSquadWikitext, validateJapaneseName,
 } from '../tools/lib/players-ja.mjs';
 
@@ -48,6 +48,39 @@ export function register(test, equal, deepEqual) {
     deepEqual(articleJapaneseName('ロドリ (サッカー選手)', 1996), { name: 'ロドリ', reason: null });
     equal(validateJapaneseName('志尹南', 'PRK'), 'non-katakana');
     equal(validateJapaneseName('本田圭佑', 'JPN'), null);
+  });
+
+  test('formal article names are rejected only for one-name Latin displays', () => {
+    const players = [
+      { id: 'article-multipart', name: 'Dida', team: 'BRA' },
+      { id: 'article-singlepart', name: 'Pelé', team: 'BRA' },
+      { id: 'squad-multipart', name: 'Xavi', team: 'ESP' },
+      { id: 'latin-multipart', name: 'Gerd Müller', team: 'DEU' },
+      { id: 'hyphenated', name: 'Ró-Ró', team: 'QAT' },
+      { id: 'overridden', name: 'Didi', team: 'BRA' },
+    ];
+    const matches = [{
+      id: 'squad-multipart', name: 'シャビ エルナンデス', source: 'squad-title', year: 2010,
+    }];
+    const articleTitles = {
+      'article-multipart': { ja: 'エジヴァウド アウヴェス' },
+      'article-singlepart': { ja: 'ペレ' },
+      'latin-multipart': { ja: 'ゲルト ミュラー' },
+      hyphenated: { ja: 'ペドロ ミゲル' },
+      overridden: { ja: 'ヴァルディール ペレイラ' },
+    };
+    const result = chooseJapaneseNames({
+      players, matches, articleTitles, overrides: { overridden: 'ディヂ コモン' },
+    });
+
+    equal(result.chosen.has('article-multipart'), false);
+    equal(result.chosen.get('article-singlepart').ja, 'ペレ');
+    equal(result.chosen.get('squad-multipart').ja, 'シャビ エルナンデス');
+    equal(result.chosen.get('latin-multipart').ja, 'ゲルト ミュラー');
+    equal(result.chosen.has('hyphenated'), false);
+    equal(result.chosen.get('overridden').ja, 'ディヂ コモン');
+    deepEqual(result.rejections.filter(({ reason }) => reason === 'formal-name-for-one-name-player')
+      .map(({ id }) => id), ['article-multipart', 'hyphenated']);
   });
 
   test('squad identity matching uses team candidates, DOB, then shirt number', () => {
