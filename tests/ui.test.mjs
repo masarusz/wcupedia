@@ -4,14 +4,14 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { crc32, inflateSync } from 'node:zlib';
 import ui from './golden/ui.json' with { type: 'json' };
-import { buildBracket } from '../public/js/bracket.js?v=0.3.0';
+import { buildBracket } from '../public/js/bracket.js?v=0.4.0';
 import { foldCompact } from '../public/js/fold.js';
-import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=0.3.0';
+import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=0.4.0';
 import { parseRuby } from '../public/js/ruby.js';
-import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=0.3.0';
-import { VERSION } from '../public/js/version.js?v=0.3.0';
+import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=0.4.0';
+import { VERSION } from '../public/js/version.js?v=0.4.0';
 import { applySquadChanges } from '../tools/lib/phase4.mjs';
-import { awardTier } from '../public/js/views.js?v=0.3.0';
+import { awardTier } from '../public/js/views.js?v=0.4.0';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const PUBLIC = join(ROOT, 'public');
@@ -366,13 +366,12 @@ export function register(test, equal, deepEqual) {
   });
 
   test('asset imports and footer share VERSION', () => {
-    equal(VERSION, '0.3.0');
+    equal(VERSION, '0.4.0');
     const html = readFileSync(join(PUBLIC, 'index.html'), 'utf8');
     for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
       const url = match[1];
       if (/^(?:https?:|#)/.test(url)) continue;
-      const isTouchIcon = url === 'assets/apple-touch-icon.png';
-      if (!isTouchIcon) equal(url.endsWith(`?v=${VERSION}`), true, url);
+      equal(url.endsWith(`?v=${VERSION}`), true, url);
       equal(existsSync(join(PUBLIC, url.split('?')[0])), true, `${url} exists`);
     }
     for (const file of files(join(PUBLIC, 'js')).filter((name) => name.endsWith('.js'))) {
@@ -407,6 +406,9 @@ export function register(test, equal, deepEqual) {
       try { await data.loadTournaments(); } catch { rejected = true; }
       equal(rejected, true, 'invalid tournaments rejected');
       equal(requested[0], `data/tournaments.json?v=${VERSION}`);
+      rejected = false;
+      try { await data.loadSearch(); } catch { rejected = true; }
+      equal(rejected, true, 'invalid search rejected');
     } finally {
       globalThis.fetch = originalFetch;
     }
@@ -419,10 +421,13 @@ export function register(test, equal, deepEqual) {
     }
     equal(html.includes('name="viewport"'), true, 'viewport');
     const app = readFileSync(join(PUBLIC, 'js/app.js'), 'utf8');
-    for (const route of ["route === '/'", "route === '/credits'", "route === '/c'", "route === '/r'", '/^\\/t\\/', '/^\\/m\\/', '/^\\/c\\/', '/^\\/p\\/', '/^\\/r\\/']) equal(app.includes(route), true, route);
+    for (const route of ["route === '/'", "route === '/s'", "route === '/credits'", "route === '/c'", "route === '/r'", '/^\\/t\\/', '/^\\/m\\/', '/^\\/c\\/', '/^\\/p\\/', '/^\\/r\\/']) equal(app.includes(route), true, route);
     const playerBranch = app.slice(app.indexOf('} else if (playerMatch)'), app.indexOf('} else if (rankingMatch)'));
     equal(playerBranch.includes('loadTeams'), false, 'player route loads only players and its tournament files');
     equal(app.includes('window.scrollTo(0, 0)'), true, 'route scroll');
+    const searchOptions = app.slice(app.indexOf('function searchOptions'), app.indexOf('async function renderRoute'));
+    equal(searchOptions.includes('history.replaceState'), true, 'search query uses replaceState');
+    equal(searchOptions.includes('location.hash'), false, 'search query does not assign location.hash');
   });
 
   test('CSS has iPad overflow tap and sticky guards', () => {
@@ -589,9 +594,10 @@ export function register(test, equal, deepEqual) {
     const html = readFileSync(join(PUBLIC, 'index.html'), 'utf8');
     const touchIcon = /<link rel="apple-touch-icon" sizes="180x180" href="([^"]+)">/.exec(html);
     equal(Boolean(touchIcon), true, 'apple-touch-icon link present');
-    equal(touchIcon[1].includes('?'), false, 'apple-touch-icon href has no query string (iOS ignores it)');
-    equal(existsSync(join(PUBLIC, touchIcon[1])), true, 'linked touch icon exists');
-    deepEqual(pngHeader(join(PUBLIC, touchIcon[1])), { width: 180, height: 180, colorType: 2 }, 'linked touch icon dimensions');
+    equal(touchIcon[1], `assets/apple-touch-icon.png?v=${VERSION}`, 'apple-touch-icon version');
+    const touchIconPath = join(PUBLIC, touchIcon[1].split('?')[0]);
+    equal(existsSync(touchIconPath), true, 'linked touch icon exists');
+    deepEqual(pngHeader(touchIconPath), { width: 180, height: 180, colorType: 2 }, 'linked touch icon dimensions');
     equal(html.includes(`<link rel="icon" type="image/png" href="assets/icon-512.png?v=${VERSION}">`), true, 'favicon link');
     equal(html.includes(`<link rel="manifest" href="manifest.webmanifest?v=${VERSION}">`), true, 'manifest link');
     equal(html.includes('name="apple-mobile-web-app-capable" CONTENT="yes"'), true, 'apple-mobile-web-app-capable meta');

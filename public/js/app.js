@@ -1,8 +1,9 @@
-import { loadMeta, loadPlayers, loadRankings, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.3.0';
-import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.3.0';
-import { STRINGS } from './strings.js?v=0.3.0';
-import { countriesView, countryView, creditsView, errorView, homeView, matchView, notFoundView, playerView, rankingsView, tournamentView } from './views.js?v=0.3.0';
-import { VERSION } from './version.js?v=0.3.0';
+import { loadMeta, loadPlayers, loadRankings, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.4.0';
+import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.4.0';
+import { prepareIndex } from './search.js?v=0.4.0';
+import { STRINGS } from './strings.js?v=0.4.0';
+import { countriesView, countryView, creditsView, errorView, homeView, matchView, notFoundView, playerView, rankingsView, searchView, tournamentView } from './views.js?v=0.4.0';
+import { VERSION } from './version.js?v=0.4.0';
 
 const root = document.querySelector('#app');
 
@@ -20,6 +21,7 @@ function shell() {
         el('a', { href: '#/' }, rubyNodes(STRINGS.tournaments)),
         el('a', { href: '#/c' }, '国'),
         el('a', { href: '#/r' }, 'ランキング'),
+        el('a', { href: '#/s' }, rubyNodes(STRINGS.search)),
         el('a', { href: '#/credits' }, rubyNodes(STRINGS.credits)),
       ]),
     ])),
@@ -34,16 +36,47 @@ function shell() {
 
 const main = shell();
 let routeNumber = 0;
+let searchContextPromise = null;
+
+function loadSearchContext() {
+  if (!searchContextPromise) {
+    searchContextPromise = Promise.all([loadSearch(), loadTeams(), loadTournaments()])
+      .then(([entries, teams, tournaments]) => ({ index: prepareIndex(entries), teams, tournaments }))
+      .catch((error) => {
+        searchContextPromise = null;
+        throw error;
+      });
+  }
+  return searchContextPromise;
+}
+
+function searchOptions(path, query, eager = false) {
+  return {
+    initialQuery: query,
+    eager,
+    loadContext: loadSearchContext,
+    updateUrl: (value) => {
+      const suffix = value ? `?q=${encodeURIComponent(value)}` : '';
+      history.replaceState(null, '', `#${path}${suffix}`);
+    },
+  };
+}
 
 async function renderRoute() {
   const current = ++routeNumber;
-  const route = location.hash.slice(1) || '/';
+  const routeValue = location.hash.slice(1) || '/';
+  const separator = routeValue.indexOf('?');
+  const route = separator < 0 ? routeValue : routeValue.slice(0, separator);
+  const parameters = new URLSearchParams(separator < 0 ? '' : routeValue.slice(separator + 1));
+  const query = parameters.get('q') || '';
   window.scrollTo(0, 0);
   try {
     let view;
     if (route === '/') {
       const [tournaments, teams] = await Promise.all([loadTournaments(), loadTeams()]);
-      view = homeView(tournaments, teams);
+      view = homeView(tournaments, teams, searchOptions('/', query));
+    } else if (route === '/s') {
+      view = searchView(searchOptions('/s', query, true));
     } else if (route === '/credits') {
       view = creditsView(await loadMeta());
     } else if (route === '/c') {

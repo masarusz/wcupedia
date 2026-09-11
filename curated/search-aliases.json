@@ -1,0 +1,6 @@
+{
+  "_about": "Extra search keys for names children say differently from the data's spelling. Keys are written in hiragana and folded by fold.js at build time. Keep this short: the loose kana tier (small っ, ー and small kana ignored) already covers spelling slips such as えむばっぺ for エムバペ; add an entry only for a genuinely different name. Written 2026-09-11.",
+  "team:JPN": ["にっぽん"],
+  "player:P-70442": ["くりろな"],
+  "player:P-64077": ["えんばぺ"]
+}

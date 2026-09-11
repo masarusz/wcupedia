@@ -1,8 +1,9 @@
-import { rubyPlain } from './ruby.js?v=0.3.0';
+import { rubyPlain } from './ruby.js?v=0.4.0';
 
 const ALLOWED_ATTRIBUTES = new Set([
   'alt', 'aria-current', 'aria-label', 'aria-live', 'aria-pressed', 'class', 'colspan', 'href', 'id',
-  'role', 'scope', 'src', 'title', 'type', 'width', 'height',
+  'role', 'scope', 'src', 'title', 'type', 'width', 'height', 'for', 'placeholder',
+  'enterkeyhint', 'autocomplete', 'autocorrect', 'autocapitalize', 'spellcheck',
 ]);
 
 const APPROVED_HTTPS_HOSTS = new Set([

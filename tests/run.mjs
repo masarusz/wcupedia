@@ -9,6 +9,11 @@ import { register as viewsRenderTests } from './views-render.test.mjs';
 import { register as bracketLayoutTests } from './bracket-layout.test.mjs';
 import { register as playersJaTests } from './players-ja.test.mjs';
 import { register as phase4Tests } from './phase4.test.mjs';
+import { register as searchTests } from './search.test.mjs';
+import { register as lazyKidTests } from './lazy-kid.test.mjs';
+import { register as searchBuildTests } from './search-build.test.mjs';
+import { register as searchUiTests } from './search-ui.test.mjs';
+import { register as mutationTests } from './mutation.test.mjs';
 
 const checks = [];
 const test = (name, run) => checks.push({ name, run });
@@ -28,6 +33,11 @@ uiTests(test, equal, deepEqual);
 bracketLayoutTests(test, equal, deepEqual);
 playersJaTests(test, equal, deepEqual);
 phase4Tests(test, equal, deepEqual);
+searchTests(test, equal, deepEqual);
+searchBuildTests(test, equal, deepEqual);
+lazyKidTests(test, equal, deepEqual);
+searchUiTests(test, equal, deepEqual);
+mutationTests(test, equal, deepEqual);
 viewsRenderTests(test, equal, deepEqual);
 
 let passed = 0;

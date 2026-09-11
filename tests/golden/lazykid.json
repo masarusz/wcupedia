@@ -1,0 +1,383 @@
+{
+ "_about": "Lazy-kid test (SPEC.md): what a bored 8-year-old types, and the page that must come first. Written 2026-09-11 by the orchestrator from what a child would expect — not from the search implementation. Player ids resolved from the English label in search.json. \"first\" = result #1; \"top3\" = must appear within the first three; \"mustNotInclude\" = must not appear anywhere; \"noResults\" = empty result list. Printed as N/N.",
+ "cases": [
+  {
+   "q": "にほん",
+   "first": {
+    "type": "team",
+    "id": "JPN"
+   }
+  },
+  {
+   "q": "にっぽん",
+   "first": {
+    "type": "team",
+    "id": "JPN"
+   }
+  },
+  {
+   "q": "日本",
+   "first": {
+    "type": "team",
+    "id": "JPN"
+   }
+  },
+  {
+   "q": "japan",
+   "first": {
+    "type": "team",
+    "id": "JPN"
+   }
+  },
+  {
+   "q": "めっし",
+   "first": {
+    "type": "player",
+    "id": "P-14758"
+   }
+  },
+  {
+   "q": "メッシ",
+   "first": {
+    "type": "player",
+    "id": "P-14758"
+   }
+  },
+  {
+   "q": "messi",
+   "first": {
+    "type": "player",
+    "id": "P-14758"
+   }
+  },
+  {
+   "q": "ｍｅｓｓｉ",
+   "first": {
+    "type": "player",
+    "id": "P-14758"
+   }
+  },
+  {
+   "q": "りおねる めっし",
+   "first": {
+    "type": "player",
+    "id": "P-14758"
+   }
+  },
+  {
+   "q": "えむばぺ",
+   "first": {
+    "type": "player",
+    "id": "P-64077"
+   }
+  },
+  {
+   "q": "えむばっぺ",
+   "first": {
+    "type": "player",
+    "id": "P-64077"
+   }
+  },
+  {
+   "q": "むばっぺ",
+   "first": {
+    "type": "player",
+    "id": "P-64077"
+   }
+  },
+  {
+   "q": "えんばぺ",
+   "first": {
+    "type": "player",
+    "id": "P-64077"
+   }
+  },
+  {
+   "q": "mbappe",
+   "first": {
+    "type": "player",
+    "id": "P-64077"
+   }
+  },
+  {
+   "q": "くりろな",
+   "first": {
+    "type": "player",
+    "id": "P-70442"
+   }
+  },
+  {
+   "q": "ろなうど",
+   "first": {
+    "type": "player",
+    "id": "P-62722"
+   }
+  },
+  {
+   "q": "ぺれ",
+   "first": {
+    "type": "player",
+    "id": "P-38906"
+   }
+  },
+  {
+   "q": "まらどーな",
+   "first": {
+    "type": "player",
+    "id": "P-80404"
+   }
+  },
+  {
+   "q": "みとま",
+   "first": {
+    "type": "player",
+    "id": "P-22633"
+   }
+  },
+  {
+   "q": "三笘",
+   "first": {
+    "type": "player",
+    "id": "P-22633"
+   }
+  },
+  {
+   "q": "ほんだ",
+   "first": {
+    "type": "player",
+    "id": "P-33175"
+   }
+  },
+  {
+   "q": "くぼ",
+   "first": {
+    "type": "player",
+    "id": "P-39942"
+   }
+  },
+  {
+   "q": "ながとも",
+   "first": {
+    "type": "player",
+    "id": "P-26303"
+   }
+  },
+  {
+   "q": "どうあん",
+   "first": {
+    "type": "player",
+    "id": "P-58907"
+   }
+  },
+  {
+   "q": "まちの",
+   "first": {
+    "type": "player",
+    "id": "P-44328"
+   }
+  },
+  {
+   "q": "はーらんど",
+   "first": {
+    "type": "player",
+    "id": "P26-813a16a38a"
+   }
+  },
+  {
+   "q": "けいん",
+   "first": {
+    "type": "player",
+    "id": "P-58924"
+   }
+  },
+  {
+   "q": "ねいまーる",
+   "first": {
+    "type": "player",
+    "id": "P-87008"
+   }
+  },
+  {
+   "q": "もどりっち",
+   "first": {
+    "type": "player",
+    "id": "P-29491"
+   }
+  },
+  {
+   "q": "べっかむ",
+   "first": {
+    "type": "player",
+    "id": "P-81049"
+   }
+  },
+  {
+   "q": "くろーぜ",
+   "first": {
+    "type": "player",
+    "id": "P-27787"
+   }
+  },
+  {
+   "q": "ぶらじる",
+   "first": {
+    "type": "team",
+    "id": "BRA"
+   }
+  },
+  {
+   "q": "すぺいん",
+   "first": {
+    "type": "team",
+    "id": "ESP"
+   }
+  },
+  {
+   "q": "ぽるとがる",
+   "first": {
+    "type": "team",
+    "id": "PRT"
+   }
+  },
+  {
+   "q": "いんぐらんど",
+   "first": {
+    "type": "team",
+    "id": "ENG"
+   }
+  },
+  {
+   "q": "あるぜんちん",
+   "first": {
+    "type": "team",
+    "id": "ARG"
+   }
+  },
+  {
+   "q": "かんこく",
+   "first": {
+    "type": "team",
+    "id": "KOR"
+   }
+  },
+  {
+   "q": "あめりか",
+   "first": {
+    "type": "team",
+    "id": "USA"
+   }
+  },
+  {
+   "q": "さうじあらびあ",
+   "first": {
+    "type": "team",
+    "id": "SAU"
+   }
+  },
+  {
+   "q": "それん",
+   "first": {
+    "type": "team",
+    "id": "SUN"
+   }
+  },
+  {
+   "q": "ざいーる",
+   "first": {
+    "type": "team",
+    "id": "ZAI"
+   }
+  },
+  {
+   "q": "にしどいつ",
+   "first": {
+    "type": "team",
+    "id": "FRG"
+   }
+  },
+  {
+   "q": "2022",
+   "first": {
+    "type": "tournament",
+    "id": "2022"
+   }
+  },
+  {
+   "q": "2026",
+   "first": {
+    "type": "tournament",
+    "id": "2026"
+   }
+  },
+  {
+   "q": "1930",
+   "first": {
+    "type": "tournament",
+    "id": "1930"
+   }
+  },
+  {
+   "q": "どいつ",
+   "first": {
+    "type": "team",
+    "id": "DEU"
+   },
+   "top3": [
+    {
+     "type": "team",
+     "id": "FRG"
+    }
+   ],
+   "why": "西ドイツ discoverable from ドイツ"
+  },
+  {
+   "q": "かたーる",
+   "first": {
+    "type": "team",
+    "id": "QAT"
+   },
+   "top3": [
+    {
+     "type": "tournament",
+     "id": "2022"
+    }
+   ],
+   "why": "the team first, its World Cup right behind"
+  },
+  {
+   "q": "めし",
+   "top3": [
+    {
+     "type": "player",
+     "id": "P-14758"
+    }
+   ],
+   "why": "dropped っ: loose tier, may follow strict prefix matches"
+  },
+  {
+   "q": "ほ",
+   "mustNotInclude": [
+    {
+     "type": "team",
+     "id": "PRT"
+    }
+   ],
+   "why": "voicing marks are never folded away (ほ ≠ ぽ)"
+  },
+  {
+   "q": "ぽ",
+   "mustNotInclude": [
+    {
+     "type": "team",
+     "id": "HND"
+    }
+   ],
+   "why": "and the other way round (ぽ ≠ ほ)"
+  },
+  {
+   "q": "かぶとむし",
+   "noResults": true,
+   "why": "empty-result state. Replaced にっこう on 2026-09-11: with っ ignored it becomes にこう, a legitimate loose-tier prefix of ニコ ウィリアムズ — the case was wrong about the SPEC rule, not the search"
+  }
+ ]
+}

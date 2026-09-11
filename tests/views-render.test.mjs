@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { rubyPlain } from '../public/js/ruby.js?v=0.3.0';
-import { stageLabel } from '../public/js/strings.js?v=0.3.0';
+import { rubyPlain } from '../public/js/ruby.js?v=0.4.0';
+import { stageLabel } from '../public/js/strings.js?v=0.4.0';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -138,6 +138,9 @@ export function register(test, equal, deepEqual) {
     try {
       await import(`../public/js/app.js?shell-test=${Date.now()}`);
       await new Promise((resolvePromise) => setImmediate(resolvePromise));
+      equal(requested.includes('data/search.json'), false, 'home does not load search before focus');
+      deepEqual(descendants(appRoot).filter((node) => node.tagName === 'NAV' && node.getAttribute('aria-label') === 'main')[0]
+        .childNodes.map((node) => node.textContent), ['大会', '国', 'ランキング', '検索', 'クレジット'], 'menu order');
       equal(descendants(appRoot).some((node) => node.tagName === 'BUTTON'), false, 'shell buttons');
       equal(descendants(appRoot).some((node) => node.tagName === 'RUBY' || node.tagName === 'RT'), false,
         'shell ruby or rt elements');
@@ -150,7 +153,7 @@ export function register(test, equal, deepEqual) {
       equal(marks[0].tagName, 'IMG', 'brand-mark is an img element');
       equal(brand.childNodes[0], marks[0], 'brand-mark is the first child of .brand');
       equal(marks[0].getAttribute('alt'), '', 'brand-mark has empty alt text');
-      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=0.3.0', 'brand-mark versioned resource');
+      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=0.4.0', 'brand-mark versioned resource');
       equal(marks[0].getAttribute('width'), '34', 'brand-mark width');
       equal(marks[0].getAttribute('height'), '34', 'brand-mark height');
       requested.length = 0;
@@ -167,6 +170,24 @@ export function register(test, equal, deepEqual) {
       deepEqual(requested.filter((path) => path.startsWith('data/t/')).sort(),
         [2006, 2010, 2014, 2018, 2022, 2026].map((year) => `data/t/${year}.json`), 'player route tournament requests');
       equal(requested.includes('data/search.json'), false, 'player route does not load search.json');
+      requested.length = 0;
+      for (const hash of ['#/t/2022', '#/m/M-2022-64']) {
+        globalThis.location.hash = hash;
+        await listeners.get('hashchange')();
+      }
+      equal(requested.includes('data/search.json'), false, 'tournament/match routes do not load search.json');
+      globalThis.location.hash = '#/';
+      await listeners.get('hashchange')();
+      requested.length = 0;
+      const homeInput = descendants(appRoot).find((node) => node.tagName === 'INPUT');
+      await homeInput.listeners.get('focus')[0]();
+      equal(requested.includes('data/search.json'), true, 'home focus loads search.json');
+      globalThis.location.hash = '#/s?q=%E3%82%81%E3%81%A3%E3%81%97';
+      await listeners.get('hashchange')();
+      await new Promise((resolvePromise) => setImmediate(resolvePromise));
+      const routeInput = descendants(appRoot).find((node) => node.tagName === 'INPUT');
+      equal(routeInput.value, 'めっし', 'search route restores query');
+      equal(descendants(appRoot).some((node) => node.getAttribute('href') === '#/p/P-14758'), true, 'search route restores results');
     } finally {
       if (previousDocument === undefined) delete globalThis.document;
       else globalThis.document = previousDocument;
@@ -193,7 +214,7 @@ export function register(test, equal, deepEqual) {
     try {
       const { countriesView, countryView, creditsView, errorView, homeView, matchView, notFoundView,
         playerView, rankingsView, teamName, tournamentView } =
-        await import('../public/js/views.js?v=0.3.0');
+        await import('../public/js/views.js?v=0.4.0');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const players = load('players.json');

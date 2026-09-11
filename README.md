@@ -66,6 +66,19 @@ confirms that unpublished paths return 404.
 
 ## Changelog
 
+### v0.4.0 — 2026-09-11
+
+- Search (検索): one box, in the menu and at the top of the home page, that finds
+  countries, players and tournaments from hiragana, katakana, kanji or Latin
+  letters. Results update while typing without disturbing Japanese input, and
+  going back from a result restores the search.
+- Results are ranked for "tap the first one": exact names first, then surname
+  or given name, then names that start with or contain the query. Near-miss
+  spellings (a missing small っ or ー, as in えむばっぺ for エムバペ) are found
+  after exact matches, and a few nicknames are known (にっぽん, くりろな).
+  Tournaments are also found by host country.
+- The search index loads only when a search box is first used.
+
 ### v0.3.0 — 2026-09-11
 
 - Country list (国), grouped by region (Asia, Europe, South America, North and

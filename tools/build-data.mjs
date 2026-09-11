@@ -8,6 +8,7 @@ import { SOURCES } from './lib/sources.mjs';
 import { conductScore, rankGroup2026 } from './lib/standings-2026.mjs';
 import { chooseJapaneseNames, matchSquadEntry, parseSquadWikitext, validateJapaneseName } from './lib/players-ja.mjs';
 import { applySquadChanges, playerTieOrder, rankRows, resolveLineups2026 } from './lib/phase4.mjs';
+import { addTournamentHostKeys, mergeSearchAliases } from './lib/search-data.mjs';
 import { fold, foldCompact } from '../public/js/fold.js';
 import { rubyPlain, rubyReading, parseRuby } from '../public/js/ruby.js';
 
@@ -15,10 +16,12 @@ const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const args = process.argv.slice(2);
 let sourceRoot = '.cache/sources';
 let outputRoot = 'public/data';
+let searchAliasesPath = join(ROOT, 'curated/search-aliases.json');
 for (let index = 0; index < args.length; index += 1) {
   if (args[index] === '--src' && args[index + 1]) sourceRoot = args[++index];
   else if (args[index] === '--out' && args[index + 1]) outputRoot = args[++index];
-  else throw new Error('usage: node tools/build-data.mjs [--src DIR] [--out DIR]');
+  else if (args[index] === '--search-aliases' && args[index + 1]) searchAliasesPath = resolve(args[++index]);
+  else throw new Error('usage: node tools/build-data.mjs [--src DIR] [--out DIR] [--search-aliases FILE]');
 }
 sourceRoot = resolve(sourceRoot);
 outputRoot = resolve(outputRoot);
@@ -41,6 +44,7 @@ const squadChanges2026 = await json(join(ROOT, 'curated/squad-changes-2026.json'
 const confederationFallbacks = await json(join(ROOT, 'curated/confederations.json'));
 const teamHeadingsJa = await json(join(ROOT, 'curated/team-headings-ja.json'));
 const playersJaOverrides = await json(join(ROOT, 'curated/players-ja-overrides.json'));
+const searchAliases = await json(searchAliasesPath);
 const playerJaTitles = await json(join(sourceRoot, 'wikipedia/player-ja-titles.json'));
 let standingsOverrides2026 = {};
 try {
@@ -847,10 +851,16 @@ const records = {
     .sort((a, b) => b.titlesWithPredecessors - a.titlesWithPredecessors || b.titles - a.titles || compare(a.team, b.team)),
 };
 
-const search = [];
+let search = [];
+const teamSearchKeys = new Map();
 for (const key of allTeamKeys) {
   const team = outputTeams[key];
-  search.push({ type: 'team', id: key, label: team.en, keys: unique([fold(team.en), fold(rubyPlain(team.ja)), fold(rubyReading(team.ja))]) });
+  teamSearchKeys.set(key, unique([fold(team.en), fold(rubyPlain(team.ja)), fold(rubyReading(team.ja))]));
+}
+for (const key of allTeamKeys) {
+  const team = outputTeams[key];
+  const successorKeys = team.successor ? teamSearchKeys.get(team.successor) : [];
+  search.push({ type: 'team', id: key, label: team.en, keys: unique([...teamSearchKeys.get(key), ...successorKeys]) });
 }
 for (const id of Object.keys(outputPlayers)) {
   const player = outputPlayers[id];
@@ -858,9 +868,16 @@ for (const id of Object.keys(outputPlayers)) {
   const values = [fold(player.name), foldCompact(player.name)];
   if (player.ja) values.push(fold(player.ja), foldCompact(player.ja));
   if (source.teams.has('JPN') && source.reading) values.push(fold(source.reading), foldCompact(source.reading));
-  search.push({ type: 'player', id, label: player.name, keys: unique(values) });
+  const recentYear = player.years.at(-1);
+  search.push({
+    type: 'player', id, label: player.name, keys: unique(values), ja: player.ja,
+    team: playerYearTeam.get(`${id}\0${recentYear}`) || player.teams.at(-1),
+    years: [player.years[0], recentYear], fame: [player.goals, player.apps ?? 0, player.years.length],
+  });
 }
 for (const tournament of tournamentSummaries) search.push({ type: 'tournament', id: String(tournament.year), label: `${tournament.year}`, keys: [String(tournament.year)] });
+search = mergeSearchAliases(search, searchAliases);
+search = addTournamentHostKeys(search, tournamentSummaries);
 search.sort((a, b) => compare(a.type, b.type) || compare(a.id, b.id));
 
 const meta = {
