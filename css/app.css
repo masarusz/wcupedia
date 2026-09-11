@@ -96,16 +96,17 @@ button { font: inherit; font-size: 16px; }
   color: var(--ink);
   text-decoration: none;
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: auto auto auto;
   column-gap: 12px;
   align-items: center;
   align-content: center;
   margin-right: auto;
 }
 
-.brand strong { grid-row: 1 / span 2; color: var(--primary); font-size: 30px; line-height: 1; letter-spacing: .02em; }
-.brand .subtitle { grid-column: 2; align-self: end; font-size: 15px; font-weight: 700; line-height: 1.25; }
-.brand small { grid-column: 2; align-self: start; color: var(--muted); font-size: 11px; line-height: 1.25; letter-spacing: .06em; }
+.brand-mark { grid-column: 1; grid-row: 1 / span 2; align-self: center; width: 34px; height: 34px; }
+.brand strong { grid-column: 2; grid-row: 1 / span 2; color: var(--primary); font-size: 30px; line-height: 1; letter-spacing: .02em; }
+.brand .subtitle { grid-column: 3; align-self: end; font-size: 15px; font-weight: 700; line-height: 1.25; }
+.brand small { grid-column: 3; align-self: start; color: var(--muted); font-size: 11px; line-height: 1.25; letter-spacing: .06em; }
 
 .site-nav { display: flex; gap: 4px; }
 .site-nav a, .back-link, .retry-button {
@@ -657,6 +658,7 @@ h3 { font-size: 21px; }
 @media (max-width: 760px) {
   .header-inner { padding-inline: 12px; gap: 6px; flex-wrap: wrap; }
   .brand { min-height: 48px; }
+  .brand-mark { width: 28px; height: 28px; }
   .brand strong { grid-row: auto; font-size: 24px; }
   .brand .subtitle { align-self: center; }
   .brand small { display: none; }

@@ -1,0 +1,14 @@
+{
+  "name": "Wcupedia（Wカップ大図鑑）",
+  "short_name": "Wcupedia",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fffdf7",
+  "theme_color": "#17653a",
+  "lang": "ja",
+  "icons": [
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
