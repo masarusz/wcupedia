@@ -1,4 +1,4 @@
-import { VERSION } from './version.js?v=0.2.9';
+import { VERSION } from './version.js?v=0.2.10';
 
 const cache = new Map();
 

@@ -80,7 +80,7 @@ button { font: inherit; font-size: 16px; }
 
 .header-inner {
   width: min(1180px, 100%);
-  min-height: 88px;
+  min-height: 68px;
   margin: 0 auto;
   padding: 8px 20px;
   display: flex;
@@ -88,19 +88,24 @@ button { font: inherit; font-size: 16px; }
   gap: 16px;
 }
 
+/* Brand lockup (owner, 2026-09-11: three stacked lines looked cramped):
+   "Wcupedia" on the left spanning two rows; "Wカップ大図鑑" over the small reading
+   in a column to its right. */
 .brand {
-  min-height: 64px;
+  min-height: 48px;
   color: var(--ink);
   text-decoration: none;
   display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 12px;
+  align-items: center;
   align-content: center;
-  line-height: 1.15;
   margin-right: auto;
 }
 
-.brand strong { color: var(--primary); font-size: 28px; letter-spacing: .02em; }
-.brand .subtitle { font-size: 15px; font-weight: 700; }
-.brand small { color: var(--muted); font-size: 11px; letter-spacing: .08em; }
+.brand strong { grid-row: 1 / span 2; color: var(--primary); font-size: 30px; line-height: 1; letter-spacing: .02em; }
+.brand .subtitle { grid-column: 2; align-self: end; font-size: 15px; font-weight: 700; line-height: 1.25; }
+.brand small { grid-column: 2; align-self: start; color: var(--muted); font-size: 11px; line-height: 1.25; letter-spacing: .06em; }
 
 .site-nav { display: flex; gap: 4px; }
 .site-nav a, .back-link, .retry-button {
@@ -647,8 +652,9 @@ h3 { font-size: 21px; }
 
 @media (max-width: 760px) {
   .header-inner { padding-inline: 12px; gap: 6px; flex-wrap: wrap; }
-  .brand { min-height: 56px; }
-  .brand strong { font-size: 24px; }
+  .brand { min-height: 48px; }
+  .brand strong { grid-row: auto; font-size: 24px; }
+  .brand .subtitle { align-self: center; }
   .brand small { display: none; }
   .site-nav { order: 3; width: 100%; justify-content: center; }
   .page { --page-padding-inline: 14px; padding: 22px var(--page-padding-inline) 52px; }
