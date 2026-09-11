@@ -38,10 +38,12 @@ fi
 # shipping a half-empty site.
 PATTERNS=(
   "index.html"
+  "manifest.webmanifest"
   "css/*.css"
   "js/*.js"
   "data/*.json"
   "data/t/*.json"
+  "assets/*.png"
   "assets/flags/*.svg"
   "assets/flags/LICENSE-flag-icons.txt"
 )

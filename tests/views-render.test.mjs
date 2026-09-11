@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { rubyPlain } from '../public/js/ruby.js?v=0.2.11';
-import { stageLabel } from '../public/js/strings.js?v=0.2.11';
+import { rubyPlain } from '../public/js/ruby.js?v=0.2.12';
+import { stageLabel } from '../public/js/strings.js?v=0.2.12';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -141,6 +141,13 @@ export function register(test, equal, deepEqual) {
         'shell ruby or rt elements');
       equal(descendants(appRoot).find((node) => hasClass(node, 'subtitle')).textContent, 'Wカップ大図鑑',
         'home title without reading');
+
+      const brand = descendants(appRoot).find((node) => hasClass(node, 'brand'));
+      const marks = descendants(appRoot).filter((node) => hasClass(node, 'brand-mark'));
+      equal(marks.length, 1, 'exactly one .brand-mark image');
+      equal(marks[0].tagName, 'IMG', 'brand-mark is an img element');
+      equal(brand.childNodes[0], marks[0], 'brand-mark is the first child of .brand');
+      equal(marks[0].getAttribute('alt'), '', 'brand-mark has empty alt text');
     } finally {
       if (previousDocument === undefined) delete globalThis.document;
       else globalThis.document = previousDocument;
@@ -166,7 +173,7 @@ export function register(test, equal, deepEqual) {
 
     try {
       const { creditsView, errorView, homeView, matchView, notFoundView, tournamentView } =
-        await import('../public/js/views.js?v=0.2.11');
+        await import('../public/js/views.js?v=0.2.12');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const meta = load('meta.json');

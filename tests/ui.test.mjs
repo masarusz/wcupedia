@@ -1,13 +1,15 @@
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { inflateSync } from 'node:zlib';
 import ui from './golden/ui.json' with { type: 'json' };
-import { buildBracket } from '../public/js/bracket.js?v=0.2.11';
+import { buildBracket } from '../public/js/bracket.js?v=0.2.12';
 import { foldCompact } from '../public/js/fold.js';
-import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=0.2.11';
+import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=0.2.12';
 import { parseRuby } from '../public/js/ruby.js';
-import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=0.2.11';
-import { VERSION } from '../public/js/version.js?v=0.2.11';
+import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=0.2.12';
+import { VERSION } from '../public/js/version.js?v=0.2.12';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const PUBLIC = join(ROOT, 'public');
@@ -54,6 +56,169 @@ function parseCssRules(css, atRules = []) {
     cursor = close;
   }
   return rules;
+}
+
+function decodePng(path) {
+  // A tiny decoder for the one shape of PNG this project writes itself:
+  // 8-bit, non-interlaced, colour type 2 (RGB) or 6 (RGBA). Uses only
+  // node:zlib (a Node builtin, not an installed dependency) to inflate the
+  // IDAT stream, then reverses the PNG per-scanline filters by hand.
+  const buf = readFileSync(path);
+  let offset = 8; // past the 8-byte PNG signature
+  let width;
+  let height;
+  let bitDepth;
+  let colorType;
+  let interlace;
+  const idatChunks = [];
+  while (offset < buf.length) {
+    const length = buf.readUInt32BE(offset);
+    const type = buf.toString('ascii', offset + 4, offset + 8);
+    const dataStart = offset + 8;
+    const data = buf.subarray(dataStart, dataStart + length);
+    if (type === 'IHDR') {
+      width = data.readUInt32BE(0);
+      height = data.readUInt32BE(4);
+      bitDepth = data.readUInt8(8);
+      colorType = data.readUInt8(9);
+      interlace = data.readUInt8(12);
+    } else if (type === 'IDAT') {
+      idatChunks.push(data);
+    } else if (type === 'IEND') {
+      break;
+    }
+    offset = dataStart + length + 4; // skip the trailing CRC
+  }
+  if (bitDepth !== 8) throw new Error(`decodePng: unsupported bit depth ${bitDepth}`);
+  if (interlace !== 0) throw new Error('decodePng: interlaced PNG not supported');
+  if (colorType !== 2 && colorType !== 6) throw new Error(`decodePng: unsupported colour type ${colorType}`);
+  const channels = colorType === 2 ? 3 : 4;
+
+  const raw = inflateSync(Buffer.concat(idatChunks));
+  const stride = width * channels;
+  const pixels = Buffer.alloc(height * stride);
+  let rawOffset = 0;
+  for (let y = 0; y < height; y += 1) {
+    const filterType = raw[rawOffset];
+    rawOffset += 1;
+    const rowStart = y * stride;
+    for (let x = 0; x < stride; x += 1) {
+      const rawByte = raw[rawOffset + x];
+      const a = x >= channels ? pixels[rowStart + x - channels] : 0;
+      const b = y > 0 ? pixels[rowStart - stride + x] : 0;
+      const c = x >= channels && y > 0 ? pixels[rowStart - stride + x - channels] : 0;
+      let value;
+      if (filterType === 0) value = rawByte;
+      else if (filterType === 1) value = rawByte + a;
+      else if (filterType === 2) value = rawByte + b;
+      else if (filterType === 3) value = rawByte + Math.floor((a + b) / 2);
+      else if (filterType === 4) {
+        const p = a + b - c;
+        const pa = Math.abs(p - a);
+        const pb = Math.abs(p - b);
+        const pc = Math.abs(p - c);
+        value = rawByte + (pa <= pb && pa <= pc ? a : pb <= pc ? b : c);
+      } else throw new Error(`decodePng: unsupported filter type ${filterType}`);
+      pixels[rowStart + x] = value & 0xff;
+    }
+    rawOffset += stride;
+  }
+  return { width, height, channels, pixels };
+}
+
+function pixelAt(png, x, y) {
+  const idx = (y * png.width + x) * png.channels;
+  return [png.pixels[idx], png.pixels[idx + 1], png.pixels[idx + 2]];
+}
+
+function pointSegmentDistance(p, a, b) {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  if (dx === 0 && dy === 0) return Math.hypot(p[0] - a[0], p[1] - a[1]);
+  let t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy);
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+}
+
+function segmentsIntersect(a, b, c, d) {
+  // Signed orientations, with collinear cases handled explicitly. A boolean
+  // `>`-only orientation test treats collinear triples as "clockwise" on both
+  // sides and reports far-apart segments as crossing: measured 2026-09-11, the
+  // classic-ball geometry has vertices in exact alignment and outer[1]/outer[3]
+  // (226px apart) were reported 0px apart.
+  const orient = (p, q, r) => {
+    const v = (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]);
+    return Math.abs(v) < 1e-9 ? 0 : Math.sign(v);
+  };
+  const onSegment = (p, q, r) => Math.min(p[0], r[0]) - 1e-9 <= q[0] && q[0] <= Math.max(p[0], r[0]) + 1e-9
+    && Math.min(p[1], r[1]) - 1e-9 <= q[1] && q[1] <= Math.max(p[1], r[1]) + 1e-9;
+  const o1 = orient(a, b, c);
+  const o2 = orient(a, b, d);
+  const o3 = orient(c, d, a);
+  const o4 = orient(c, d, b);
+  if (o1 !== o2 && o3 !== o4 && o1 !== 0 && o2 !== 0 && o3 !== 0 && o4 !== 0) return true;
+  if (o1 === 0 && onSegment(a, c, b)) return true;
+  if (o2 === 0 && onSegment(a, d, b)) return true;
+  if (o3 === 0 && onSegment(c, a, d)) return true;
+  if (o4 === 0 && onSegment(c, b, d)) return true;
+  return false;
+}
+
+function segmentDistance(a1, a2, b1, b2) {
+  if (segmentsIntersect(a1, a2, b1, b2)) return 0;
+  return Math.min(
+    pointSegmentDistance(a1, b1, b2),
+    pointSegmentDistance(a2, b1, b2),
+    pointSegmentDistance(b1, a1, a2),
+    pointSegmentDistance(b2, a1, a2),
+  );
+}
+
+function pointInPolygon([x, y], polygon) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
+    const [xi, yi] = polygon[i];
+    const [xj, yj] = polygon[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+function polygonDistance(polyA, polyB) {
+  // Overlapping (a vertex of one inside the other) counts as distance 0.
+  for (const p of polyA) if (pointInPolygon(p, polyB)) return 0;
+  for (const p of polyB) if (pointInPolygon(p, polyA)) return 0;
+  let best = Infinity;
+  for (let i = 0; i < polyA.length; i += 1) {
+    const a1 = polyA[i];
+    const a2 = polyA[(i + 1) % polyA.length];
+    for (let j = 0; j < polyB.length; j += 1) {
+      const b1 = polyB[j];
+      const b2 = polyB[(j + 1) % polyB.length];
+      best = Math.min(best, segmentDistance(a1, a2, b1, b2));
+    }
+  }
+  return best;
+}
+
+function iconPatternGeometry(diameter) {
+  // Ask scripts/generate_icon.py for the exact polygons it draws (not a
+  // hand-copied reconstruction of its geometry), via the --print-polygons
+  // dev flag it exposes for this purpose.
+  const output = execFileSync('python3', [join(ROOT, 'scripts/generate_icon.py'), '--print-polygons', String(diameter)], { encoding: 'utf8' });
+  return JSON.parse(output);
+}
+
+function pngHeader(path) {
+  // The IHDR chunk is always the first chunk, right after the 8-byte PNG
+  // signature: 4-byte length, 4-byte type, then width/height/bit depth/colour
+  // type/compression/filter/interlace. No PNG library needed to read it.
+  const buf = readFileSync(path);
+  return {
+    width: buf.readUInt32BE(16),
+    height: buf.readUInt32BE(20),
+    colorType: buf.readUInt8(25),
+  };
 }
 
 function japaneseStrings(value) {
@@ -168,7 +333,7 @@ export function register(test, equal, deepEqual) {
   });
 
   test('asset imports and footer share VERSION', () => {
-    equal(VERSION, '0.2.11');
+    equal(VERSION, '0.2.12');
     const html = readFileSync(join(PUBLIC, 'index.html'), 'utf8');
     for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
       if (/^(?:css|js)\//.test(match[1])) equal(match[1].endsWith(`?v=${VERSION}`), true, match[1]);
@@ -251,5 +416,127 @@ export function register(test, equal, deepEqual) {
     for (const match of sources.matchAll(/https:\/\/([^/'"`]+)/g)) {
       equal(['github.com', 'creativecommons.org', 'commons.wikimedia.org'].includes(match[1]), true, match[0]);
     }
+  });
+
+  test('icon PNGs have the required dimensions and colour type', () => {
+    deepEqual(pngHeader(join(PUBLIC, 'assets/apple-touch-icon.png')),
+      { width: 180, height: 180, colorType: 2 }, 'apple-touch-icon.png (RGB, no alpha)');
+    deepEqual(pngHeader(join(PUBLIC, 'assets/icon-512.png')),
+      { width: 512, height: 512, colorType: 2 }, 'icon-512.png (RGB, no alpha)');
+    deepEqual(pngHeader(join(PUBLIC, 'assets/ball-mark.png')),
+      { width: 96, height: 96, colorType: 6 }, 'ball-mark.png (RGBA)');
+  });
+
+  test('icon-512.png silhouette stays inside the ball: nothing dark escapes the outline', () => {
+    const png = decodePng(join(PUBLIC, 'assets/icon-512.png'));
+    equal(png.channels, 3, 'icon-512.png sanity: no alpha channel');
+    const size = png.width;
+    const cx = size / 2;
+    const cy = size / 2;
+    const bg = [31, 122, 77]; // #1f7a4d
+    const isBackground = (x, y) => {
+      const [r, g, b] = pixelAt(png, x, y);
+      return Math.abs(r - bg[0]) + Math.abs(g - bg[1]) + Math.abs(b - bg[2]) <= 6;
+    };
+
+    // The ball's outline outer radius is a rendering detail (its exact pixel
+    // position depends on how the ring is constructed), so measure it from
+    // the image itself: cast a ray outward from the centre every half a
+    // degree and record the outermost non-background pixel it hits. In a
+    // properly round ball every ray lands within a couple of pixels of the
+    // same radius. A pentagon tip poking past the ring only along a few
+    // rays - the exact "lumpy, not round" defect reported - shows up as a
+    // handful of rays landing well past that common radius.
+    const maxScanRadius = Math.floor(size / 2) - 1;
+    const boundaryRadii = [];
+    for (let deg = 0; deg < 360; deg += 0.5) {
+      const rad = (deg * Math.PI) / 180;
+      let boundary = 0;
+      for (let r = maxScanRadius; r >= 0; r -= 1) {
+        const x = Math.round(cx + r * Math.cos(rad));
+        const y = Math.round(cy + r * Math.sin(rad));
+        if (x < 0 || y < 0 || x >= size || y >= size) continue;
+        if (!isBackground(x, y)) { boundary = r; break; }
+      }
+      boundaryRadii.push(boundary);
+    }
+    const sorted = [...boundaryRadii].sort((a, b) => a - b);
+    const medianRadius = sorted[Math.floor(sorted.length / 2)];
+    const maxRadius = sorted.at(-1);
+    // Nothing dark may extend beyond the outline's own outer edge by more
+    // than a couple of pixels of anti-aliasing - i.e. the outer boundary
+    // must be circular, not lumpy.
+    equal(maxRadius - medianRadius <= 2, true,
+      `outline is not round: typical outer radius ${medianRadius}px, but some ray reaches ${maxRadius}px`);
+
+    // Independently, exhaustively confirm every pixel further out than that
+    // clear radius is pure background - not just the single outermost pixel
+    // per ray, so a lump that is wide as well as tall cannot slip through.
+    const clearRadius = medianRadius + 2;
+    let offenders = 0;
+    let firstOffender = null;
+    for (let y = 0; y < size; y += 1) {
+      for (let x = 0; x < size; x += 1) {
+        const dist = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+        if (dist <= clearRadius) continue;
+        if (!isBackground(x, y)) {
+          offenders += 1;
+          if (!firstOffender) firstOffender = { x, y, dist: Math.round(dist * 10) / 10, rgb: pixelAt(png, x, y) };
+        }
+      }
+    }
+    equal(offenders, 0,
+      `${offenders} pixel(s) beyond the outline's +2px margin (radius ${clearRadius}) are not background, e.g. ${JSON.stringify(firstOffender)}`);
+  });
+
+  test('ball pattern pentagons never touch or overlap (>= 4% of diameter gap)', () => {
+    const geometry = iconPatternGeometry(512);
+    const requiredGap = 0.04 * geometry.diameter; // owner's stated minimum
+    const polygons = [
+      { name: 'central', points: geometry.central },
+      ...geometry.outer.map((points, i) => ({ name: `outer[${i}]`, points })),
+    ];
+    let worst = Infinity;
+    let worstPair = null;
+    for (let i = 0; i < polygons.length; i += 1) {
+      for (let j = i + 1; j < polygons.length; j += 1) {
+        const gap = polygonDistance(polygons[i].points, polygons[j].points);
+        if (gap < worst) { worst = gap; worstPair = [polygons[i].name, polygons[j].name]; }
+      }
+    }
+    equal(worst >= requiredGap, true,
+      `pentagons ${worstPair?.join(' and ')} are only ${worst.toFixed(1)}px apart, need >= ${requiredGap.toFixed(1)}px (4% of ${geometry.diameter}px diameter)`);
+  });
+
+  test('index.html links the touch icon, favicon, manifest and web-app meta', () => {
+    const html = readFileSync(join(PUBLIC, 'index.html'), 'utf8');
+    const touchIcon = /<link rel="apple-touch-icon" sizes="180x180" href="([^"]+)">/.exec(html);
+    equal(Boolean(touchIcon), true, 'apple-touch-icon link present');
+    equal(touchIcon[1].includes('?'), false, 'apple-touch-icon href has no query string (iOS ignores it)');
+    equal(html.includes('<link rel="icon" type="image/png" href="assets/icon-512.png">'), true, 'favicon link');
+    equal(html.includes('<link rel="manifest" href="manifest.webmanifest">'), true, 'manifest link');
+    equal(html.includes('name="apple-mobile-web-app-capable" content="yes"'), true, 'apple-mobile-web-app-capable meta');
+    equal(html.includes('name="mobile-web-app-capable" content="yes"'), true, 'mobile-web-app-capable meta');
+    equal(html.includes('name="apple-mobile-web-app-title" content="Wcupedia"'), true, 'apple-mobile-web-app-title meta');
+  });
+
+  test('manifest.webmanifest parses and its icons exist with matching dimensions', () => {
+    const manifest = JSON.parse(readFileSync(join(PUBLIC, 'manifest.webmanifest'), 'utf8'));
+    equal(manifest.name, 'Wcupedia（Wカップ大図鑑）');
+    equal(manifest.short_name, 'Wcupedia');
+    equal(Array.isArray(manifest.icons) && manifest.icons.length > 0, true, 'manifest has icons');
+    for (const icon of manifest.icons) {
+      const path = join(PUBLIC, icon.src);
+      equal(existsSync(path), true, `${icon.src} exists`);
+      const [width, height] = icon.sizes.split('x').map(Number);
+      const header = pngHeader(path);
+      deepEqual({ width: header.width, height: header.height }, { width, height }, `${icon.src} dimensions match manifest`);
+    }
+  });
+
+  test('deploy.sh allowlist ships the manifest and PNG assets', () => {
+    const script = readFileSync(join(ROOT, 'scripts/deploy.sh'), 'utf8');
+    equal(script.includes('"manifest.webmanifest"'), true, 'manifest.webmanifest in PATTERNS');
+    equal(script.includes('"assets/*.png"'), true, 'assets/*.png in PATTERNS');
   });
 }

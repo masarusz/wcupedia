@@ -1,8 +1,8 @@
-import { loadMeta, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.2.11';
-import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.2.11';
-import { STRINGS } from './strings.js?v=0.2.11';
-import { creditsView, errorView, homeView, matchView, notFoundView, tournamentView } from './views.js?v=0.2.11';
-import { VERSION } from './version.js?v=0.2.11';
+import { loadMeta, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.2.12';
+import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.2.12';
+import { STRINGS } from './strings.js?v=0.2.12';
+import { creditsView, errorView, homeView, matchView, notFoundView, tournamentView } from './views.js?v=0.2.12';
+import { VERSION } from './version.js?v=0.2.12';
 
 const root = document.querySelector('#app');
 
@@ -11,6 +11,7 @@ function shell() {
   replace(root, [
     el('header', { class: 'site-header' }, el('div', { class: 'header-inner' }, [
       el('a', { class: 'brand', href: '#/' }, [
+        el('img', { class: 'brand-mark', src: `assets/ball-mark.png?v=${VERSION}`, alt: '', width: 34, height: 34 }),
         el('strong', {}, 'Wcupedia'),
         rubyEl('span', STRINGS.subtitle, { class: 'subtitle' }),
         el('small', {}, STRINGS.logoReading),
