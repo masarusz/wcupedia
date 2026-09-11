@@ -1,6 +1,9 @@
-import { prepareIndex, search } from '../public/js/search.js?v=0.4.1';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { prepareIndex, search } from '../public/js/search.js?v=0.5.0';
 
 const entry = (type, id, label, keys) => ({ type, id, label, keys });
+const load = (name) => JSON.parse(readFileSync(resolve(import.meta.dirname, '..', 'public/data', name), 'utf8'));
 
 export function register(test, equal, deepEqual) {
   test('search strict exact word prefix and substring tiers', () => {
@@ -40,6 +43,15 @@ export function register(test, equal, deepEqual) {
       entry('player', 'p', 'P', ['same']), entry('tournament', 't', 'T', ['same']), entry('team', 'c', 'C', ['same']),
     ]);
     deepEqual(search(index, 'same').map((result) => result.type), ['team', 'tournament', 'player']);
+  });
+
+  test('search orders equal-tier tournaments newest first', () => {
+    const index = prepareIndex([
+      entry('tournament', '1950', '1950', ['host']), entry('tournament', '2014', '2014', ['host']),
+    ]);
+    deepEqual(search(index, 'host').map((result) => result.id), ['2014', '1950']);
+    deepEqual(search(prepareIndex(load('search.json')), 'ぶらじる').slice(0, 3).map((result) => `${result.type}:${result.id}`),
+      ['team:BRA', 'tournament:2014', 'tournament:1950'], 'Brazil team then host tournaments newest first');
   });
 
   test('search player fame uses goals appearances and squads in order', () => {

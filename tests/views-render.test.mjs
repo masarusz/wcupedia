@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { rubyPlain } from '../public/js/ruby.js?v=0.4.1';
-import { stageLabel } from '../public/js/strings.js?v=0.4.1';
+import { rubyPlain } from '../public/js/ruby.js?v=0.5.0';
+import { stageLabel } from '../public/js/strings.js?v=0.5.0';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -150,7 +150,7 @@ export function register(test, equal, deepEqual) {
       await new Promise((resolvePromise) => setImmediate(resolvePromise));
       equal(requested.includes('data/search.json'), false, 'home does not load search before focus');
       deepEqual(descendants(appRoot).filter((node) => node.tagName === 'NAV' && node.getAttribute('aria-label') === 'main')[0]
-        .childNodes.map((node) => node.textContent), ['大会', '国', 'ランキング', '検索', 'クレジット'], 'menu order');
+        .childNodes.map((node) => node.textContent), ['大会', '国', '選手名鑑', 'ランキング', '検索', 'クレジット'], 'menu order');
       equal(descendants(appRoot).some((node) => node.tagName === 'BUTTON'), false, 'shell buttons');
       equal(descendants(appRoot).some((node) => node.tagName === 'RUBY' || node.tagName === 'RT'), false,
         'shell ruby or rt elements');
@@ -163,7 +163,7 @@ export function register(test, equal, deepEqual) {
       equal(marks[0].tagName, 'IMG', 'brand-mark is an img element');
       equal(brand.childNodes[0], marks[0], 'brand-mark is the first child of .brand');
       equal(marks[0].getAttribute('alt'), '', 'brand-mark has empty alt text');
-      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=0.4.1', 'brand-mark versioned resource');
+      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=0.5.0', 'brand-mark versioned resource');
       equal(marks[0].getAttribute('width'), '34', 'brand-mark width');
       equal(marks[0].getAttribute('height'), '34', 'brand-mark height');
       requested.length = 0;
@@ -181,13 +181,22 @@ export function register(test, equal, deepEqual) {
       equal(requested.some((path) => path.endsWith('players.json') || path.endsWith('search.json')), false,
         `country/ranking loader requests: ${requested.join(', ')}`);
       requested.length = 0;
+      globalThis.location.hash = '#/z/2022/JPN';
+      globalThis.history.state = null;
+      await listeners.get('hashchange')();
+      equal(descendants(appRoot).filter((node) => hasClass(node, 'meikan-card')).length, load('t/2022.json').squads.JPN.length,
+        'player guide route cards');
+      equal(requested.includes('data/players.json'), false, 'player guide does not load players.json');
+      equal(requested.includes('data/search.json'), false, 'player guide does not load search.json');
+      requested.length = 0;
       globalThis.location.hash = '#/p/P-14758';
       globalThis.history.state = null;
       await listeners.get('hashchange')();
       equal(descendants(appRoot).filter((node) => hasClass(node, 'header-back')).length, 1, 'player header back');
       equal(requested.includes('data/players.json'), true, 'player route loads players.json');
+      equal(requested.includes('data/photos.json'), true, 'player route loads photo credits');
       deepEqual(requested.filter((path) => path.startsWith('data/t/')).sort(),
-        [2006, 2010, 2014, 2018, 2022, 2026].map((year) => `data/t/${year}.json`), 'player route tournament requests');
+        [2006, 2010, 2014, 2018, 2026].map((year) => `data/t/${year}.json`), 'player route uncached tournament requests');
       equal(requested.includes('data/search.json'), false, 'player route does not load search.json');
       requested.length = 0;
       for (const hash of ['#/t/2022', '#/m/M-2022-64']) {
@@ -243,25 +252,33 @@ export function register(test, equal, deepEqual) {
     };
 
     try {
-      const { countriesView, countryView, creditsView, errorView, homeView, matchView, notFoundView,
-        playerView, rankingsView, teamName, tournamentView } =
-        await import('../public/js/views.js?v=0.4.1');
+      const { countriesView, countryView, creditsView, errorView, homeView, matchView, meikanTeamKeys, meikanView, notFoundView,
+        photoCreditsView, playerView, rankingsView, teamName, tournamentView } =
+        await import('../public/js/views.js?v=0.5.0');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const players = load('players.json');
       const rankings = load('rankings.json');
       const meta = load('meta.json');
+      const photos = load('photos.json');
       const details = tournaments.map(({ year }) => load(`t/${year}.json`));
       const errors = [];
       const englishGroupLabels = [];
       let tournamentRenders = 0;
       let matchRenders = 0;
       let bracketStateRenders = 0;
+      let meikanRenders = 0;
       let missingAlt = 0;
       let readingElementCount = 0;
       const readingElementSamples = [];
       const renderedPlayerLabels = [];
       const nestedLinks = [];
+      const assertRecentFirst = (nodes, label) => {
+        const years = nodes.map((node) => Number(node.getAttribute('data-year')));
+        equal(years.every((year, index) => index === 0 || years[index - 1] >= year), true,
+          `${label}: ${years.join(',')}`);
+        return years;
+      };
 
       const render = (label, view) => {
         try {
@@ -284,6 +301,9 @@ export function register(test, equal, deepEqual) {
       };
 
       const homeTree = render('home', () => homeView(tournaments, teams));
+      const homeTournamentCards = descendants(homeTree).filter((node) => hasClass(node, 'tournament-card'));
+      deepEqual(assertRecentFirst(homeTournamentCards, 'home tournaments'),
+        tournaments.map(({ year }) => year).sort((a, b) => b - a), 'home tournament years');
       let tournament1950Tree;
       let tournament2022Tree;
       let tournament2026Tree;
@@ -398,6 +418,35 @@ export function register(test, equal, deepEqual) {
         const standingLinks = descendants(tree).filter((node) => hasClass(node, 'standings-country-link'));
         equal(standingLinks.length, detail.groups.reduce((sum, group) => sum + group.standings.length, 0), `${detail.year} standings country link count`);
         equal(standingLinks.every((node) => /^#\/c\/[A-Z]{3}$/.test(node.getAttribute('href') || '')), true, `${detail.year} standings country targets`);
+        equal(descendants(tree).some((node) => node.getAttribute('href') === `#/z/${detail.year}`), true, `${detail.year} player-guide link`);
+        const guideTeams = meikanTeamKeys(detail, teams);
+        if (guideTeams.includes('JPN')) equal(guideTeams[0], 'JPN', `${detail.year} Japan first`);
+        for (const teamKey of guideTeams) {
+          const guide = render(`meikan ${detail.year} ${teamKey}`, () => meikanView(detail, teams, tournaments, teamKey));
+          if (!guide) continue;
+          meikanRenders += 1;
+          const pickerOptions = descendants(guide).filter((node) => node.tagName === 'OPTION');
+          assertRecentFirst(pickerOptions, `${detail.year} ${teamKey} player-guide picker`);
+          equal(pickerOptions[0].getAttribute('value'), '2026', `${detail.year} ${teamKey} player-guide newest option`);
+          const cards = descendants(guide).filter((node) => hasClass(node, 'meikan-card'));
+          const squad = detail.squads[teamKey];
+          equal(cards.length, squad.length, `${detail.year} ${teamKey} card count`);
+          deepEqual(cards.map((card) => card.getAttribute('href')), squad.map((member) => `#/p/${member.player}`),
+            `${detail.year} ${teamKey} card links`);
+          equal(cards.every((card) => Boolean(players[card.getAttribute('href').slice(4)])), true,
+            `${detail.year} ${teamKey} card targets`);
+          const images = descendants(guide).filter((node) => hasClass(node, 'meikan-photo'));
+          deepEqual(images.map((image) => image.getAttribute('src').match(/players\/(.+)\.webp/)[1]),
+            squad.filter((member) => member.photo).map((member) => member.player), `${detail.year} ${teamKey} guide images`);
+          equal(images.every((image) => image.getAttribute('loading') === 'lazy'
+            && image.getAttribute('width') === '240' && image.getAttribute('height') === '320' && image.getAttribute('alt')), true,
+          `${detail.year} ${teamKey} lazy image attributes`);
+          const chips = descendants(guide).find((node) => hasClass(node, 'meikan-team-chips'));
+          const filters = descendants(guide).filter((node) => hasClass(node, 'meikan-filter'));
+          filters.find((button) => button.getAttribute('value') === 'MF').listeners.get('click')[0]();
+          equal(descendants(guide).find((node) => hasClass(node, 'meikan-team-chips')), chips,
+            `${detail.year} ${teamKey} position filter preserves chips`);
+        }
         if (detail.year === 1950) tournament1950Tree = tree;
         if (detail.year === 2022) tournament2022Tree = tree;
         if (detail.year === 2026) tournament2026Tree = tree;
@@ -413,27 +462,71 @@ export function register(test, equal, deepEqual) {
           if (detail.year === 2022 && match.home === 'CAN' && match.away === 'MAR') canadaMoroccoTree = matchTree;
         }
       }
-      render('credits', () => creditsView(meta));
+      const creditsTree = render('credits', () => creditsView(meta));
+      const photoIntroduction = '写真は Wikimedia Commons のものを、それぞれのライセンスにしたがって使っています。どの写真も、顔の部分を切り抜いて小さくしています。';
+      equal(descendants(creditsTree).some((node) => node.getAttribute('href') === '#/credits/photos'), true, 'photo credits route link');
+      equal(creditsTree.textContent.includes(photoIntroduction), true, 'main credits photo introduction');
+      const photoCreditsTree = render('photo credits', () => photoCreditsView(photos));
+      equal(photoCreditsTree.textContent.includes(photoIntroduction), true, 'photo credits introduction');
+      equal(descendants(photoCreditsTree).filter((node) => hasClass(node, 'photo-credit-row')).length,
+        Object.keys(photos).length, 'every photo credited');
       render('not found', () => notFoundView());
       render('error', () => errorView(() => {}));
 
       const countriesTree = render('countries', () => countriesView(teams));
       const rootCountries = Object.keys(teams).filter((key) => !teams[key].successor);
       equal(descendants(countriesTree).filter((node) => hasClass(node, 'country-tile')).length, 84, 'country root tile count');
-      for (const key of Object.keys(teams)) render(`country ${key}`, () => countryView(key, teams));
+      for (const key of Object.keys(teams)) {
+        const tree = render(`country ${key}`, () => countryView(key, teams));
+        const recent = teams[key].ownTournaments.at(-1) || teams[key].tournaments.at(-1);
+        equal(descendants(tree).some((node) => node.getAttribute('href') === `#/z/${recent.year}/${key}`), true, `${key} player-guide link`);
+        const tournamentList = descendants(tree).find((node) => hasClass(node, 'country-tournaments'));
+        const tournamentRows = tournamentList.childNodes.filter((node) => node instanceof FakeElement);
+        equal(tournamentRows.length, teams[key].tournaments.length, `${key} tournament rows including predecessors`);
+        assertRecentFirst(tournamentRows, `${key} country tournaments`);
+        for (const matchList of descendants(tree).filter((node) => hasClass(node, 'opponent-matches'))) {
+          const links = matchList.childNodes.filter((node) => node instanceof FakeElement);
+          assertRecentFirst(links, `${key} opponent matches`);
+          const ids = links.map((node) => node.getAttribute('href').slice(4));
+          const sourceRow = teams[key].opponents.find((row) => row.matches.length === ids.length
+            && row.matches.every((match) => ids.includes(match.id)));
+          const expectedIds = [...sourceRow.matches].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
+            .map((match) => match.id);
+          deepEqual(ids, expectedIds, `${key} opponent matches by date then id`);
+        }
+      }
       let rankingRenders = 0;
       for (const [kind, metrics] of [['c', ['titles', 'appearances', 'wins', 'goals']], ['p', ['goals', 'tournamentGoals', 'awards', 'squads', 'apps', 'youngest', 'oldest']]]) {
         for (const metric of metrics) {
           const tree = render(`ranking ${kind}/${metric}`, () => rankingsView(rankings, teams, kind, metric));
           rankingRenders += Boolean(tree);
           equal(descendants(tree).filter((node) => node.getAttribute('aria-current') === 'page').length, 2, `${kind}/${metric} active choices`);
+          const yearRows = descendants(tree).filter((node) => hasClass(node, 'ranking-row') && node.hasAttribute('data-year'));
+          for (let index = 1; index < yearRows.length; index += 1) {
+            const previousRank = descendants(yearRows[index - 1]).find((node) => hasClass(node, 'ranking-rank')).textContent;
+            const rank = descendants(yearRows[index]).find((node) => hasClass(node, 'ranking-rank')).textContent;
+            if (rank === previousRank) equal(Number(yearRows[index - 1].getAttribute('data-year')) >= Number(yearRows[index].getAttribute('data-year')),
+              true, `${kind}/${metric} rank ${rank} recent first`);
+          }
         }
       }
       let playerRenders = 0;
+      const [manifestPhotoPlayerId] = Object.keys(JSON.parse(readFileSync(join(ROOT, 'curated/photos.json'), 'utf8')));
       for (const [id, player] of Object.entries(players)) {
         const playerDetails = player.years.map((year) => details.find((detail) => detail.year === year));
-        const tree = render(`player ${id}`, () => playerView(id, player, playerDetails, teams));
+        const tree = render(`player ${id}`, () => playerView(id, player, playerDetails, teams, photos[id] || null));
         playerRenders += Boolean(tree);
+        assertRecentFirst(descendants(tree).filter((node) => hasClass(node, 'player-tournament')), `${id} World Cups`);
+        const playerAwards = descendants(tree).find((node) => hasClass(node, 'player-awards'));
+        if (playerAwards) assertRecentFirst(descendants(playerAwards).filter((node) => node.tagName === 'LI'), `${id} awards`);
+        const portraits = descendants(tree).filter((node) => hasClass(node, 'player-portrait'));
+        equal(portraits.length, photos[id] ? 1 : 0, `${id} portrait availability`);
+        if (photos[id]) {
+          equal(descendants(portraits[0]).filter((node) => node.tagName === 'IMG').length, 1, `${id} portrait image`);
+          equal(portraits[0].textContent.includes(`写真: ${photos[id].artist} / ${photos[id].licence}（切り抜き・縮小）`), true, `${id} photo credit`);
+          if (id === manifestPhotoPlayerId) equal(portraits[0].textContent.includes('（切り抜き・縮小）'), true,
+            `${id} manifest photo modification note`);
+        }
         if (!Object.hasOwn(player, 'apps')) {
           equal((tree.textContent.match(/1970年より前の出場試合の記録はありません/g) || []).length, 1, `${id} pre-1970 note`);
           equal(/出場試合数 \d/.test(tree.textContent), false, `${id} no partial appearance count`);
@@ -452,6 +545,12 @@ export function register(test, equal, deepEqual) {
           });
           deepEqual(headings.map(({ href }) => Number(href.slice(-4))),
             [2026, 2022, 2018, 2014, 2010, 2006], 'Messi World Cups descending');
+          const awards = descendants(playerAwards).filter((node) => node.tagName === 'LI');
+          deepEqual(awards.map((node) => Number(node.getAttribute('data-year'))),
+            [2026, 2026, 2022, 2022, 2014], 'Messi awards descending');
+          deepEqual(awards.map((node) => descendants(node).find((child) => child.tagName === 'STRONG').textContent),
+            ['シルバーボール', 'シルバーブーツ', 'ゴールデンボール', 'シルバーブーツ', 'ゴールデンボール'],
+            'Messi award order within each year');
           equal(headings.find(({ href }) => href === '#/t/2018').text.includes('2018年 ロシア大会'), true,
             'Messi 2018 tournament heading includes full title');
           equal(['2026年', 'アメリカ', 'カナダ', 'メキシコ'].every((part) =>
@@ -468,10 +567,11 @@ export function register(test, equal, deepEqual) {
         equal(markup.textContent, name, `${name} text preserved`);
       }
 
-      console.log(`views render counts: tournaments=${tournamentRenders} matches=${matchRenders} countries=${Object.keys(teams).length} rankings=${rankingRenders} players=${playerRenders} bracket-states=${bracketStateRenders} exceptions=${errors.length}`);
+      console.log(`views render counts: tournaments=${tournamentRenders} matches=${matchRenders} meikan=${meikanRenders} countries=${Object.keys(teams).length} rankings=${rankingRenders} players=${playerRenders} bracket-states=${bracketStateRenders} exceptions=${errors.length}`);
       if (errors.length) throw new Error(`render exceptions: ${errors.slice(0, 3).join('; ')}`);
       equal(tournamentRenders, 23, 'tournament render count');
       equal(matchRenders, 1068, 'match render count');
+      equal(meikanRenders, details.reduce((sum, detail) => sum + Object.keys(detail.squads).length, 0), 'all tournament-country guides rendered');
       equal(bracketStateRenders > 0, true, 'all available bracket states rendered');
       equal(missingAlt, 0, 'images missing alt');
       equal(readingElementCount, 0, `ruby or rt elements rendered: ${readingElementSamples.join(', ')}`);
@@ -498,6 +598,14 @@ export function register(test, equal, deepEqual) {
       }
       const japanTree = countryView('JPN', teams);
       equal(descendants(japanTree).some((node) => node.tagName === 'A' && /^#\/p\//.test(node.getAttribute('href') || '')), true, 'country scorer player links');
+      const japanTournamentRows = descendants(japanTree).find((node) => hasClass(node, 'country-tournaments')).childNodes
+        .filter((node) => node instanceof FakeElement);
+      equal(japanTournamentRows[0].getAttribute('data-year'), '2026', 'Japan newest tournament first');
+      equal(japanTournamentRows.at(-1).getAttribute('data-year'), '1998', 'Japan oldest tournament last');
+      const croatiaMatches = descendants(japanTree).find((node) => hasClass(node, 'opponent-matches')
+        && descendants(node).some((child) => child.getAttribute('href') === '#/m/M-2022-53'));
+      deepEqual(croatiaMatches.childNodes.map((node) => Number(node.getAttribute('data-year'))), [2022, 2006, 1998],
+        'Japan–Croatia matches descending');
       const playerRankingTree = rankingsView(rankings, teams, 'p', 'goals');
       equal(descendants(playerRankingTree).filter((node) => node.tagName === 'A' && /^#\/p\//.test(node.getAttribute('href') || '')).length,
         rankings.players.goals.length, 'ranking player links');

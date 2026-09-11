@@ -43,7 +43,7 @@ PATTERNS=(
   "js/*.js"
   "data/*.json"
   "data/t/*.json"
-  "assets/*.png"
+  "assets/*.png" "assets/players/*.webp"
   "assets/flags/*.svg"
   "assets/flags/LICENSE-flag-icons.txt"
 )
@@ -117,16 +117,19 @@ git worktree remove --force "$WORKTREE" 2>/dev/null || true
 # matches, re-fetching only the files that still differ, for up to ~5 minutes.
 # The check asks for the real path with a no-cache header - a ?v= URL proves
 # nothing, because static hosts ignore query strings.
-live_sum() { curl -sS --fail -H 'Cache-Control: no-cache' "$SITE/$1" 2>/dev/null | shasum -a 256 | cut -d' ' -f1 || echo "FETCH-FAILED"; }
+# Checked 16 at a time: v0.5.0 adds several thousand player photos, and one
+# sequential curl per file made a single round take 20-30 minutes (estimated
+# 2026-09-11). Every file is still checked; only the waiting is parallel. Paths
+# never contain spaces or quotes (allowlist patterns), so xargs -I is safe.
+# `mismatches` reads paths on stdin and prints each one whose live bytes differ
+# from public/ (a failed fetch hashes the empty string, so it counts as a DIFF).
+mismatches() {
+  xargs -P 16 -I{} sh -c 'want=$(shasum -a 256 "public/$1" | cut -d" " -f1); got=$(curl -sS --fail -H "Cache-Control: no-cache" "$2/$1" 2>/dev/null | shasum -a 256 | cut -d" " -f1); [ "$got" = "$want" ] || echo "$1"' _ {} "$SITE"
+}
 PENDING=( "${FILES[@]}" )
-echo "== waiting for Pages to publish ${#FILES[@]} files (up to ~300s)"
-for i in $(seq 1 30); do
-  STILL=()
-  for f in "${PENDING[@]}"; do
-    want=$(shasum -a 256 "public/$f" | cut -d' ' -f1)
-    got=$(live_sum "$f")
-    [[ "$got" == "$want" ]] || STILL+=( "$f" )
-  done
+echo "== waiting for Pages to publish ${#FILES[@]} files (up to ~10 min)"
+for i in $(seq 1 40); do
+  STILL=( $(printf '%s\n' "${PENDING[@]}" | mismatches) )
   if [[ ${#STILL[@]} -eq 0 ]]; then echo "   all files matched after round $i"; PENDING=(); break; fi
   echo "   round $i: ${#STILL[@]} file(s) not yet live"
   PENDING=( "${STILL[@]}" )
@@ -134,14 +137,12 @@ for i in $(seq 1 30); do
 done
 
 echo "== verifying ${#FILES[@]} files against $SITE"
-DIFFS=0; CHECKED=0
-for f in "${FILES[@]}"; do
-  CHECKED=$((CHECKED+1))
-  local_sum=$(shasum -a 256 "public/$f" | cut -d' ' -f1)
-  got=$(live_sum "$f")
-  if [[ "$local_sum" != "$got" ]]; then echo "   DIFF  $f  (local ${local_sum:0:12} / live ${got:0:12})"; DIFFS=$((DIFFS+1)); fi
-done
+CHECKED=${#FILES[@]}
 [[ $CHECKED -gt 0 ]] || fail "manifest was empty - verified nothing"
+DIFF_LIST=( $(printf '%s\n' "${FILES[@]}" | mismatches) )
+DIFFS=${#DIFF_LIST[@]}
+# bash 3.2 (macOS /bin/bash) + set -u rejects "${arr[@]}" on an empty array.
+if [[ $DIFFS -gt 0 ]]; then for f in "${DIFF_LIST[@]}"; do echo "   DIFF  $f"; done; fi
 echo "   $((CHECKED-DIFFS))/$CHECKED files match"
 
 # --- 5. Prove the unpublished paths are not served --------------------------

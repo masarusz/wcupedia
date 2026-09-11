@@ -1,5 +1,5 @@
-import { VERSION } from './version.js?v=0.4.1';
-import { isIsoDate } from './ages.js?v=0.4.1';
+import { VERSION } from './version.js?v=0.5.0';
+import { isIsoDate } from './ages.js?v=0.5.0';
 
 const cache = new Map();
 
@@ -38,8 +38,16 @@ const validators = {
         && Array.isArray(item.years) && item.years.length === 2 && item.years.every(Number.isInteger)
         && Array.isArray(item.fame) && item.fame.length === 3 && item.fame.every(Number.isInteger)))),
   'meta.json': (value) => validObject(value) && validObject(value.sources),
+  'photos.json': (value) => validObject(value)
+    && Object.values(value).every((item) => validObject(item) && typeof item.artist === 'string'
+      && typeof item.licence === 'string' && typeof item.licenceUrl === 'string' && typeof item.source === 'string'
+      && typeof item.name === 'string' && (item.ja === null || typeof item.ja === 'string') && typeof item.team === 'string'),
   tournament: (value) => validObject(value) && Number.isInteger(value.year) && isIsoDate(value.start)
-    && Array.isArray(value.matches) && Array.isArray(value.groups) && validObject(value.people) && validObject(value.teamDisplay),
+    && Array.isArray(value.matches) && Array.isArray(value.groups) && validObject(value.people) && validObject(value.teamDisplay)
+    && validObject(value.squads) && Object.values(value.squads).every((squad) => Array.isArray(squad)
+      && squad.every((member) => validObject(member) && typeof member.player === 'string'
+        && (member.no === null || Number.isInteger(member.no)) && ['GK', 'DF', 'MF', 'FW'].includes(member.pos)
+        && Number.isInteger(member.goals) && typeof member.photo === 'boolean')),
 };
 
 async function load(path, validator) {
@@ -64,3 +72,4 @@ export const loadTournament = (year) => load(`data/t/${year}.json`, validators.t
 export const loadPlayers = () => load('data/players.json', validators['players.json']);
 export const loadRankings = () => load('data/rankings.json', validators['rankings.json']);
 export const loadSearch = () => load('data/search.json', validators['search.json']);
+export const loadPhotos = () => load('data/photos.json', validators['photos.json']);

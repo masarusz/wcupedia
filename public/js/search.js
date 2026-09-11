@@ -1,4 +1,4 @@
-import { fold, foldCompact } from './fold.js?v=0.4.1';
+import { fold, foldCompact } from './fold.js?v=0.5.0';
 
 const TYPE_ORDER = Object.freeze({ team: 0, tournament: 1, player: 2 });
 const SMALL_KANA = Object.freeze({
@@ -69,6 +69,7 @@ export function search(index, query, { limit = 30, players } = {}) {
   }
   matches.sort((left, right) => left.tier - right.tier
     || TYPE_ORDER[left.entry.type] - TYPE_ORDER[right.entry.type]
+    || (left.entry.type === 'tournament' ? Number(right.entry.id) - Number(left.entry.id) : 0)
     || (left.entry.type === 'player' ? right.stats.goals - left.stats.goals
       || right.stats.apps - left.stats.apps || right.stats.squads - left.stats.squads : 0)
     || compare(left.labelKey, right.labelKey)

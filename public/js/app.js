@@ -1,10 +1,10 @@
-import { loadMeta, loadPlayers, loadRankings, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.4.1';
-import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.4.1';
-import { prepareIndex } from './search.js?v=0.4.1';
-import { STRINGS } from './strings.js?v=0.4.1';
-import { countriesView, countryView, creditsView, errorView, homeView, matchView, notFoundView, playerView, rankingsView, searchView, tournamentView } from './views.js?v=0.4.1';
-import { VERSION } from './version.js?v=0.4.1';
-import { backDecision } from './navigation.js?v=0.4.1';
+import { loadMeta, loadPhotos, loadPlayers, loadRankings, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.5.0';
+import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.5.0';
+import { prepareIndex } from './search.js?v=0.5.0';
+import { STRINGS } from './strings.js?v=0.5.0';
+import { countriesView, countryView, creditsView, errorView, homeView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, searchView, tournamentView } from './views.js?v=0.5.0';
+import { VERSION } from './version.js?v=0.5.0';
+import { backDecision } from './navigation.js?v=0.5.0';
 
 const root = document.querySelector('#app');
 
@@ -23,6 +23,7 @@ function shell() {
       el('nav', { class: 'site-nav', 'aria-label': 'main' }, [
         el('a', { href: '#/' }, rubyNodes(STRINGS.tournaments)),
         el('a', { href: '#/c' }, '国'),
+        el('a', { href: '#/z' }, '選手名鑑'),
         el('a', { href: '#/r' }, 'ランキング'),
         el('a', { href: '#/s' }, rubyNodes(STRINGS.search)),
         el('a', { href: '#/credits' }, rubyNodes(STRINGS.credits)),
@@ -107,6 +108,8 @@ async function renderRoute() {
       view = searchView(searchOptions('/s', query, true));
     } else if (route === '/credits') {
       view = creditsView(await loadMeta());
+    } else if (route === '/credits/photos') {
+      view = photoCreditsView(await loadPhotos());
     } else if (route === '/c') {
       view = countriesView(await loadTeams());
     } else if (route === '/r') {
@@ -118,6 +121,7 @@ async function renderRoute() {
       const countryMatch = /^\/c\/([A-Z]{3})$/.exec(route);
       const playerMatch = /^\/p\/(P(?:26-[a-f0-9]{10}|-\d+))$/.exec(route);
       const rankingMatch = /^\/r\/([cp])\/([A-Za-z]+)$/.exec(route);
+      const meikanMatch = /^\/z(?:\/(\d{4})(?:\/([A-Z]{3}))?)?$/.exec(route);
       if (tournamentMatch) {
         const year = Number(tournamentMatch[1]);
         const [tournaments, teams] = await Promise.all([loadTournaments(), loadTeams()]);
@@ -137,14 +141,24 @@ async function renderRoute() {
         const teams = await loadTeams();
         view = teams[countryMatch[1]] ? countryView(countryMatch[1], teams) : notFoundView();
       } else if (playerMatch) {
-        const players = await loadPlayers();
+        const [players, photos] = await Promise.all([loadPlayers(), loadPhotos()]);
         const player = players[playerMatch[1]];
-        view = player ? playerView(playerMatch[1], player, await Promise.all(player.years.map(loadTournament))) : notFoundView();
+        view = player ? playerView(playerMatch[1], player, await Promise.all(player.years.map(loadTournament)), null, photos[playerMatch[1]] || null) : notFoundView();
       } else if (rankingMatch) {
         const [kind, metric] = rankingMatch.slice(1);
         const allowed = kind === 'c' ? ['titles', 'appearances', 'wins', 'goals'] : ['goals', 'tournamentGoals', 'awards', 'squads', 'apps', 'youngest', 'oldest'];
         const [rankings, teams] = await Promise.all([loadRankings(), loadTeams()]);
         view = allowed.includes(metric) ? rankingsView(rankings, teams, kind, metric) : notFoundView();
+      } else if (meikanMatch) {
+        const year = Number(meikanMatch[1] || 2026);
+        const [tournaments, teams] = await Promise.all([loadTournaments(), loadTeams()]);
+        if (!tournaments.some((item) => item.year === year)) view = notFoundView();
+        else {
+          const detail = await loadTournament(year);
+          const selectedTeam = meikanMatch[2] || null;
+          view = selectedTeam && !detail.squads[selectedTeam]
+            ? notFoundView() : meikanView(detail, teams, tournaments, selectedTeam);
+        }
       } else {
         view = notFoundView();
       }

@@ -1,14 +1,14 @@
-import { buildBracket } from './bracket.js?v=0.4.1';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.4.1';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.4.1';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.4.1';
-import { search as runSearch } from './search.js?v=0.4.1';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.4.1';
-import { VERSION } from './version.js?v=0.4.1';
-import { rubyPlain } from './ruby.js?v=0.4.1';
-import { rubyReading } from './ruby.js?v=0.4.1';
-import { fold } from './fold.js?v=0.4.1';
-import { ageInYears } from './ages.js?v=0.4.1';
+import { buildBracket } from './bracket.js?v=0.5.0';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.5.0';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.5.0';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.5.0';
+import { search as runSearch } from './search.js?v=0.5.0';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.5.0';
+import { VERSION } from './version.js?v=0.5.0';
+import { rubyPlain } from './ruby.js?v=0.5.0';
+import { rubyReading } from './ruby.js?v=0.5.0';
+import { fold } from './fold.js?v=0.5.0';
+import { ageInYears } from './ages.js?v=0.5.0';
 
 function flag(teams, key) {
   return el('img', {
@@ -32,6 +32,14 @@ function team(teams, key, className = 'team') {
 
 function countryLink(teams, key, className = 'country-link') {
   return el('a', { class: className, href: `#/c/${key}` }, [flag(teams, key), teamName(teams[key].ja)]);
+}
+
+export function meikanTeamKeys(detail, teams) {
+  return Object.keys(detail.squads).sort((left, right) => {
+    if (left === 'JPN') return -1;
+    if (right === 'JPN') return 1;
+    return teamReadingOrder(teams, left, right);
+  });
 }
 
 function playerName(detail, id, teamKey, linked = false) {
@@ -97,7 +105,7 @@ function searchResultRow(result, context) {
     teamKey = tournament.hosts[0];
     name = rubyEl('span', tournamentTitle(tournament, teams), { class: 'search-result-name' });
   }
-  return el('a', { class: 'search-result', href }, [
+  return el('a', { class: 'search-result', href, 'data-year': result.type === 'tournament' ? result.id : null }, [
     el('span', { class: `search-type search-type-${result.type}` }, typeLabels[result.type]),
     flag(teams, teamKey),
     name,
@@ -156,7 +164,7 @@ export function searchComponent({ initialQuery = '', eager = false, loadContext,
 export function homeView(tournaments, teams, searchOptions = null) {
   const cards = [...tournaments].sort((a, b) => b.year - a.year).map((tournament) => {
     const champion = tournament.placings['1'];
-    return el('a', { class: 'tournament-card', href: `#/t/${tournament.year}` }, [
+    return el('a', { class: 'tournament-card', href: `#/t/${tournament.year}`, 'data-year': tournament.year }, [
       rubyEl('h2', tournamentTitle(tournament, teams)),
       el('div', { class: 'host-flags', 'aria-label': 'hosts' }, tournament.hosts.map((key) => flag(teams, key))),
       el('p', { class: 'champion' }, [text('🏆 '), rubyNodes(STRINGS.champion), text(' '), team(teams, champion)]),
@@ -381,6 +389,7 @@ export function tournamentView(detail, teams) {
       el('div', { class: 'stats' }, [stat(STRINGS.teams, detail.teams), stat(STRINGS.matches, detail.matches.length), stat(STRINGS.goals, detail.goals)]),
     ]),
     el('div', { class: 'two-column' }, [podium(detail, teams), honours(detail, teams)]),
+    el('a', { class: 'meikan-entry-link', href: `#/z/${detail.year}` }, 'この大会の選手名鑑'),
     stageViews,
   ]);
 }
@@ -460,7 +469,7 @@ function recordStats(record) {
 }
 
 function countryMatchLink(match, teams) {
-  return el('a', { class: 'country-match-link', href: `#/m/${match.id}` }, [
+  return el('a', { class: 'country-match-link', href: `#/m/${match.id}`, 'data-year': match.year }, [
     text(`${match.year}年 `), team(teams, match.home), el('strong', {}, `${match.homeGoals}–${match.awayGoals}`), team(teams, match.away),
   ]);
 }
@@ -469,6 +478,8 @@ export function countryView(key, teams) {
   const country = teams[key];
   const predecessorNames = country.predecessors.map((item) => rubyPlain(teams[item].ja));
   const opponents = country.opponents.slice().sort((a, b) => b.p - a.p || teamReadingOrder(teams, a.team, b.team));
+  const tournamentRows = [...country.tournaments].sort((a, b) => b.year - a.year);
+  const meikanTournament = country.ownTournaments.at(-1) || country.tournaments.at(-1);
   return el('article', { class: 'page country-page' }, [
     el('header', { class: 'country-header panel' }, [
       flag(teams, key), teamName(country.ja, 'team-name country-title'),
@@ -478,11 +489,12 @@ export function countryView(key, teams) {
         el('span', {}, `最高 ${FINISH_LABELS[country.bestFinish] || '—'}`),
         el('span', {}, `優勝 ${country.titlesWithPredecessors}回`),
       ]),
+      meikanTournament ? el('a', { class: 'country-meikan-link', href: `#/z/${meikanTournament.year}/${key}` }, '選手名鑑') : null,
     ]),
     el('section', { class: 'panel' }, [el('h2', {}, '通算成績'), recordStats(country.record)]),
     el('section', { class: 'panel' }, [
       el('h2', {}, '大会ごとの成績'),
-      el('ul', { class: 'country-tournaments' }, country.tournaments.map((item) => el('li', {}, [
+      el('ul', { class: 'country-tournaments' }, tournamentRows.map((item) => el('li', { 'data-year': item.year }, [
         el('a', { href: `#/t/${item.year}` }, `${item.year}年`),
         el('strong', {}, FINISH_LABELS[item.finish] || item.finish),
         item.team !== key ? el('small', {}, `${rubyPlain(teams[item.team].ja)}時代`) : null,
@@ -495,7 +507,9 @@ export function countryView(key, teams) {
         el('tbody', {}, opponents.map((row) => el('tr', {}, [
           el('td', {}, el('details', {}, [
             el('summary', {}, [flag(teams, row.team), teamName(teams[row.team].ja)]),
-            el('div', { class: 'opponent-matches' }, row.matches.map((match) => countryMatchLink(match, teams))),
+            el('div', { class: 'opponent-matches' }, [...row.matches]
+              .sort((a, b) => compareText(b.date, a.date) || compareText(b.id, a.id))
+              .map((match) => countryMatchLink(match, teams))),
           ])),
           ...[row.p, row.w, row.d, row.l].map((value) => el('td', {}, String(value))),
         ]))),
@@ -516,9 +530,28 @@ export function countryView(key, teams) {
 }
 
 const POSITION_LABELS = { GK: 'ゴールキーパー', DF: 'ディフェンダー', MF: 'ミッドフィールダー', FW: 'フォワード' };
+const PHOTO_INTRODUCTION = '写真は Wikimedia Commons のものを、それぞれのライセンスにしたがって使っています。どの写真も、顔の部分を切り抜いて小さくしています。';
 
-export function playerView(id, player, details, suppliedTeams = null) {
+function photoCredit(photo) {
+  return el('p', { class: 'photo-credit' }, [
+    text('写真: '), el('a', { href: photo.source }, photo.artist), text(' / '),
+    photo.licenceUrl ? el('a', { href: photo.licenceUrl }, photo.licence) : text(photo.licence),
+    text('（切り抜き・縮小）'),
+  ]);
+}
+
+function playerPortrait(id, label, photo, className) {
+  if (!photo) return null;
+  return el('figure', { class: className }, [
+    el('img', { src: `assets/players/${id}.webp?v=${VERSION}`, width: 240, height: 320, alt: label }),
+    el('figcaption', {}, photoCredit(photo)),
+  ]);
+}
+
+export function playerView(id, player, details, suppliedTeams = null, photo = null) {
   const teams = Object.assign({}, ...details.map((detail) => detail.teamDisplay || {}), suppliedTeams || {});
+  const label = playerLabel(player, player.teams.includes('JPN') ? 'JPN' : player.teams.at(-1));
+  const awardRows = [...player.awards].sort((a, b) => b[0] - a[0]);
   const tournamentRows = [...details].sort((a, b) => b.year - a.year).map((detail) => {
     let squadTeam = null;
     let member = null;
@@ -530,7 +563,7 @@ export function playerView(id, player, details, suppliedTeams = null) {
     const goals = detail.matches.flatMap((match) => match.goals
       .filter((goal) => goal.player === id)
       .map((goal) => ({ ...goal, match })));
-    return el('section', { class: 'player-tournament panel' }, [
+    return el('section', { class: 'player-tournament panel', 'data-year': detail.year }, [
       el('h2', {}, [
         el('a', { href: `#/t/${detail.year}` }, rubyNodes(tournamentTitle(detail, teams))),
         player.birthDate ? el('span', { class: 'player-age' }, `${ageInYears(player.birthDate, detail.start)}さい`) : null,
@@ -546,21 +579,84 @@ export function playerView(id, player, details, suppliedTeams = null) {
   });
   return el('article', { class: 'page player-page' }, [
     el('header', { class: 'player-header panel' }, [
-      el('div', { class: 'player-flags' }, player.teams.map((teamKey) => flag(teams, teamKey))),
-      el('h1', {}, playerLabel(player, player.teams.includes('JPN') ? 'JPN' : player.teams.at(-1))),
-      player.birthDate ? el('p', { class: 'player-birth-date' }, `${Number(player.birthDate.slice(0, 4))}年${Number(player.birthDate.slice(5, 7))}月${Number(player.birthDate.slice(8, 10))}日うまれ`) : null,
-      el('p', {}, `通算ゴール ${player.goals}点`),
-      Object.hasOwn(player, 'apps') ? el('p', {}, `出場試合数 ${player.apps}試合`) :
-        el('p', { class: 'appearance-note' }, '1970年より前の出場試合の記録はありません'),
+      playerPortrait(id, label, photo, 'player-portrait'),
+      el('div', { class: 'player-header-copy' }, [
+        el('div', { class: 'player-flags' }, player.teams.map((teamKey) => flag(teams, teamKey))),
+        el('h1', {}, label),
+        player.birthDate ? el('p', { class: 'player-birth-date' }, `${Number(player.birthDate.slice(0, 4))}年${Number(player.birthDate.slice(5, 7))}月${Number(player.birthDate.slice(8, 10))}日うまれ`) : null,
+        el('p', {}, `通算ゴール ${player.goals}点`),
+        Object.hasOwn(player, 'apps') ? el('p', {}, `出場試合数 ${player.apps}試合`) :
+          el('p', { class: 'appearance-note' }, '1970年より前の出場試合の記録はありません'),
+      ]),
     ]),
     player.awards.length ? el('section', { class: 'panel player-awards' }, [
       el('h2', {}, '大会賞'),
-      el('ul', {}, player.awards.map(([year, award]) => el('li', {}, [
+      el('ul', {}, awardRows.map(([year, award]) => el('li', { 'data-year': year }, [
         rubyEl('strong', AWARD_LABELS[award] || award, { class: `honour-pill honour-pill-${awardTier(award)}` }),
         el('a', { href: `#/t/${year}` }, `${year}年`),
       ]))),
     ]) : null,
     tournamentRows,
+  ]);
+}
+
+function meikanCard(detail, member, teamKey) {
+  const person = detail.people[member.player];
+  const label = playerLabel(person, teamKey);
+  const picture = member.photo
+    ? el('img', {
+      class: 'meikan-photo', src: `assets/players/${member.player}.webp?v=${VERSION}`,
+      loading: 'lazy', width: 240, height: 320, alt: label,
+    })
+    : el('div', { class: 'meikan-silhouette', 'aria-label': '写真なし' }, [
+      el('span', { class: 'silhouette-person', 'aria-hidden': 'true' }, '👤'),
+      el('strong', { class: 'silhouette-number' }, member.no ?? '–'),
+    ]);
+  return el('a', { class: 'meikan-card', href: `#/p/${member.player}` }, [
+    picture,
+    el('strong', { class: 'meikan-name person' }, label),
+    el('span', { class: 'meikan-shirt' }, `${member.no == null ? '背番号なし' : `背番号 ${member.no}`}・${member.pos}`),
+    Number.isInteger(member.age) ? el('span', { class: 'meikan-age' }, `${member.age}さい`) : null,
+    member.club ? el('span', { class: 'meikan-club' }, member.club) : null,
+    el('span', { class: 'meikan-career' }, [
+      text(`W杯 ${member.goals}点`),
+      Object.hasOwn(member, 'apps') ? text(`・${member.apps}試合`) : null,
+    ]),
+  ]);
+}
+
+export function meikanView(detail, teams, tournaments, selectedTeam = null) {
+  const teamKeys = meikanTeamKeys(detail, teams);
+  const teamKey = selectedTeam || teamKeys[0];
+  const picker = el('select', { id: 'meikan-tournament', class: 'meikan-tournament-picker' },
+    [...tournaments].sort((a, b) => b.year - a.year).map((tournament) =>
+      el('option', { value: tournament.year, selected: tournament.year === detail.year, 'data-year': tournament.year }, `${tournament.year}年`)));
+  picker.value = String(detail.year);
+  picker.addEventListener('change', () => { location.hash = `#/z/${picker.value}`; });
+
+  const grid = el('div', { class: 'meikan-grid' });
+  const filterButtons = [];
+  const renderCards = (position) => {
+    filterButtons.forEach((button) => button.setAttribute('aria-pressed', button.getAttribute('value') === position ? 'true' : 'false'));
+    const squad = detail.squads[teamKey].filter((member) => position === 'all' || member.pos === position);
+    grid.replaceChildren(...squad.map((member) => meikanCard(detail, member, teamKey)));
+  };
+  for (const [value, label] of [['all', 'すべて'], ['GK', 'GK'], ['DF', 'DF'], ['MF', 'MF'], ['FW', 'FW']]) {
+    const button = el('button', { type: 'button', value, class: 'meikan-filter', 'aria-pressed': value === 'all' ? 'true' : 'false' }, label);
+    button.addEventListener('click', () => renderCards(value));
+    filterButtons.push(button);
+  }
+  renderCards('all');
+  return el('article', { class: 'page meikan-page' }, [
+    el('h1', {}, '選手名鑑'),
+    el('div', { class: 'meikan-controls' }, [
+      el('label', { for: 'meikan-tournament' }, '大会'), picker,
+      el('nav', { class: 'meikan-team-chips', 'aria-label': '国を選ぶ' }, teamKeys.map((key) =>
+        el('a', { href: `#/z/${detail.year}/${key}`, 'aria-current': key === teamKey ? 'page' : null }, [flag(teams, key), teamName(teams[key].ja)]))),
+      el('div', { class: 'meikan-filters', role: 'group', 'aria-label': 'ポジション' }, filterButtons),
+    ]),
+    el('h2', { class: 'meikan-country-heading' }, [flag(teams, teamKey), teamName(teams[teamKey].ja)]),
+    grid,
   ]);
 }
 
@@ -590,6 +686,10 @@ function rankingValue(kind, metric, row) {
 export function rankingsView(rankings, teams, kind = 'c', metric = 'titles') {
   const metrics = kind === 'c' ? COUNTRY_METRICS : PLAYER_METRICS;
   const rows = kind === 'c' ? rankings.countries[metric] : rankings.players[metric];
+  const yearBearingMetric = kind === 'p' && ['tournamentGoals', 'youngest', 'oldest'].includes(metric);
+  const displayRows = yearBearingMetric
+    ? [...rows].sort((a, b) => a.rank - b.rank || b.year - a.year)
+    : rows;
   const caption = kind === 'p' && metric === 'squads' ? 'メンバーに選ばれた大会の数'
     : kind === 'p' && metric === 'apps' ? '1970年から' : null;
   return el('article', { class: 'page rankings-page' }, [
@@ -601,8 +701,9 @@ export function rankingsView(rankings, teams, kind = 'c', metric = 'titles') {
     el('nav', { class: 'ranking-metrics', 'aria-label': 'ランキングの項目' }, metrics.map(([key, label]) =>
       el('a', { href: `#/r/${kind}/${key}`, 'aria-current': key === metric ? 'page' : null }, label))),
     caption ? el('p', { class: 'ranking-caption' }, caption) : null,
-    el('ol', { class: 'ranking-list' }, rows.map((row) => el('li', {
+    el('ol', { class: 'ranking-list' }, displayRows.map((row) => el('li', {
       class: `ranking-row rank-${Math.min(row.rank, 4)}${kind === 'c' && row.team === 'JPN' ? ' ranking-japan' : ''}`,
+      'data-year': yearBearingMetric ? row.year : null,
     }, [
       el('strong', { class: 'ranking-rank' }, String(row.rank)),
       flag(teams, row.team),
@@ -627,6 +728,11 @@ export function creditsView(meta) {
       rubyEl('p', STRINGS.modified),
     ]),
     el('section', { class: 'panel credit-block' }, [
+      el('h3', {}, '写真のクレジット'),
+      el('p', {}, PHOTO_INTRODUCTION),
+      el('a', { href: '#/credits/photos' }, '写真のクレジットを見る'),
+    ]),
+    el('section', { class: 'panel credit-block' }, [
       el('h3', {}, 'openfootball/worldcup.json'),
       el('p', {}, [link(meta.sources.openfootball.url, 'github.com/openfootball/worldcup.json'), text(' — CC0')]),
     ]),
@@ -642,6 +748,21 @@ export function creditsView(meta) {
     rubyEl('h2', STRINGS.licences),
     el('p', {}, [rubyNodes(STRINGS.siteData), text(' — '), link('https://creativecommons.org/licenses/by-sa/4.0/', 'CC BY-SA 4.0')]),
     el('p', {}, [rubyNodes(STRINGS.code), text(' — MIT')]),
+  ]);
+}
+
+export function photoCreditsView(photos) {
+  return el('article', { class: 'page photo-credits-page' }, [
+    el('h1', {}, '写真のクレジット'),
+    el('p', {}, PHOTO_INTRODUCTION),
+    el('ul', { class: 'photo-credit-list' }, Object.entries(photos).map(([id, photo]) => el('li', { class: 'photo-credit-row' }, [
+      el('a', { class: 'photo-credit-player person', href: `#/p/${id}` }, playerLabel(photo, photo.team)),
+      el('span', { class: 'photo-credit-details' }, [
+        el('a', { href: photo.source }, photo.artist), text(' / '),
+        photo.licenceUrl ? el('a', { href: photo.licenceUrl }, photo.licence) : text(photo.licence),
+        text(' / '), el('a', { href: photo.source }, '出典'),
+      ]),
+    ]))),
   ]);
 }
 

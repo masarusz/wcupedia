@@ -66,6 +66,24 @@ confirms that unpublished paths return 404.
 
 ## Changelog
 
+### v0.5.0 — 2026-09-11
+
+- 選手名鑑 (player guide): pick a World Cup, then a country, then browse its
+  players as cards with photo, shirt number and position, age at that World
+  Cup, club (from the 1950 and 1990–2026 squad lists on Japanese Wikipedia) and
+  World Cup goals and matches. Filter by position; each card opens the player
+  page.
+- Player photos: freely licensed photos from Wikimedia Commons (CC0, public
+  domain, CC BY, CC BY-SA), cropped around the face and self-hosted as small
+  WebP images without metadata. Each photo is credited on the player page and
+  on a photo credits page. Players without a suitable photo get a silhouette with
+  their shirt number. This release includes the photos reviewed so far; more
+  follow in a later update.
+- Recent first: every list spanning several World Cups now shows the most
+  recent first (country results, matches against an opponent, player awards,
+  tournaments in search results, the 名鑑 tournament picker).
+- Tournament and country pages link to their 選手名鑑.
+
 ### v0.4.1 — 2026-09-11
 
 Changes from the children's first session on the iPad.

@@ -1,0 +1,154 @@
+{
+ "_about": "Meikan oracle, written 2026-09-11 by the orchestrator from the raw Japanese Wikipedia squad pages (.cache/sources/wikipedia/squads, parsed independently of tools/lib/players-ja.mjs), never from public/data. Club = the squad page club label as displayed (link label, templates removed). Only 1950 and 1990–2026 have squad pages; every other World Cup has no club. \"shirt\"/\"pos\" are the page values for cross-checking the squad match.",
+ "yearsWithClubs": [
+  1950,
+  1990,
+  1994,
+  1998,
+  2002,
+  2006,
+  2010,
+  2014,
+  2018,
+  2022,
+  2026
+ ],
+ "squadPageCounts": {
+  "1950": {
+   "squadEntries": 280,
+   "withClub": 280
+  },
+  "1990": {
+   "squadEntries": 529,
+   "withClub": 529
+  },
+  "1994": {
+   "squadEntries": 528,
+   "withClub": 528
+  },
+  "1998": {
+   "squadEntries": 704,
+   "withClub": 704
+  },
+  "2002": {
+   "squadEntries": 736,
+   "withClub": 736
+  },
+  "2006": {
+   "squadEntries": 736,
+   "withClub": 736
+  },
+  "2010": {
+   "squadEntries": 736,
+   "withClub": 736
+  },
+  "2014": {
+   "squadEntries": 736,
+   "withClub": 736
+  },
+  "2018": {
+   "squadEntries": 736,
+   "withClub": 736
+  },
+  "2022": {
+   "squadEntries": 831,
+   "withClub": 831
+  },
+  "2026": {
+   "squadEntries": 1248,
+   "withClub": 1248
+  }
+ },
+ "samples": [
+  {
+   "year": 1950,
+   "team": "BRA",
+   "player": "P-49381",
+   "club": "ヴァスコ・ダ・ガマ",
+   "shirt": "-",
+   "pos": "FW",
+   "jaSquadName": "アデミール"
+  },
+  {
+   "year": 1990,
+   "team": "ARG",
+   "player": "P-80404",
+   "club": "ナポリ",
+   "shirt": "10",
+   "pos": "MF",
+   "jaSquadName": "ディエゴ・マラドーナ"
+  },
+  {
+   "year": 1998,
+   "team": "JPN",
+   "player": "P-09349",
+   "club": "ベルマーレ平塚",
+   "shirt": "8",
+   "pos": "MF",
+   "jaSquadName": "中田英寿"
+  },
+  {
+   "year": 2002,
+   "team": "JPN",
+   "player": "P-46807",
+   "club": "アーセナル",
+   "shirt": "5",
+   "pos": "MF",
+   "jaSquadName": "稲本潤一"
+  },
+  {
+   "year": 2010,
+   "team": "JPN",
+   "player": "P-33175",
+   "club": "CSKAモスクワ",
+   "shirt": "18",
+   "pos": "MF",
+   "jaSquadName": "本田圭佑"
+  },
+  {
+   "year": 2014,
+   "team": "JPN",
+   "player": "P-33175",
+   "club": "ミラン",
+   "shirt": "4",
+   "pos": "FW",
+   "jaSquadName": "本田圭佑"
+  },
+  {
+   "year": 2022,
+   "team": "JPN",
+   "player": "P-22633",
+   "club": "ブライトン",
+   "shirt": "9",
+   "pos": "MF",
+   "jaSquadName": "三笘薫"
+  },
+  {
+   "year": 2026,
+   "team": "JPN",
+   "player": "P-39942",
+   "club": "レアル・ソシエダ",
+   "shirt": "8",
+   "pos": "MF",
+   "jaSquadName": "久保建英"
+  },
+  {
+   "year": 2026,
+   "team": "ARG",
+   "player": "P-14758",
+   "club": "インテル・マイアミ",
+   "shirt": "10",
+   "pos": "FW",
+   "jaSquadName": "リオネル・メッシ"
+  },
+  {
+   "year": 2026,
+   "team": "FRA",
+   "player": "P-64077",
+   "club": "レアル・マドリード",
+   "shirt": "10",
+   "pos": "FW",
+   "jaSquadName": "キリアン・エムバペ"
+  }
+ ]
+}

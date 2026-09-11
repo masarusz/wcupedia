@@ -6,9 +6,10 @@ import { fileURLToPath } from 'node:url';
 import { parseCsv } from './lib/csv.mjs';
 import { SOURCES } from './lib/sources.mjs';
 import { conductScore, rankGroup2026 } from './lib/standings-2026.mjs';
-import { chooseJapaneseNames, matchSquadEntry, parseSquadWikitext, validateJapaneseName } from './lib/players-ja.mjs';
+import { chooseJapaneseNames, matchSquadClubEntry, matchSquadEntry, parseSquadWikitext, validateJapaneseName } from './lib/players-ja.mjs';
 import { applySquadChanges, playerTieOrder, rankRows, resolveLineups2026 } from './lib/phase4.mjs';
 import { addTournamentHostKeys, mergeSearchAliases } from './lib/search-data.mjs';
+import { validatePhotoManifest, validatePhotoOriginals } from './lib/photos.mjs';
 import { fold, foldCompact } from '../public/js/fold.js';
 import { rubyPlain, rubyReading, parseRuby } from '../public/js/ruby.js';
 import { ageInDays, ageInYears, isIsoDate } from '../public/js/ages.js';
@@ -19,12 +20,14 @@ let sourceRoot = '.cache/sources';
 let outputRoot = 'public/data';
 let searchAliasesPath = join(ROOT, 'curated/search-aliases.json');
 let birthDateCorrectionsPath = join(ROOT, 'curated/birth-date-corrections.json');
+let photosPath = join(ROOT, 'curated/photos.json');
 for (let index = 0; index < args.length; index += 1) {
   if (args[index] === '--src' && args[index + 1]) sourceRoot = args[++index];
   else if (args[index] === '--out' && args[index + 1]) outputRoot = args[++index];
   else if (args[index] === '--search-aliases' && args[index + 1]) searchAliasesPath = resolve(args[++index]);
   else if (args[index] === '--birth-date-corrections' && args[index + 1]) birthDateCorrectionsPath = resolve(args[++index]);
-  else throw new Error('usage: node tools/build-data.mjs [--src DIR] [--out DIR] [--search-aliases FILE] [--birth-date-corrections FILE]');
+  else if (args[index] === '--photos' && args[index + 1]) photosPath = resolve(args[++index]);
+  else throw new Error('usage: node tools/build-data.mjs [--src DIR] [--out DIR] [--search-aliases FILE] [--birth-date-corrections FILE] [--photos FILE]');
 }
 sourceRoot = resolve(sourceRoot);
 outputRoot = resolve(outputRoot);
@@ -49,6 +52,10 @@ const teamHeadingsJa = await json(join(ROOT, 'curated/team-headings-ja.json'));
 const playersJaOverrides = await json(join(ROOT, 'curated/players-ja-overrides.json'));
 const searchAliases = await json(searchAliasesPath);
 const birthDateCorrections = await json(birthDateCorrectionsPath);
+const photoManifest = await json(photosPath);
+const photoEntries = validatePhotoManifest(photoManifest);
+await validatePhotoOriginals(photoEntries, join(sourceRoot, 'photos/orig'));
+const photoIds = new Set(photoEntries.map(([id]) => id));
 const playerJaTitles = await json(join(sourceRoot, 'wikipedia/player-ja-titles.json'));
 let standingsOverrides2026 = {};
 try {
@@ -507,7 +514,8 @@ for (const row of menTournaments) {
   for (const item of menSquads.filter((squad) => squad.tournament_id === row.tournament_id).sort((a, b) => compare(keyForTeamId(a.team_id), keyForTeamId(b.team_id)) || number(a.shirt_number) - number(b.shirt_number) || compare(a.player_id, b.player_id))) {
     const key = keyForTeamId(item.team_id);
     if (!squads[key]) squads[key] = [];
-    squads[key].push({ player: item.player_id, no: number(item.shirt_number), pos: item.position_code });
+    const shirt = /^\d+$/.test(item.shirt_number) && number(item.shirt_number) > 0 ? number(item.shirt_number) : null;
+    squads[key].push({ player: item.player_id, no: shirt, pos: item.position_code });
   }
   tournamentDetails.push({ ...summary, groups, matches, squads });
   for (const item of menQualified.filter((qualified) => qualified.tournament_id === row.tournament_id)) {
@@ -599,8 +607,18 @@ for (const year of squadPageYears) {
   for (const entry of entries) {
     const candidates = (tournament.squads[entry.team] || []).map((member) => ({
       id: member.player, no: member.no || null, birthDate: playerData.get(member.player)?.birthDate || null,
+      name: playerData.get(member.player)?.name || null,
     }));
     const matched = matchSquadEntry(entry, candidates);
+    const clubMatched = matchSquadClubEntry(entry, candidates);
+    if (clubMatched.id && entry.club) {
+      const member = tournament.squads[entry.team].find((item) => item.player === clubMatched.id);
+      if (!member) throw new Error(`matched Japanese squad player missing from ${year} ${entry.team}: ${clubMatched.id}`);
+      if (member.club && member.club !== entry.club) {
+        throw new Error(`conflicting clubs for ${year} ${entry.team} ${clubMatched.id}: ${member.club} / ${entry.club}`);
+      }
+      member.club = entry.club;
+    }
     if (!matched.id) {
       squadMatchProblems.push({ ...entry, reason: matched.reason });
       continue;
@@ -623,6 +641,7 @@ for (const [id, choice] of japaneseNames.chosen) {
   player.reading = choice.reading;
   player.jaSource = choice.source;
 }
+for (const [id] of photoEntries) if (!playerData.has(id)) throw new Error(`photo has unknown player ${id}`);
 
 const coverageRows = tournamentDetails.map((tournament) => {
   const ids = Object.values(tournament.squads).flatMap((squad) => squad.map((member) => member.player));
@@ -671,6 +690,15 @@ for (const tournament of tournamentDetails) {
     const player = playerData.get(id);
     if (!player) throw new Error(`missing display name for ${tournament.year} ${id}`);
     tournament.people[id] = { name: player.name, ja: player.ja };
+  }
+  for (const squad of Object.values(tournament.squads)) for (const member of squad) {
+    const player = playerData.get(member.player);
+    if (player.birthDate) member.age = ageInYears(player.birthDate, tournament.start);
+    member.goals = player.goals;
+    if ([...player.years].every((year) => year >= 1970)) {
+      member.apps = Object.values(player.appsByYear).reduce((sum, value) => sum + value, 0);
+    }
+    member.photo = photoIds.has(member.player);
   }
 }
 
@@ -745,7 +773,7 @@ for (const key of allTeamKeys) {
     const row = opponentsByKey.get(opponent);
     const result = resultFor(match, member);
     row.p += 1; row.w += result.w; row.d += result.d; row.l += result.l;
-    row.matches.push({ id: match.id, year: match.year, home: match.home, away: match.away, homeGoals: match.score.home, awayGoals: match.score.away });
+    row.matches.push({ id: match.id, year: match.year, date: match.date, home: match.home, away: match.away, homeGoals: match.score.home, awayGoals: match.score.away });
   }
   const scorerCounts = new Map();
   for (const goal of allMatches.flatMap((match) => match.goals)) {
@@ -940,12 +968,25 @@ const meta = {
   counts: { tournaments: tournamentSummaries.length, matches: allMatches.length, goals: allMatches.reduce((sum, match) => sum + match.goals.length, 0), teams: allTeamKeys.length, players: playerData.size },
 };
 
+const photoCredits = {};
+for (const [id, photo] of photoEntries) {
+  const player = playerData.get(id);
+  const recentYear = [...player.years].sort((a, b) => a - b).at(-1);
+  const team = playerYearTeam.get(`${id}\0${recentYear}`) || [...player.teams].sort(compare).at(-1);
+  photoCredits[id] = {
+    artist: photo.artist.trim(), licence: photo.licence,
+    licenceUrl: photo.licenceUrl.replace(/^http:\/\/creativecommons\.org\//, 'https://creativecommons.org/'),
+    source: photo.source.trim(), name: player.name, ja: player.ja, team,
+  };
+}
+
 await mkdir(join(outputRoot, 't'), { recursive: true });
 const writeJson = (name, value) => writeFile(join(outputRoot, name), `${JSON.stringify(value)}\n`);
 await Promise.all([
   writeJson('meta.json', meta), writeJson('tournaments.json', tournamentSummaries),
   writeJson('teams.json', outputTeams), writeJson('players.json', outputPlayers),
   writeJson('matches.json', compactMatches), writeJson('records.json', records), writeJson('rankings.json', rankings), writeJson('search.json', search),
+  writeJson('photos.json', photoCredits),
   ...tournamentDetails.map((tournament) => writeJson(`t/${tournament.year}.json`, tournament)),
 ]);
 

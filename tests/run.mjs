@@ -16,6 +16,8 @@ import { register as searchUiTests } from './search-ui.test.mjs';
 import { register as mutationTests } from './mutation.test.mjs';
 import { register as agesTests } from './ages.test.mjs';
 import { register as navigationTests } from './navigation.test.mjs';
+import { register as meikanTests } from './meikan.test.mjs';
+import { register as photoTests } from './photos.test.mjs';
 
 const checks = [];
 const test = (name, run) => checks.push({ name, run });
@@ -42,6 +44,8 @@ searchUiTests(test, equal, deepEqual);
 mutationTests(test, equal, deepEqual);
 agesTests(test, equal, deepEqual);
 navigationTests(test, equal, deepEqual);
+meikanTests(test, equal, deepEqual);
+photoTests(test, equal, deepEqual);
 viewsRenderTests(test, equal, deepEqual);
 
 let passed = 0;

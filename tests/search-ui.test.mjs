@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import golden from './golden/lazykid.json' with { type: 'json' };
-import { prepareIndex, search } from '../public/js/search.js?v=0.4.1';
+import { prepareIndex, search } from '../public/js/search.js?v=0.5.0';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const load = (name) => JSON.parse(readFileSync(resolve(ROOT, 'public/data', name), 'utf8'));
@@ -43,7 +43,7 @@ export function register(test, equal) {
     globalThis.Node = FakeNode;
     globalThis.document = { createElement: (tag) => new FakeElement(tag), createTextNode: (value) => new FakeText(value) };
     try {
-      const { homeView, searchView } = await import('../public/js/views.js?v=0.4.1');
+      const { homeView, searchView } = await import('../public/js/views.js?v=0.5.0');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       let loads = 0;
@@ -70,7 +70,7 @@ export function register(test, equal) {
     globalThis.Node = FakeNode;
     globalThis.document = { createElement: (tag) => new FakeElement(tag), createTextNode: (value) => new FakeText(value) };
     try {
-      const { searchComponent } = await import('../public/js/views.js?v=0.4.1');
+      const { searchComponent } = await import('../public/js/views.js?v=0.5.0');
       const entries = load('search.json');
       const context = {
         index: prepareIndex(entries), players: load('players.json'), teams: load('teams.json'), tournaments: load('tournaments.json'),
@@ -94,6 +94,13 @@ export function register(test, equal) {
       equal(descendants(results).some((node) => node.getAttribute('href') === '#/p/P-14758'), true, 'Messi result link');
       equal(descendants(results).filter((node) => hasClass(node, 'search-result')).every((node) => node.tagName === 'A'), true, 'one link per row');
       equal(urls.at(-1), 'めっし', 'URL callback query');
+
+      input.value = 'ぶらじる';
+      input.listeners.get('input')[0]();
+      const brazilRows = descendants(results).filter((node) => hasClass(node, 'search-result'));
+      equal(brazilRows.slice(0, 3).map((node) => node.getAttribute('href')).join(','),
+        '#/c/BRA,#/t/2014,#/t/1950', 'Brazil rendered result order');
+      equal(brazilRows[0].textContent.includes('ブラジル'), true, 'Brazil rendered team label');
     } finally {
       if (previousDocument === undefined) delete globalThis.document; else globalThis.document = previousDocument;
       if (previousNode === undefined) delete globalThis.Node; else globalThis.Node = previousNode;
@@ -106,7 +113,7 @@ export function register(test, equal) {
     globalThis.Node = FakeNode;
     globalThis.document = { createElement: (tag) => new FakeElement(tag), createTextNode: (value) => new FakeText(value) };
     try {
-      const { countryView, playerView, searchView, tournamentView } = await import('../public/js/views.js?v=0.4.1');
+      const { countryView, playerView, searchView, tournamentView } = await import('../public/js/views.js?v=0.5.0');
       const entries = load('search.json');
       const players = load('players.json');
       const teams = load('teams.json');

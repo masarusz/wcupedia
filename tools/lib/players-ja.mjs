@@ -1,3 +1,5 @@
+import { foldCompact } from '../../public/js/fold.js';
+
 const PLAYER_TEMPLATE = 'サッカーナショナルチーム選手一覧 選手';
 
 const NON_TEAM_HEADINGS = new Set([
@@ -124,6 +126,24 @@ export function extractSquadName(rawName) {
   return { name: normalizeJapaneseName(raw), source: 'squad-title' };
 }
 
+export function extractClub(rawClub) {
+  let value = String(rawClub || '')
+    .replace(/<ref\b[^>]*>[\s\S]*?<\/ref\s*>|<ref\b[^>]*\/\s*>/giu, '')
+    .replace(/<!--[\s\S]*?-->/gu, '');
+  while (value.includes('{{')) {
+    const start = value.lastIndexOf('{{');
+    const end = balancedEnd(value, start, '{{', '}}');
+    if (end < 0) break;
+    value = `${value.slice(0, start)}${value.slice(end)}`;
+  }
+  value = value.replace(/\[\[([^\]]+)\]\]/gu, (_match, body) => {
+    const parts = splitTopLevel(body);
+    return parts.at(-1).trim();
+  });
+  value = value.replace(/\[https?:\/\/[^\s\]]+\s+([^\]]+)\]/gu, '$1');
+  return value.replace(/<[^>]*>/gu, '').replace(/'{2,}/gu, '').replace(/\s+/gu, ' ').trim() || null;
+}
+
 export function validateJapaneseName(name, team) {
   if (!name) return 'empty';
   if (team === 'JPN') return /\[\[|\]\]|\{\{|\}\}|[\[\]{}]/u.test(name) ? 'wiki syntax' : null;
@@ -166,14 +186,16 @@ export function parseSquadWikitext(text, year, teamHeadings) {
       const parsed = templateParts(section.slice(start, templateEnd));
       const rawName = parsed.named.name ?? parsed.named['名前'] ?? '';
       cursor = templateEnd;
-      if (!rawName.trim()) continue;
+      const originalName = String(parsed.named['原語表記'] || '').replace(/\s+/gu, ' ').trim() || null;
+      if (!rawName.trim() && !originalName) continue;
       const noRaw = parsed.named.no ?? parsed.named['背番号'];
       const no = /^\d+$/.test(String(noRaw || '').trim()) ? Number(noRaw) : null;
       entries.push({
         year: Number(year), team, no,
         pos: parsed.named.pos ?? parsed.named['ポジション'] ?? null,
+        club: extractClub(parsed.named.club ?? parsed.named['クラブ']),
         birthDate: birthDate(parsed.named.age ?? parsed.named['生年月日']),
-        reading: String(parsed.named['原語表記'] || '').replace(/\s+/gu, ' ').trim() || null,
+        reading: originalName,
         rawName,
         ...extractSquadName(rawName),
       });
@@ -198,6 +220,45 @@ export function matchSquadEntry(entry, candidates) {
   }
   if (sameBirth.length > 1) return { id: null, reason: `ambiguous team+DOB (${sameBirth.map((item) => item.id).sort(compare).join(', ')})` };
   return { id: null, reason: entry.birthDate ? 'no team+DOB candidate' : 'missing birth date' };
+}
+
+function oneEditApart(left, right) {
+  if (left === right) return true;
+  if (Math.abs(left.length - right.length) > 1) return false;
+  let edits = 0;
+  for (let a = 0, b = 0; a < left.length || b < right.length;) {
+    if (left[a] === right[b]) { a += 1; b += 1; continue; }
+    edits += 1;
+    if (edits > 1) return false;
+    if (left.length > right.length) a += 1;
+    else if (right.length > left.length) b += 1;
+    else { a += 1; b += 1; }
+  }
+  return true;
+}
+
+export function matchSquadClubEntry(entry, candidates) {
+  const strict = matchSquadEntry(entry, candidates);
+  if (strict.id) return strict;
+  const sourceName = foldCompact(entry.reading || '');
+  if (sourceName) {
+    const exact = candidates.filter((candidate) => foldCompact(candidate.name || '') === sourceName);
+    if (exact.length === 1) return { id: exact[0].id, reason: null };
+  }
+  if (entry.no != null) {
+    const byShirt = candidates.filter((candidate) => candidate.no === entry.no);
+    if (byShirt.length === 1) return { id: byShirt[0].id, reason: null };
+  }
+  const sourceTokens = String(entry.reading || '').split(/\s+/u).map(foldCompact).filter(Boolean);
+  if (sourceTokens.length >= 2) {
+    const near = candidates.filter((candidate) => {
+      const tokens = String(candidate.name || '').split(/\s+/u).map(foldCompact).filter(Boolean);
+      return tokens.length >= 2 && sourceTokens.at(-1) === tokens.at(-1)
+        && oneEditApart(sourceTokens[0], tokens[0]);
+    });
+    if (near.length === 1) return { id: near[0].id, reason: null };
+  }
+  return strict;
 }
 
 export function chooseJapaneseNames({ players, matches, articleTitles, overrides = {} }) {
