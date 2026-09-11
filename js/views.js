@@ -1,10 +1,12 @@
-import { buildBracket } from './bracket.js?v=0.2.12';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.2.12';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.2.12';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.2.12';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.2.12';
-import { VERSION } from './version.js?v=0.2.12';
-import { rubyPlain } from './ruby.js?v=0.2.12';
+import { buildBracket } from './bracket.js?v=0.3.0';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.3.0';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.3.0';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.3.0';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.3.0';
+import { VERSION } from './version.js?v=0.3.0';
+import { rubyPlain } from './ruby.js?v=0.3.0';
+import { rubyReading } from './ruby.js?v=0.3.0';
+import { fold } from './fold.js?v=0.3.0';
 
 function flag(teams, key) {
   return el('img', {
@@ -13,13 +15,23 @@ function flag(teams, key) {
   });
 }
 
-function team(teams, key, className = 'team') {
-  return el('span', { class: className }, [flag(teams, key), rubyNodes(teams[key].ja)]);
+export function teamName(markup, className = 'team-name') {
+  const parts = rubyPlain(markup).split('・');
+  return el('span', { class: className }, parts.flatMap((part, index) => [
+    index ? text('・') : null,
+    index ? el('wbr') : null,
+    text(part),
+  ]));
 }
 
-function playerName(detail, id, teamKey) {
+function team(teams, key, className = 'team') {
+  return el('span', { class: className }, [flag(teams, key), teamName(teams[key].ja)]);
+}
+
+function playerName(detail, id, teamKey, linked = false) {
   const person = detail.people[id];
-  return text(person ? playerLabel(person, teamKey) : id);
+  const label = person ? playerLabel(person, teamKey) : id;
+  return linked ? el('a', { class: 'person', href: `#/p/${id}` }, label) : text(label);
 }
 
 function badge(markup, className = '') {
@@ -80,12 +92,12 @@ function podium(detail, teams) {
 
 function honourPlayerLine(detail, playerId, playerTeamKey, teams, awardTeamKey) {
   return el('span', { class: 'honour-player' }, [
-    el('span', { class: 'person' }, playerName(detail, playerId, playerTeamKey)),
+    playerName(detail, playerId, playerTeamKey, true),
     team(teams, awardTeamKey),
   ]);
 }
 
-function awardTier(award) {
+export function awardTier(award) {
   if (award.startsWith('golden-')) return 'golden';
   if (award.startsWith('silver-')) return 'silver';
   if (award.startsWith('bronze-')) return 'bronze';
@@ -154,12 +166,7 @@ function bracketResult(match, index) {
 function chartName(markup) {
   const name = rubyPlain(markup);
   const nameClass = [...name].length <= 7 ? 'bracket-name bracket-name-short' : 'bracket-name bracket-name-long';
-  const parts = name.split('・');
-  return el('span', { class: nameClass }, parts.flatMap((part, index) => [
-    index ? text('・') : null,
-    index ? el('wbr') : null,
-    text(part),
-  ]));
+  return teamName(markup, nameClass);
 }
 
 function bracketBox(box, state, detail, teams, standaloneFinal = false) {
@@ -308,13 +315,201 @@ export function matchView(detail, match, teams) {
       rubyEl('h2', STRINGS.goalTimeline),
       goals.length ? el('ol', { class: 'timeline' }, goals.map((goal) => el('li', { class: goal.team === match.home ? 'goal-home' : 'goal-away' }, [
         el('span', { class: 'goal-minute' }, formatMinute(goal.minute)),
-        el('span', { class: 'person' }, playerName(detail, goal.player, goal.playerTeam)),
+        playerName(detail, goal.player, goal.playerTeam, true),
         goal.penalty ? badge('PK') : null,
         goal.ownGoal ? badge(STRINGS.ownGoal, 'own-goal') : null,
         goal.ownGoal ? team(teams, goal.playerTeam, 'player-team') : null,
       ]))) : rubyEl('p', STRINGS.noGoals),
     ]),
     el('a', { class: 'back-link', href: `#/t/${detail.year}` }, rubyNodes(STRINGS.backTournament)),
+  ]);
+}
+
+const REGION_SECTIONS = [
+  ['AFC', 'アジア'], ['UEFA', 'ヨーロッパ'], ['CONMEBOL', '南米'],
+  ['CONCACAF', '北中米カリブ'], ['CAF', 'アフリカ'], ['OFC', 'オセアニア'],
+];
+
+const compareText = (left, right) => left < right ? -1 : left > right ? 1 : 0;
+const teamReadingOrder = (teams, left, right) =>
+  compareText(fold(rubyReading(teams[left].ja)), fold(rubyReading(teams[right].ja))) || compareText(left, right);
+
+export function countriesView(teams) {
+  const roots = Object.keys(teams).filter((key) => !teams[key].successor);
+  return el('article', { class: 'page countries-page' }, [
+    el('h1', {}, '国'),
+    REGION_SECTIONS.map(([region, label]) => {
+      const keys = roots.filter((key) => teams[key].region === region).sort((a, b) => teamReadingOrder(teams, a, b));
+      return el('section', { class: 'country-region' }, [
+        el('h2', {}, label),
+        el('div', { class: 'country-grid' }, keys.map((key) => el('a', { class: 'country-tile', href: `#/c/${key}` }, [
+          flag(teams, key), teamName(teams[key].ja),
+          teams[key].predecessors.length ? el('small', {}, `${teams[key].predecessors.map((item) => rubyPlain(teams[item].ja)).join('・')}をふくむ`) : null,
+        ]))),
+      ]);
+    }),
+  ]);
+}
+
+const FINISH_LABELS = {
+  champion: '優勝', 'runner-up': '準優勝', third: '3位', fourth: '4位', sf: 'ベスト4', qf: 'ベスト8',
+  r16: 'ベスト16', r32: 'ベスト32', 'second-group': '2次リーグ', 'final-round': '決勝リーグ', group: 'グループリーグ',
+};
+
+function recordStats(record) {
+  return el('div', { class: 'record-stats' }, [
+    ['試合', record.p], ['勝', record.w], ['分', record.d], ['敗', record.l], ['得点', record.gf], ['失点', record.ga],
+  ].map(([label, value]) => el('span', {}, [el('strong', {}, String(value)), text(label)])));
+}
+
+function countryMatchLink(match, teams) {
+  return el('a', { class: 'country-match-link', href: `#/m/${match.id}` }, [
+    text(`${match.year}年 `), team(teams, match.home), el('strong', {}, `${match.homeGoals}–${match.awayGoals}`), team(teams, match.away),
+  ]);
+}
+
+export function countryView(key, teams) {
+  const country = teams[key];
+  const predecessorNames = country.predecessors.map((item) => rubyPlain(teams[item].ja));
+  const opponents = country.opponents.slice().sort((a, b) => b.p - a.p || teamReadingOrder(teams, a.team, b.team));
+  return el('article', { class: 'page country-page' }, [
+    el('header', { class: 'country-header panel' }, [
+      flag(teams, key), teamName(country.ja, 'team-name country-title'),
+      predecessorNames.length ? el('p', { class: 'lineage-note' }, `${predecessorNames.join('・')}時代をふくむ`) : null,
+      el('div', { class: 'country-head-stats' }, [
+        el('span', {}, `出場 ${country.tournaments.length}回`),
+        el('span', {}, `最高 ${FINISH_LABELS[country.bestFinish] || '—'}`),
+        el('span', {}, `優勝 ${country.titlesWithPredecessors}回`),
+      ]),
+    ]),
+    el('section', { class: 'panel' }, [el('h2', {}, '通算成績'), recordStats(country.record)]),
+    el('section', { class: 'panel' }, [
+      el('h2', {}, '大会ごとの成績'),
+      el('ul', { class: 'country-tournaments' }, country.tournaments.map((item) => el('li', {}, [
+        el('a', { href: `#/t/${item.year}` }, `${item.year}年`),
+        el('strong', {}, FINISH_LABELS[item.finish] || item.finish),
+        item.team !== key ? el('small', {}, `${rubyPlain(teams[item.team].ja)}時代`) : null,
+      ]))),
+    ]),
+    el('section', { class: 'panel opponents-panel' }, [
+      el('h2', {}, '対戦成績'),
+      el('table', { class: 'opponents-table' }, [
+        el('thead', {}, el('tr', {}, ['相手', '試合', '勝', '分', '敗'].map((label) => el('th', { scope: 'col' }, label)))),
+        el('tbody', {}, opponents.map((row) => el('tr', {}, [
+          el('td', {}, el('details', {}, [
+            el('summary', {}, [flag(teams, row.team), teamName(teams[row.team].ja)]),
+            el('div', { class: 'opponent-matches' }, row.matches.map((match) => countryMatchLink(match, teams))),
+          ])),
+          ...[row.p, row.w, row.d, row.l].map((value) => el('td', {}, String(value))),
+        ]))),
+      ]),
+    ]),
+    el('section', { class: 'panel country-scorers' }, [
+      el('h2', {}, '通算得点ランキング'),
+      country.topScorers.length ? el('ol', {}, country.topScorers.map((row) => el('li', {}, [
+        el('a', { class: 'person', href: `#/p/${row.player}` }, playerLabel(row, row.team)),
+        el('strong', {}, `${row.goals}点`),
+      ]))) : el('p', {}, '得点の記録はありません'),
+    ]),
+    country.successor || country.predecessors.length ? el('nav', { class: 'lineage-links', 'aria-label': '国の歴史' }, [
+      country.successor ? el('a', { href: `#/c/${country.successor}` }, `${rubyPlain(teams[country.successor].ja)}を見る`) : null,
+      country.predecessors.map((item) => el('a', { href: `#/c/${item}` }, `${rubyPlain(teams[item].ja)}を見る`)),
+    ]) : null,
+  ]);
+}
+
+const POSITION_LABELS = { GK: 'ゴールキーパー', DF: 'ディフェンダー', MF: 'ミッドフィールダー', FW: 'フォワード' };
+
+export function playerView(id, player, details, suppliedTeams = null) {
+  const teams = Object.assign({}, ...details.map((detail) => detail.teamDisplay || {}), suppliedTeams || {});
+  const tournamentRows = details.map((detail) => {
+    let squadTeam = null;
+    let member = null;
+    for (const [teamKey, squad] of Object.entries(detail.squads)) {
+      const found = squad.find((item) => item.player === id);
+      if (found) { squadTeam = teamKey; member = found; break; }
+    }
+    if (!member) throw new Error(`player ${id} missing from ${detail.year} squad`);
+    const goals = detail.matches.flatMap((match) => match.goals
+      .filter((goal) => goal.player === id)
+      .map((goal) => ({ ...goal, match })));
+    return el('section', { class: 'player-tournament panel' }, [
+      el('h2', {}, el('a', { href: `#/t/${detail.year}` }, `${detail.year}年大会`)),
+      el('p', { class: 'player-squad-line' }, [team(teams, squadTeam), text(` 背番号${member.no}・${POSITION_LABELS[member.pos] || member.pos}`)]),
+      Object.hasOwn(player, 'appsByYear') ? el('p', {}, `出場試合数 ${player.appsByYear[detail.year]}試合`) : null,
+      el('p', {}, `ゴール ${player.goalsByYear[detail.year] || 0}点`),
+      goals.length ? el('ul', { class: 'player-goals' }, goals.map((goal) => el('li', {}, [
+        el('a', { href: `#/m/${goal.match.id}` }, `${formatMinute(goal.minute)} ${rubyPlain(teams[goal.match.home].ja)} ${goal.match.score.home}–${goal.match.score.away} ${rubyPlain(teams[goal.match.away].ja)}`),
+        goal.penalty ? badge('PK') : null, goal.ownGoal ? badge(STRINGS.ownGoal, 'own-goal') : null,
+      ]))) : null,
+    ]);
+  });
+  return el('article', { class: 'page player-page' }, [
+    el('header', { class: 'player-header panel' }, [
+      el('div', { class: 'player-flags' }, player.teams.map((teamKey) => flag(teams, teamKey))),
+      el('h1', {}, playerLabel(player, player.teams.includes('JPN') ? 'JPN' : player.teams.at(-1))),
+      el('p', {}, `通算ゴール ${player.goals}点`),
+      Object.hasOwn(player, 'apps') ? el('p', {}, `出場試合数 ${player.apps}試合`) :
+        el('p', { class: 'appearance-note' }, '1970年より前の出場試合の記録はありません'),
+    ]),
+    player.awards.length ? el('section', { class: 'panel player-awards' }, [
+      el('h2', {}, '大会賞'),
+      el('ul', {}, player.awards.map(([year, award]) => el('li', {}, [
+        rubyEl('strong', AWARD_LABELS[award] || award, { class: `honour-pill honour-pill-${awardTier(award)}` }),
+        el('a', { href: `#/t/${year}` }, `${year}年`),
+      ]))),
+    ]) : null,
+    tournamentRows,
+  ]);
+}
+
+const COUNTRY_METRICS = [
+  ['titles', '優勝回数'], ['appearances', '出場回数'], ['wins', '勝利数'], ['goals', '総得点'],
+];
+const PLAYER_METRICS = [
+  ['goals', '通算ゴール'], ['tournamentGoals', '1大会のゴール'], ['awards', '大会賞の数'],
+  ['squads', '出場大会数'], ['apps', '出場試合数'],
+];
+
+function rankingValue(kind, metric, row) {
+  if (kind === 'c') {
+    if (metric === 'titles') return `優勝 ${row.value}回（準優勝 ${row.runnerUp}回）`;
+    if (metric === 'appearances') return `出場 ${row.value}回`;
+    if (metric === 'wins') return `${row.value}勝`;
+    return `${row.value}点`;
+  }
+  if (metric === 'goals') return `通算 ${row.value}点`;
+  if (metric === 'tournamentGoals') return `${row.value}点（${row.year}年）`;
+  if (metric === 'awards') return `大会賞 ${row.value}回`;
+  if (metric === 'squads') return `出場大会数 ${row.value}大会`;
+  return `出場試合数 ${row.value}試合`;
+}
+
+export function rankingsView(rankings, teams, kind = 'c', metric = 'titles') {
+  const metrics = kind === 'c' ? COUNTRY_METRICS : PLAYER_METRICS;
+  const rows = kind === 'c' ? rankings.countries[metric] : rankings.players[metric];
+  const caption = kind === 'p' && metric === 'squads' ? 'メンバーに選ばれた大会の数'
+    : kind === 'p' && metric === 'apps' ? '1970年から' : null;
+  return el('article', { class: 'page rankings-page' }, [
+    el('h1', {}, 'ランキング'),
+    el('nav', { class: 'ranking-tabs', 'aria-label': 'ランキングの種類' }, [
+      el('a', { href: '#/r/c/titles', 'aria-current': kind === 'c' ? 'page' : null }, '国'),
+      el('a', { href: '#/r/p/goals', 'aria-current': kind === 'p' ? 'page' : null }, '選手'),
+    ]),
+    el('nav', { class: 'ranking-metrics', 'aria-label': 'ランキングの項目' }, metrics.map(([key, label]) =>
+      el('a', { href: `#/r/${kind}/${key}`, 'aria-current': key === metric ? 'page' : null }, label))),
+    caption ? el('p', { class: 'ranking-caption' }, caption) : null,
+    el('ol', { class: 'ranking-list' }, rows.map((row) => el('li', {
+      class: `ranking-row rank-${Math.min(row.rank, 4)}${kind === 'c' && row.team === 'JPN' ? ' ranking-japan' : ''}`,
+    }, [
+      el('strong', { class: 'ranking-rank' }, String(row.rank)),
+      flag(teams, row.team),
+      kind === 'c'
+        ? el('a', { class: 'ranking-name', href: `#/c/${row.team}` }, teamName(row.ja))
+        : el('a', { class: 'ranking-name person', href: `#/p/${row.player}` }, playerLabel(row, row.team)),
+      metric === 'tournamentGoals' ? el('a', { class: 'ranking-value', href: `#/t/${row.year}` }, rankingValue(kind, metric, row))
+        : el('strong', { class: 'ranking-value' }, rankingValue(kind, metric, row)),
+    ]))),
   ]);
 }
 

@@ -172,6 +172,11 @@ h3 { font-size: 21px; }
   vertical-align: middle;
 }
 .team, .score-team, .player-team { display: inline-flex; align-items: center; gap: 7px; }
+.team-name, .bracket-name {
+  min-width: 0;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
 .team-list { display: flex; flex-wrap: wrap; gap: 10px 18px; }
 .summary { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; margin: 22px 0; }
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -190,7 +195,7 @@ h3 { font-size: 21px; }
    (owner, 2026-09-11, option B). Must stay AFTER the `.podium li` rule above: same
    specificity, so source order decides. Every row gets the first row's inline
    padding so the columns line up across the highlighted 優勝 row and the others. */
-.podium li { display: grid; grid-template-columns: 5em 2.5em minmax(0, 1fr); column-gap: 8px; padding-inline: 10px; }
+.podium li { display: grid; grid-template-columns: 4.2em 1.8em minmax(0, 1fr); column-gap: 6px; padding-inline: 10px; }
 .podium li > strong { text-align: center; }
 .podium li .team { display: contents; }
 .podium li .flag { justify-self: center; }
@@ -643,6 +648,93 @@ h3 { font-size: 21px; }
 .credit-block h3 { margin-top: 0; }
 .credits-page a { min-height: 44px; display: inline-flex; align-items: center; }
 
+.country-region { margin-top: 34px; }
+.country-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px; }
+.country-tile {
+  min-height: 72px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 10px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  text-decoration: none;
+  box-shadow: var(--shadow);
+}
+.country-tile .flag { width: 32px; height: 24px; grid-row: 1 / span 2; }
+.country-tile .team-name { font-weight: 800; }
+.country-tile small { color: var(--muted); font-size: 13px; }
+.country-header { margin-bottom: 20px; display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 6px 18px; }
+.country-header > .flag { width: 72px; height: 54px; grid-row: 1 / span 2; }
+.country-title { font-size: clamp(28px, 5vw, 44px); font-weight: 800; line-height: 1.3; }
+.lineage-note { margin: 0; color: var(--muted); }
+.country-head-stats { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.country-head-stats span { padding: 5px 12px; background: var(--surface-strong); border-radius: 999px; font-weight: 700; }
+.country-page > .panel, .player-tournament { margin-bottom: 20px; }
+.record-stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.record-stats span { min-width: 0; padding: 8px 4px; background: var(--surface-strong); border-radius: 10px; text-align: center; }
+.record-stats strong { display: block; font-size: 25px; }
+.country-tournaments { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.country-tournaments li { min-height: 44px; display: grid; grid-template-columns: 7em 1fr auto; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+.country-tournaments a, .lineage-links a { min-height: 44px; display: inline-flex; align-items: center; }
+.country-tournaments small { color: var(--muted); }
+.opponents-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.opponents-table th, .opponents-table td { padding: 8px; border-bottom: 1px solid var(--border); text-align: center; }
+.opponents-table th:not(:first-child), .opponents-table td:not(:first-child) { white-space: nowrap; }
+.opponents-table th:first-child, .opponents-table td:first-child { width: 100%; text-align: left; }
+.opponents-table summary { min-height: 44px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; }
+.opponent-matches { width: min(560px, calc(100vw - 110px)); padding: 8px 0; display: grid; gap: 6px; }
+.country-match-link { min-height: 44px; padding: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; background: var(--surface-strong); border-radius: 8px; }
+.country-scorers ol { margin: 0; padding-left: 1.6em; }
+.country-scorers li { min-height: 44px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.lineage-links { display: flex; flex-wrap: wrap; gap: 18px; }
+.player-header { margin-bottom: 20px; }
+.player-header h1 { word-break: keep-all; overflow-wrap: normal; }
+.player-flags { display: flex; gap: 6px; }
+.appearance-note, .ranking-caption { color: var(--muted); }
+.player-squad-line { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.player-goals { padding-left: 1.5em; }
+.player-goals li { min-height: 44px; }
+.player-awards { margin-bottom: 20px; }
+.player-awards ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 10px 18px; }
+.player-awards li { min-height: 44px; display: flex; align-items: center; gap: 8px; }
+.ranking-tabs, .ranking-metrics { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.ranking-tabs a, .ranking-metrics a {
+  min-height: 44px;
+  padding: 7px 16px;
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--surface);
+  font-weight: 700;
+  text-decoration: none;
+}
+.ranking-tabs a[aria-current="page"], .ranking-metrics a[aria-current="page"] { color: var(--primary-ink); background: var(--primary); border-color: var(--primary); }
+.ranking-list { margin: 24px 0 0; padding: 0; list-style: none; display: grid; gap: 7px; }
+.ranking-row {
+  min-height: 58px;
+  padding: 7px 12px;
+  display: grid;
+  grid-template-columns: 2.5em 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.ranking-rank { text-align: center; font-size: 22px; }
+.rank-1 .ranking-rank { color: var(--gold); }
+.rank-2 .ranking-rank { color: var(--silver); }
+.rank-3 .ranking-rank { color: var(--bronze); }
+.ranking-name { min-height: 44px; min-width: 0; display: flex; align-items: center; font-weight: 700; }
+.ranking-value { min-height: 44px; display: flex; align-items: center; text-align: right; }
+.ranking-japan { background: var(--advance); border-color: var(--primary); }
+
 .site-footer {
   min-height: 72px;
   padding: 14px 24px;
@@ -670,6 +762,7 @@ h3 { font-size: 21px; }
   .score-card { padding: 20px 10px; gap: 8px; }
   .score-team .flag { width: 48px; height: 36px; }
   .timeline li { width: 88%; }
+  .record-stats { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 420px) {
@@ -679,4 +772,10 @@ h3 { font-size: 21px; }
   .stats { grid-template-columns: 1fr; }
   .match-link { font-size: 15px; }
   .match-link .flag { display: none; }
+  .podium li { column-gap: 4px; }
+  .podium li .flag { width: 20px; height: 15px; }
+  .ranking-row { grid-template-columns: 2em 24px minmax(0, 1fr); gap: 7px; padding-inline: 8px; }
+  .ranking-value { grid-column: 3; justify-self: start; text-align: left; }
+  .opponents-panel { overflow-x: auto; }
+  .opponents-table { min-width: 390px; }
 }
