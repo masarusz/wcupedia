@@ -1,12 +1,13 @@
-import { buildBracket } from './bracket.js?v=0.3.0';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.3.0';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.3.0';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.3.0';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.3.0';
-import { VERSION } from './version.js?v=0.3.0';
-import { rubyPlain } from './ruby.js?v=0.3.0';
-import { rubyReading } from './ruby.js?v=0.3.0';
-import { fold } from './fold.js?v=0.3.0';
+import { buildBracket } from './bracket.js?v=0.4.0';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.4.0';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.4.0';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.4.0';
+import { search as runSearch } from './search.js?v=0.4.0';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.4.0';
+import { VERSION } from './version.js?v=0.4.0';
+import { rubyPlain } from './ruby.js?v=0.4.0';
+import { rubyReading } from './ruby.js?v=0.4.0';
+import { fold } from './fold.js?v=0.4.0';
 
 function flag(teams, key) {
   return el('img', {
@@ -66,7 +67,88 @@ function hostList(detail, teams) {
   return el('div', { class: 'team-list' }, hosts.map((key) => team(teams, key)));
 }
 
-export function homeView(tournaments, teams) {
+function searchResultRow(result, context) {
+  const { teams, tournaments } = context;
+  const typeLabels = { team: '国', player: '選手', tournament: '大会' };
+  let href;
+  let teamKey;
+  let name;
+  let hint = null;
+  if (result.type === 'team') {
+    const country = teams[result.id];
+    href = `#/c/${result.id}`;
+    teamKey = result.id;
+    name = teamName(country.ja, 'search-result-name team-name');
+    hint = `出場 ${country.tournaments.length}回`;
+  } else if (result.type === 'player') {
+    href = `#/p/${result.id}`;
+    teamKey = result.team;
+    name = el('span', { class: 'search-result-name person' }, playerLabel({ name: result.label, ja: result.ja }, teamKey));
+    const [first, last] = result.years;
+    hint = `${rubyPlain(teams[teamKey].ja)} ${first === last ? `${first}年` : `${first}–${last}年`}`;
+  } else {
+    const tournament = tournaments.find((item) => item.year === Number(result.id));
+    href = `#/t/${result.id}`;
+    teamKey = tournament.hosts[0];
+    name = rubyEl('span', tournamentTitle(tournament, teams), { class: 'search-result-name' });
+  }
+  return el('a', { class: 'search-result', href }, [
+    el('span', { class: `search-type search-type-${result.type}` }, typeLabels[result.type]),
+    flag(teams, teamKey),
+    name,
+    hint ? el('small', { class: 'search-result-hint' }, hint) : null,
+  ]);
+}
+
+export function searchComponent({ initialQuery = '', eager = false, loadContext, updateUrl }) {
+  const inputId = 'site-search-input';
+  const results = el('div', { class: 'search-results', 'aria-live': 'polite' });
+  const input = el('input', {
+    id: inputId, class: 'search-input', type: 'search', placeholder: rubyPlain(STRINGS.searchLabel),
+    enterkeyhint: 'search', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'false',
+  });
+  input.value = initialQuery;
+  let context = null;
+  let loading = null;
+
+  const showMatches = () => {
+    const query = input.value;
+    if (!query) {
+      results.replaceChildren();
+      return;
+    }
+    const matches = runSearch(context.index, query);
+    results.replaceChildren(matches.length
+      ? el('div', { class: 'search-result-list' }, matches.map((result) => searchResultRow(result, context)))
+      : rubyEl('p', STRINGS.noSearchResults, { class: 'search-status' }));
+  };
+  const ensureReady = async () => {
+    if (context) return showMatches();
+    results.replaceChildren(rubyEl('p', STRINGS.loading, { class: 'search-status' }));
+    if (!loading) loading = loadContext();
+    try {
+      context = await loading;
+      showMatches();
+    } catch {
+      loading = null;
+      results.replaceChildren(rubyEl('p', STRINGS.dataError, { class: 'search-status' }));
+    }
+  };
+  input.addEventListener('focus', ensureReady);
+  input.addEventListener('input', () => {
+    updateUrl(input.value);
+    if (context) showMatches();
+    else void ensureReady();
+  });
+  if (eager || initialQuery) void ensureReady();
+  return el('section', { class: 'search-box', role: 'search' }, [
+    rubyEl('label', STRINGS.searchLabel, { for: inputId }),
+    input,
+    results,
+  ]);
+}
+
+export function homeView(tournaments, teams, searchOptions = null) {
   const cards = [...tournaments].sort((a, b) => b.year - a.year).map((tournament) => {
     const champion = tournament.placings['1'];
     return el('a', { class: 'tournament-card', href: `#/t/${tournament.year}` }, [
@@ -77,9 +159,17 @@ export function homeView(tournaments, teams) {
     ]);
   });
   return el('section', { class: 'page home-page' }, [
+    searchOptions ? searchComponent(searchOptions) : null,
     rubyEl('h1', STRINGS.tournaments),
     rubyEl('p', STRINGS.intro, { class: 'intro' }),
     el('div', { class: 'tournament-grid' }, cards),
+  ]);
+}
+
+export function searchView(searchOptions) {
+  return el('section', { class: 'page search-page' }, [
+    rubyEl('h1', STRINGS.search),
+    searchComponent({ ...searchOptions, eager: true }),
   ]);
 }
 

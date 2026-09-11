@@ -66,8 +66,9 @@ body {
 }
 
 a { color: var(--primary); text-underline-offset: .18em; }
-a:focus-visible, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 button { font: inherit; font-size: 16px; }
+input { font: inherit; font-size: 16px; }
 
 .site-header {
   position: sticky;
@@ -735,6 +736,53 @@ h3 { font-size: 21px; }
 .ranking-value { min-height: 44px; display: flex; align-items: center; text-align: right; }
 .ranking-japan { background: var(--advance); border-color: var(--primary); }
 
+.search-box {
+  max-width: 840px;
+  margin: 0 auto 34px;
+}
+.search-box label { display: block; margin-bottom: 7px; font-weight: 800; }
+.search-input {
+  width: 100%;
+  min-height: 52px;
+  padding: 9px 14px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 2px solid var(--primary);
+  border-radius: 14px;
+  font-size: 18px;
+}
+.search-results { margin-top: 12px; }
+.search-status { margin: 18px 0; color: var(--muted); text-align: center; }
+.search-result-list { display: grid; gap: 7px; }
+.search-result {
+  min-width: 0;
+  min-height: 58px;
+  padding: 8px 12px;
+  display: grid;
+  grid-template-columns: 3.2em 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 10px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-decoration: none;
+  box-shadow: var(--shadow);
+}
+.search-type {
+  grid-row: 1 / span 2;
+  padding: 2px 7px;
+  color: var(--primary);
+  background: var(--advance);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+.search-result > .flag { grid-row: 1 / span 2; }
+.search-result-name { min-width: 0; font-weight: 800; overflow-wrap: anywhere; }
+.search-result-hint { grid-column: 3; color: var(--muted); font-size: 14px; }
+
 .site-footer {
   min-height: 72px;
   padding: 14px 24px;
@@ -747,7 +795,7 @@ h3 { font-size: 21px; }
 }
 .site-footer a { min-height: 44px; display: inline-flex; align-items: center; }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .header-inner { padding-inline: 12px; gap: 6px; flex-wrap: wrap; }
   .brand { min-height: 48px; }
   .brand-mark { width: 28px; height: 28px; }
