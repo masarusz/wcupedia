@@ -104,6 +104,19 @@ input { font: inherit; font-size: 16px; }
   margin-right: auto;
 }
 
+.header-back-slot { display: inline-flex; flex: 0 0 auto; }
+.header-back-slot:empty { display: none; }
+.header-back {
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  color: var(--primary);
+  background: var(--surface);
+  cursor: pointer;
+  font-weight: 800;
+}
+
 .brand-mark { grid-column: 1; grid-row: 1 / span 2; align-self: center; width: 34px; height: 34px; }
 .brand strong { grid-column: 2; grid-row: 1 / span 2; color: var(--primary); font-size: 30px; line-height: 1; letter-spacing: .02em; }
 .brand .subtitle { grid-column: 3; align-self: end; font-size: 15px; font-weight: 700; line-height: 1.25; }
@@ -173,6 +186,15 @@ h3 { font-size: 21px; }
   vertical-align: middle;
 }
 .team, .score-team, .player-team { display: inline-flex; align-items: center; gap: 7px; }
+.country-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: inherit;
+  font-weight: 700;
+  text-decoration-color: color-mix(in srgb, var(--primary) 55%, transparent);
+}
 .team-name, .bracket-name {
   min-width: 0;
   word-break: keep-all;
@@ -196,10 +218,10 @@ h3 { font-size: 21px; }
    (owner, 2026-09-11, option B). Must stay AFTER the `.podium li` rule above: same
    specificity, so source order decides. Every row gets the first row's inline
    padding so the columns line up across the highlighted 優勝 row and the others. */
-.podium li { display: grid; grid-template-columns: 4.2em 1.8em minmax(0, 1fr); column-gap: 6px; padding-inline: 10px; }
+.podium li { display: grid; grid-template-columns: 4.2em minmax(0, 1fr); column-gap: 6px; padding-inline: 10px; }
 .podium li > strong { text-align: center; }
-.podium li .team { display: contents; }
-.podium li .flag { justify-self: center; }
+.podium-country-link { display: grid; grid-template-columns: 1.8em minmax(0, 1fr); column-gap: 6px; }
+.podium-country-link .flag { justify-self: center; }
 .person { overflow-wrap: anywhere; }
 
 .honour-row { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--border); }
@@ -227,11 +249,13 @@ h3 { font-size: 21px; }
 .group-panel h3 { margin-top: 0; }
 .table-scroll { width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
 .bracket-scroll { width: 100%; max-width: 100%; overflow-x: clip; }
-.standings { min-width: 820px; width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.standings { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
 .standings th, .standings td { border-bottom: 1px solid var(--border); text-align: center; white-space: nowrap; }
-.standings th { padding: 8px 9px; }
-.standings td { padding: 10px 9px; }
-.standings th:nth-child(2), .standings td:nth-child(2) { text-align: left; }
+.standings th { padding: 7px 3px; }
+.standings td { padding: 7px 3px; }
+.standings th:nth-child(2), .standings td:nth-child(2) { width: 100%; text-align: left; white-space: normal; }
+.standings-country-link { max-width: 100%; line-height: 1.35; }
+.standings-country-link .team-name { white-space: normal; }
 .standings tr.advanced { background: var(--advance); }
 .advanced-mark { display: block; color: var(--primary); font-size: 12px; font-weight: 700; }
 
@@ -630,6 +654,7 @@ h3 { font-size: 21px; }
 .breadcrumb a { min-height: 44px; display: inline-flex; align-items: center; }
 .score-card { padding: 28px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; text-align: center; }
 .score-team { min-width: 0; flex-direction: column; font-size: clamp(20px, 3vw, 30px); font-weight: 800; }
+.score-team { justify-content: center; color: var(--ink); }
 .score-team .flag { width: 64px; height: 48px; }
 .score-centre { min-width: 125px; }
 .big-score { display: block; font-size: clamp(40px, 8vw, 72px); line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -694,6 +719,9 @@ h3 { font-size: 21px; }
 .lineage-links { display: flex; flex-wrap: wrap; gap: 18px; }
 .player-header { margin-bottom: 20px; }
 .player-header h1 { word-break: keep-all; overflow-wrap: normal; }
+.player-birth-date { margin-top: -8px; color: var(--muted); }
+.player-tournament h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
+.player-age { color: var(--primary); font-size: .72em; white-space: nowrap; }
 .player-flags { display: flex; gap: 6px; }
 .appearance-note, .ranking-caption { color: var(--muted); }
 .player-squad-line { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }

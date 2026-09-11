@@ -1,16 +1,19 @@
-import { loadMeta, loadPlayers, loadRankings, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.4.0';
-import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.4.0';
-import { prepareIndex } from './search.js?v=0.4.0';
-import { STRINGS } from './strings.js?v=0.4.0';
-import { countriesView, countryView, creditsView, errorView, homeView, matchView, notFoundView, playerView, rankingsView, searchView, tournamentView } from './views.js?v=0.4.0';
-import { VERSION } from './version.js?v=0.4.0';
+import { loadMeta, loadPlayers, loadRankings, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.4.1';
+import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.4.1';
+import { prepareIndex } from './search.js?v=0.4.1';
+import { STRINGS } from './strings.js?v=0.4.1';
+import { countriesView, countryView, creditsView, errorView, homeView, matchView, notFoundView, playerView, rankingsView, searchView, tournamentView } from './views.js?v=0.4.1';
+import { VERSION } from './version.js?v=0.4.1';
+import { backDecision } from './navigation.js?v=0.4.1';
 
 const root = document.querySelector('#app');
 
 function shell() {
   const main = el('main', { id: 'main', 'aria-live': 'polite' });
+  const backSlot = el('span', { class: 'header-back-slot' });
   replace(root, [
     el('header', { class: 'site-header' }, el('div', { class: 'header-inner' }, [
+      backSlot,
       el('a', { class: 'brand', href: '#/' }, [
         el('img', { class: 'brand-mark', src: `assets/ball-mark.png?v=${VERSION}`, alt: '', width: 34, height: 34 }),
         el('strong', {}, 'Wcupedia'),
@@ -31,12 +34,36 @@ function shell() {
       el('a', { href: '#/credits' }, rubyNodes(STRINGS.credits)),
     ]),
   ]);
-  return main;
+  return { main, backSlot };
 }
 
-const main = shell();
+const { main, backSlot } = shell();
 let routeNumber = 0;
 let searchContextPromise = null;
+let currentRoute = '/';
+let visitIndex = 0;
+let visitEntryStamped = false;
+const visitId = `${Date.now()}-${Math.random()}`;
+
+const backButton = el('button', { class: 'header-back', type: 'button' }, '‹ もどる');
+backButton.addEventListener('click', () => {
+  const decision = backDecision(currentRoute, visitIndex > 0);
+  if (decision.action === 'back') history.back();
+  else location.hash = decision.hash;
+});
+
+function stampVisitEntry(route) {
+  const state = history.state && typeof history.state === 'object' ? history.state : {};
+  if (state.wcupediaVisit === visitId && Number.isInteger(state.wcupediaVisitIndex)) {
+    visitIndex = state.wcupediaVisitIndex;
+  } else {
+    if (visitEntryStamped) visitIndex += 1;
+    history.replaceState({ ...state, wcupediaVisit: visitId, wcupediaVisitIndex: visitIndex }, '');
+  }
+  visitEntryStamped = true;
+  currentRoute = route;
+  backSlot.replaceChildren(...(route === '/' ? [] : [backButton]));
+}
 
 function loadSearchContext() {
   if (!searchContextPromise) {
@@ -57,7 +84,7 @@ function searchOptions(path, query, eager = false) {
     loadContext: loadSearchContext,
     updateUrl: (value) => {
       const suffix = value ? `?q=${encodeURIComponent(value)}` : '';
-      history.replaceState(null, '', `#${path}${suffix}`);
+      history.replaceState(history.state, '', `#${path}${suffix}`);
     },
   };
 }
@@ -67,6 +94,7 @@ async function renderRoute() {
   const routeValue = location.hash.slice(1) || '/';
   const separator = routeValue.indexOf('?');
   const route = separator < 0 ? routeValue : routeValue.slice(0, separator);
+  stampVisitEntry(route);
   const parameters = new URLSearchParams(separator < 0 ? '' : routeValue.slice(separator + 1));
   const query = parameters.get('q') || '';
   window.scrollTo(0, 0);
@@ -114,7 +142,7 @@ async function renderRoute() {
         view = player ? playerView(playerMatch[1], player, await Promise.all(player.years.map(loadTournament))) : notFoundView();
       } else if (rankingMatch) {
         const [kind, metric] = rankingMatch.slice(1);
-        const allowed = kind === 'c' ? ['titles', 'appearances', 'wins', 'goals'] : ['goals', 'tournamentGoals', 'awards', 'squads', 'apps'];
+        const allowed = kind === 'c' ? ['titles', 'appearances', 'wins', 'goals'] : ['goals', 'tournamentGoals', 'awards', 'squads', 'apps', 'youngest', 'oldest'];
         const [rankings, teams] = await Promise.all([loadRankings(), loadTeams()]);
         view = allowed.includes(metric) ? rankingsView(rankings, teams, kind, metric) : notFoundView();
       } else {
