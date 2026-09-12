@@ -1,10 +1,10 @@
-import { loadMeta, loadPhotos, loadPlayers, loadRankings, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.5.0';
-import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.5.0';
-import { prepareIndex } from './search.js?v=0.5.0';
-import { STRINGS } from './strings.js?v=0.5.0';
-import { countriesView, countryView, creditsView, errorView, homeView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, searchView, tournamentView } from './views.js?v=0.5.0';
-import { VERSION } from './version.js?v=0.5.0';
-import { backDecision } from './navigation.js?v=0.5.0';
+import { loadMeta, loadPhotos, loadPlayers, loadRankings, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.5.1';
+import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.5.1';
+import { prepareIndex } from './search.js?v=0.5.1';
+import { STRINGS } from './strings.js?v=0.5.1';
+import { countriesView, countryView, creditsView, errorView, homeView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, searchView, tournamentView } from './views.js?v=0.5.1';
+import { VERSION } from './version.js?v=0.5.1';
+import { backDecision } from './navigation.js?v=0.5.1';
 
 const root = document.querySelector('#app');
 

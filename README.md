@@ -66,6 +66,16 @@ confirms that unpublished paths return 404.
 
 ## Changelog
 
+### v0.5.1 — 2026-09-12
+
+- Player photos for 3,760 players, up from 67: every player whose English or
+  Japanese Wikipedia article has a freely licensed lead photo with one clearly
+  detectable face. Players without one keep the silhouette card. Every photo is
+  credited to its photographer with its licence and a note that it was cropped
+  and resized.
+- Photos of players from the 1986 World Cup onwards are complete; earlier
+  tournaments follow once their photos have been downloaded and reviewed.
+
 ### v0.5.0 — 2026-09-11
 
 - 選手名鑑 (player guide): pick a World Cup, then a country, then browse its

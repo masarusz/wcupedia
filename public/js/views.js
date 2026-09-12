@@ -1,14 +1,14 @@
-import { buildBracket } from './bracket.js?v=0.5.0';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.5.0';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.5.0';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.5.0';
-import { search as runSearch } from './search.js?v=0.5.0';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.5.0';
-import { VERSION } from './version.js?v=0.5.0';
-import { rubyPlain } from './ruby.js?v=0.5.0';
-import { rubyReading } from './ruby.js?v=0.5.0';
-import { fold } from './fold.js?v=0.5.0';
-import { ageInYears } from './ages.js?v=0.5.0';
+import { buildBracket } from './bracket.js?v=0.5.1';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.5.1';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.5.1';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.5.1';
+import { search as runSearch } from './search.js?v=0.5.1';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.5.1';
+import { VERSION } from './version.js?v=0.5.1';
+import { rubyPlain } from './ruby.js?v=0.5.1';
+import { rubyReading } from './ruby.js?v=0.5.1';
+import { fold } from './fold.js?v=0.5.1';
+import { ageInYears } from './ages.js?v=0.5.1';
 
 function flag(teams, key) {
   return el('img', {
