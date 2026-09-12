@@ -1,14 +1,14 @@
-import { buildBracket } from './bracket.js?v=0.5.3';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.5.3';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.5.3';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.5.3';
-import { search as runSearch } from './search.js?v=0.5.3';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.5.3';
-import { VERSION } from './version.js?v=0.5.3';
-import { rubyPlain } from './ruby.js?v=0.5.3';
-import { rubyReading } from './ruby.js?v=0.5.3';
-import { fold } from './fold.js?v=0.5.3';
-import { ageInYears } from './ages.js?v=0.5.3';
+import { buildBracket } from './bracket.js?v=0.5.4';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.5.4';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.5.4';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.5.4';
+import { search as runSearch } from './search.js?v=0.5.4';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.5.4';
+import { VERSION } from './version.js?v=0.5.4';
+import { rubyPlain } from './ruby.js?v=0.5.4';
+import { rubyReading } from './ruby.js?v=0.5.4';
+import { fold } from './fold.js?v=0.5.4';
+import { ageInYears } from './ages.js?v=0.5.4';
 
 function flag(teams, key) {
   return el('img', {
@@ -450,7 +450,7 @@ export function countriesView(teams) {
         el('h2', {}, label),
         el('div', { class: 'country-grid' }, keys.map((key) => el('a', { class: 'country-tile', href: `#/c/${key}` }, [
           flag(teams, key), teamName(teams[key].ja),
-          teams[key].predecessors.length ? el('small', {}, `${teams[key].predecessors.map((item) => rubyPlain(teams[item].ja)).join('・')}をふくむ`) : null,
+          teams[key].predecessors.length ? el('small', {}, `${teams[key].predecessors.map((item) => rubyPlain(teams[item].ja)).join('・')}を含む`) : null,
         ]))),
       ]);
     }),
@@ -483,7 +483,7 @@ export function countryView(key, teams) {
   return el('article', { class: 'page country-page' }, [
     el('header', { class: 'country-header panel' }, [
       flag(teams, key), teamName(country.ja, 'team-name country-title'),
-      predecessorNames.length ? el('p', { class: 'lineage-note' }, `${predecessorNames.join('・')}時代をふくむ`) : null,
+      predecessorNames.length ? el('p', { class: 'lineage-note' }, `${predecessorNames.join('・')}時代を含む`) : null,
       el('div', { class: 'country-head-stats' }, [
         el('span', {}, `出場 ${country.tournaments.length}回`),
         el('span', {}, `最高 ${FINISH_LABELS[country.bestFinish] || '—'}`),
@@ -530,7 +530,7 @@ export function countryView(key, teams) {
 }
 
 const POSITION_LABELS = { GK: 'ゴールキーパー', DF: 'ディフェンダー', MF: 'ミッドフィールダー', FW: 'フォワード' };
-const PHOTO_INTRODUCTION = '写真は Wikimedia Commons のものを、それぞれのライセンスにしたがって使っています。どの写真も、顔の部分を切り抜いて小さくしています。';
+const PHOTO_INTRODUCTION = '写真は Wikimedia Commons のものを、それぞれのライセンスに従って使っています。どの写真も、顔の部分を切り抜いて小さくしています。';
 
 function photoCredit(photo) {
   return el('p', { class: 'photo-credit' }, [
@@ -583,7 +583,7 @@ export function playerView(id, player, details, suppliedTeams = null, photo = nu
       el('div', { class: 'player-header-copy' }, [
         el('div', { class: 'player-flags' }, player.teams.map((teamKey) => flag(teams, teamKey))),
         el('h1', {}, label),
-        player.birthDate ? el('p', { class: 'player-birth-date' }, `${Number(player.birthDate.slice(0, 4))}年${Number(player.birthDate.slice(5, 7))}月${Number(player.birthDate.slice(8, 10))}日うまれ`) : null,
+        player.birthDate ? el('p', { class: 'player-birth-date' }, `${Number(player.birthDate.slice(0, 4))}年${Number(player.birthDate.slice(5, 7))}月${Number(player.birthDate.slice(8, 10))}日生まれ`) : null,
         el('p', {}, `通算ゴール ${player.goals}点`),
         Object.hasOwn(player, 'apps') ? el('p', {}, `出場試合数 ${player.apps}試合`) :
           el('p', { class: 'appearance-note' }, '1970年より前の出場試合の記録はありません'),
@@ -641,7 +641,7 @@ export function meikanView(detail, teams, tournaments, selectedTeam = null) {
     const squad = detail.squads[teamKey].filter((member) => position === 'all' || member.pos === position);
     grid.replaceChildren(...squad.map((member) => meikanCard(detail, member, teamKey)));
   };
-  for (const [value, label] of [['all', 'すべて'], ['GK', 'GK'], ['DF', 'DF'], ['MF', 'MF'], ['FW', 'FW']]) {
+  for (const [value, label] of [['all', '全て'], ['GK', 'GK'], ['DF', 'DF'], ['MF', 'MF'], ['FW', 'FW']]) {
     const button = el('button', { type: 'button', value, class: 'meikan-filter', 'aria-pressed': value === 'all' ? 'true' : 'false' }, label);
     button.addEventListener('click', () => renderCards(value));
     filterButtons.push(button);

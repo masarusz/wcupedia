@@ -66,6 +66,11 @@ confirms that unpublished paths return 404.
 
 ## Changelog
 
+### v0.5.4 — 2026-09-12
+
+- More of the interface is written in kanji rather than kana (生まれ, 戻る,
+  始まり, 読み込み, 探す, 含む, 全て), for readers who know 小6–中1 kanji.
+
 ### v0.5.3 — 2026-09-12
 
 - Ages are written with the kanji 歳 (17歳) instead of the kana さい.
