@@ -1,14 +1,14 @@
-import { buildBracket } from './bracket.js?v=0.5.2';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.5.2';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.5.2';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.5.2';
-import { search as runSearch } from './search.js?v=0.5.2';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.5.2';
-import { VERSION } from './version.js?v=0.5.2';
-import { rubyPlain } from './ruby.js?v=0.5.2';
-import { rubyReading } from './ruby.js?v=0.5.2';
-import { fold } from './fold.js?v=0.5.2';
-import { ageInYears } from './ages.js?v=0.5.2';
+import { buildBracket } from './bracket.js?v=0.5.3';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.5.3';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.5.3';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.5.3';
+import { search as runSearch } from './search.js?v=0.5.3';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.5.3';
+import { VERSION } from './version.js?v=0.5.3';
+import { rubyPlain } from './ruby.js?v=0.5.3';
+import { rubyReading } from './ruby.js?v=0.5.3';
+import { fold } from './fold.js?v=0.5.3';
+import { ageInYears } from './ages.js?v=0.5.3';
 
 function flag(teams, key) {
   return el('img', {
@@ -566,7 +566,7 @@ export function playerView(id, player, details, suppliedTeams = null, photo = nu
     return el('section', { class: 'player-tournament panel', 'data-year': detail.year }, [
       el('h2', {}, [
         el('a', { href: `#/t/${detail.year}` }, rubyNodes(tournamentTitle(detail, teams))),
-        player.birthDate ? el('span', { class: 'player-age' }, `${ageInYears(player.birthDate, detail.start)}さい`) : null,
+        player.birthDate ? el('span', { class: 'player-age' }, `${ageInYears(player.birthDate, detail.start)}歳`) : null,
       ]),
       el('p', { class: 'player-squad-line' }, [team(teams, squadTeam), text(` 背番号${member.no}・${POSITION_LABELS[member.pos] || member.pos}`)]),
       Object.hasOwn(player, 'appsByYear') ? el('p', {}, `出場試合数 ${player.appsByYear[detail.year]}試合`) : null,
@@ -616,7 +616,7 @@ function meikanCard(detail, member, teamKey) {
     picture,
     el('strong', { class: 'meikan-name person' }, label),
     el('span', { class: 'meikan-shirt' }, `${member.no == null ? '背番号なし' : `背番号 ${member.no}`}・${member.pos}`),
-    Number.isInteger(member.age) ? el('span', { class: 'meikan-age' }, `${member.age}さい`) : null,
+    Number.isInteger(member.age) ? el('span', { class: 'meikan-age' }, `${member.age}歳`) : null,
     member.club ? el('span', { class: 'meikan-club' }, member.club) : null,
     el('span', { class: 'meikan-career' }, [
       text(`W杯 ${member.goals}点`),
@@ -679,7 +679,7 @@ function rankingValue(kind, metric, row) {
   if (metric === 'tournamentGoals') return `${row.value}点（${row.year}年）`;
   if (metric === 'awards') return `大会賞 ${row.value}回`;
   if (metric === 'squads') return `出場大会数 ${row.value}大会`;
-  if (metric === 'youngest' || metric === 'oldest') return `${row.age}さい（${row.year}年）`;
+  if (metric === 'youngest' || metric === 'oldest') return `${row.age}歳（${row.year}年）`;
   return `出場試合数 ${row.value}試合`;
 }
 
