@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { backDecision } from '../public/js/navigation.js?v=0.5.1';
+import { backDecision } from '../public/js/navigation.js?v=0.5.2';
 
 const ROOT = resolve(import.meta.dirname, '..');
 

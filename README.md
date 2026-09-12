@@ -66,6 +66,13 @@ confirms that unpublished paths return 404.
 
 ## Changelog
 
+### v0.5.2 — 2026-09-12
+
+- Player photos for 4,929 players, up from 3,760. The remaining photos of
+  players from the 1930s to the early 1980s have now been downloaded and
+  reviewed: coverage of those tournaments rises from 9% to 43%.
+- Photos for the 1986 World Cup onwards are complete.
+
 ### v0.5.1 — 2026-09-12
 
 - Player photos for 3,760 players, up from 67: every player whose English or

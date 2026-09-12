@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import golden from './golden/ages.json' with { type: 'json' };
-import { ageInYears } from '../public/js/ages.js?v=0.5.1';
+import { ageInYears } from '../public/js/ages.js?v=0.5.2';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
