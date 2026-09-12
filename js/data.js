@@ -1,5 +1,5 @@
-import { VERSION } from './version.js?v=0.5.0';
-import { isIsoDate } from './ages.js?v=0.5.0';
+import { VERSION } from './version.js?v=0.5.1';
+import { isIsoDate } from './ages.js?v=0.5.1';
 
 const cache = new Map();
 
