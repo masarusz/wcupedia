@@ -1,4 +1,4 @@
-import { fold, foldCompact } from './fold.js?v=0.5.2';
+import { fold, foldCompact } from './fold.js?v=0.5.3';
 
 const TYPE_ORDER = Object.freeze({ team: 0, tournament: 1, player: 2 });
 const SMALL_KANA = Object.freeze({

@@ -66,6 +66,10 @@ confirms that unpublished paths return 404.
 
 ## Changelog
 
+### v0.5.3 — 2026-09-12
+
+- Ages are written with the kanji 歳 (17歳) instead of the kana さい.
+
 ### v0.5.2 — 2026-09-12
 
 - Player photos for 4,929 players, up from 3,760. The remaining photos of

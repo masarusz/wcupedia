@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { rubyPlain } from '../public/js/ruby.js?v=0.5.2';
-import { stageLabel } from '../public/js/strings.js?v=0.5.2';
+import { rubyPlain } from '../public/js/ruby.js?v=0.5.3';
+import { stageLabel } from '../public/js/strings.js?v=0.5.3';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -163,7 +163,7 @@ export function register(test, equal, deepEqual) {
       equal(marks[0].tagName, 'IMG', 'brand-mark is an img element');
       equal(brand.childNodes[0], marks[0], 'brand-mark is the first child of .brand');
       equal(marks[0].getAttribute('alt'), '', 'brand-mark has empty alt text');
-      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=0.5.2', 'brand-mark versioned resource');
+      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=0.5.3', 'brand-mark versioned resource');
       equal(marks[0].getAttribute('width'), '34', 'brand-mark width');
       equal(marks[0].getAttribute('height'), '34', 'brand-mark height');
       requested.length = 0;
@@ -254,7 +254,7 @@ export function register(test, equal, deepEqual) {
     try {
       const { countriesView, countryView, creditsView, errorView, homeView, matchView, meikanTeamKeys, meikanView, notFoundView,
         photoCreditsView, playerView, rankingsView, teamName, tournamentView } =
-        await import('../public/js/views.js?v=0.5.2');
+        await import('../public/js/views.js?v=0.5.3');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const players = load('players.json');
