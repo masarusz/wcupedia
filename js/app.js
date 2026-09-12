@@ -1,10 +1,10 @@
-import { loadMeta, loadPhotos, loadPlayers, loadRankings, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.5.3';
-import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.5.3';
-import { prepareIndex } from './search.js?v=0.5.3';
-import { STRINGS } from './strings.js?v=0.5.3';
-import { countriesView, countryView, creditsView, errorView, homeView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, searchView, tournamentView } from './views.js?v=0.5.3';
-import { VERSION } from './version.js?v=0.5.3';
-import { backDecision } from './navigation.js?v=0.5.3';
+import { loadMeta, loadPhotos, loadPlayers, loadRankings, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.5.4';
+import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.5.4';
+import { prepareIndex } from './search.js?v=0.5.4';
+import { STRINGS } from './strings.js?v=0.5.4';
+import { countriesView, countryView, creditsView, errorView, homeView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, searchView, tournamentView } from './views.js?v=0.5.4';
+import { VERSION } from './version.js?v=0.5.4';
+import { backDecision } from './navigation.js?v=0.5.4';
 
 const root = document.querySelector('#app');
 
@@ -46,7 +46,7 @@ let visitIndex = 0;
 let visitEntryStamped = false;
 const visitId = `${Date.now()}-${Math.random()}`;
 
-const backButton = el('button', { class: 'header-back', type: 'button' }, '‹ もどる');
+const backButton = el('button', { class: 'header-back', type: 'button' }, '‹ 戻る');
 backButton.addEventListener('click', () => {
   const decision = backDecision(currentRoute, visitIndex > 0);
   if (decision.action === 'back') history.back();
