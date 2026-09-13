@@ -1,5 +1,5 @@
-import { VERSION } from './version.js?v=1.0.0';
-import { isIsoDate } from './ages.js?v=1.0.0';
+import { VERSION } from './version.js?v=1.0.1';
+import { isIsoDate } from './ages.js?v=1.0.1';
 
 const cache = new Map();
 
@@ -42,6 +42,11 @@ const validators = {
     && Object.values(value).every((item) => validObject(item) && typeof item.artist === 'string'
       && typeof item.licence === 'string' && typeof item.licenceUrl === 'string' && typeof item.source === 'string'
       && typeof item.name === 'string' && (item.ja === null || typeof item.ja === 'string') && typeof item.team === 'string'),
+  'birthdays.json': (value) => validObject(value) && Object.keys(value).length === 366
+    && Object.entries(value).every(([key, rows]) => /^\d{2}-\d{2}$/.test(key) && Array.isArray(rows)
+      && rows.length >= 1 && rows.length <= 6 && rows.every((row) => validObject(row)
+        && Object.keys(row).length === 4 && typeof row.id === 'string' && typeof row.name === 'string'
+        && Number.isInteger(row.year) && [0, 1].includes(row.photo))),
   'matches.json': (value) => Array.isArray(value) && value.length > 0
     && value.every((row) => Array.isArray(row) && row.length === 11 && typeof row[0] === 'string'
       && Number.isInteger(row[1]) && isIsoDate(row[2]) && typeof row[3] === 'string'
@@ -85,5 +90,6 @@ export const loadPlayers = () => load('data/players.json', validators['players.j
 export const loadRankings = () => load('data/rankings.json', validators['rankings.json']);
 export const loadSearch = () => load('data/search.json', validators['search.json']);
 export const loadPhotos = () => load('data/photos.json', validators['photos.json']);
+export const loadBirthdays = () => load('data/birthdays.json', validators['birthdays.json']);
 export const loadMatches = () => load('data/matches.json', validators['matches.json']);
 export const loadRecords = () => load('data/records.json', validators['records.json']);

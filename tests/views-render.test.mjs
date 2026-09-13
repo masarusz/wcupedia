@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { rubyPlain } from '../public/js/ruby.js?v=1.0.0';
-import { stageLabel } from '../public/js/strings.js?v=1.0.0';
+import { rubyPlain } from '../public/js/ruby.js?v=1.0.1';
+import { stageLabel } from '../public/js/strings.js?v=1.0.1';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -155,6 +155,9 @@ export function register(test, equal, deepEqual) {
       await import(`../public/js/app.js?shell-test=${Date.now()}`);
       await new Promise((resolvePromise) => setImmediate(resolvePromise));
       equal(requested.includes('data/search.json'), false, 'home does not load search before focus');
+      equal(requested.includes('data/birthdays.json'), true, 'home loads prebuilt birthday index');
+      equal(requested.includes('data/players.json'), false, 'home does not load players.json');
+      equal(requested.includes('data/photos.json'), false, 'home does not load photos.json');
       deepEqual(descendants(appRoot).filter((node) => node.tagName === 'NAV' && node.getAttribute('aria-label') === 'main')[0]
         .childNodes.map((node) => node.textContent), ['大会', '国', '選手名鑑', 'ランキング', '記録', '日本代表特集', '検索', 'クレジット'], 'menu order');
       equal(descendants(appRoot).some((node) => node.tagName === 'BUTTON'), false, 'shell buttons');
@@ -169,7 +172,7 @@ export function register(test, equal, deepEqual) {
       equal(marks[0].tagName, 'IMG', 'brand-mark is an img element');
       equal(brand.childNodes[0], marks[0], 'brand-mark is the first child of .brand');
       equal(marks[0].getAttribute('alt'), '', 'brand-mark has empty alt text');
-      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=1.0.0', 'brand-mark versioned resource');
+      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=1.0.1', 'brand-mark versioned resource');
       equal(marks[0].getAttribute('width'), '34', 'brand-mark width');
       equal(marks[0].getAttribute('height'), '34', 'brand-mark height');
       requested.length = 0;
@@ -256,7 +259,7 @@ export function register(test, equal, deepEqual) {
     }
   });
 
-  test('今日は何の日 always renders today or the nearest calendar date', async () => {
+  test('home date sections show exact matches and birthdays only', async () => {
     const previousDocument = globalThis.document;
     const previousNode = globalThis.Node;
     globalThis.Node = FakeNode;
@@ -265,27 +268,37 @@ export function register(test, equal, deepEqual) {
       createTextNode: (value) => new FakeText(value),
     };
     try {
-      const { calendarMatchSelection, todayMatchesView } = await import('../public/js/views.js?v=1.0.0');
+      const { homeView } = await import('../public/js/views.js?v=1.0.1');
       const matches = load('matches.json');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
-      const cases = [
-        [new Date(2026, 5, 14), '今日は何の日', true],
-        [new Date(2026, 4, 26), '5月27日の試合', false],
-        [new Date(2026, 0, 2), '12月18日の試合', false],
-      ];
-      for (const [date, heading, exact] of cases) {
-        const selection = calendarMatchSelection(matches, date);
-        const tree = todayMatchesView(matches, tournaments, teams, date);
-        equal(selection.exact, exact, heading);
-        equal(descendants(tree).find((node) => node.tagName === 'H2').textContent, heading, `${heading} heading`);
-        equal(descendants(tree).filter((node) => hasClass(node, 'today-match-row')).length > 0, true, `${heading} rows`);
+      const birthdays = load('birthdays.json');
+      const matchDay = homeView(tournaments, teams, matches, birthdays, null, new Date(2026, 5, 14));
+      const matchDaySections = matchDay.childNodes.filter((node) => node instanceof FakeElement
+        && (hasClass(node, 'today-history') || hasClass(node, 'today-birthdays')));
+      deepEqual(matchDaySections.map((node) => node.getAttribute('class')), ['today-history panel', 'today-birthdays panel'],
+        'match day section order');
+      deepEqual(matchDaySections.map((node) => descendants(node).find((child) => child.tagName === 'H2').textContent),
+        ['今日は何の日', '今日誕生日の選手'], 'match day headings');
+      equal(descendants(matchDay).filter((node) => hasClass(node, 'today-match-row')).length > 0, true, 'match day rows');
+      equal(descendants(matchDay).filter((node) => hasClass(node, 'birthday-player-card')).length, 6, 'match day birthday cards');
+
+      const nonMatchDay = homeView(tournaments, teams, matches, birthdays, null, new Date(2026, 8, 13));
+      equal(descendants(nonMatchDay).some((node) => hasClass(node, 'today-history')), false, 'non-match day match section absent');
+      equal(descendants(nonMatchDay).some((node) => hasClass(node, 'today-match-row')), false, 'non-match day match rows absent');
+      equal(nonMatchDay.textContent.includes('今日は何の日'), false, 'non-match day match heading absent');
+      equal(descendants(nonMatchDay).filter((node) => hasClass(node, 'today-birthdays')).length, 1, 'non-match day birthday section');
+      const birthdayCards = descendants(nonMatchDay).filter((node) => hasClass(node, 'birthday-player-card'));
+      equal(birthdayCards.length, 6, 'non-match day birthday cards');
+      equal(birthdayCards.some((node) => node.textContent.includes('トーマス ミュラー')), true, 'Thomas Müller card');
+      equal(birthdayCards.some((node) => node.textContent.includes('ファビオ カンナヴァーロ')), true, 'Fabio Cannavaro card');
+      equal(nonMatchDay.textContent.includes('1908年生まれ'), true, 'historic birth year shown');
+      equal(nonMatchDay.textContent.includes('歳'), false, 'birthday section has no age');
+      for (const image of descendants(nonMatchDay).filter((node) => hasClass(node, 'birthday-player-photo'))) {
+        equal(image.getAttribute('loading'), 'lazy', 'birthday photo lazy loading');
+        equal(image.getAttribute('width'), '240', 'birthday photo width');
+        equal(image.getAttribute('height'), '320', 'birthday photo height');
       }
-      const tied = calendarMatchSelection([
-        ['M-2000-01', 2000, '2000-06-12', 'group', 'JPN', 'BRA', 0, 1, 0, null, null],
-        ['M-2000-02', 2000, '2000-06-14', 'group', 'JPN', 'BRA', 0, 1, 0, null, null],
-      ], new Date(2026, 5, 13));
-      equal(`${tied.month}-${tied.day}`, '6-12', 'equal-distance tie uses earlier month-day');
     } finally {
       if (previousDocument === undefined) delete globalThis.document; else globalThis.document = previousDocument;
       if (previousNode === undefined) delete globalThis.Node; else globalThis.Node = previousNode;
@@ -301,7 +314,7 @@ export function register(test, equal, deepEqual) {
       createTextNode: (value) => new FakeText(value),
     };
     try {
-      const { japanView, recordsView, todayMatchesView } = await import('../public/js/views.js?v=1.0.0');
+      const { japanView, recordsView, todayMatchesView } = await import('../public/js/views.js?v=1.0.1');
       const matches = load('matches.json');
       const records = load('records.json');
       const tournaments = load('tournaments.json');
@@ -354,7 +367,7 @@ export function register(test, equal, deepEqual) {
     }
   });
 
-  test('new views render no literal furigana markup', async () => {
+  test('home match and non-match dates render no literal furigana markup', async () => {
     const previousDocument = globalThis.document;
     const previousNode = globalThis.Node;
     globalThis.Node = FakeNode;
@@ -363,15 +376,17 @@ export function register(test, equal, deepEqual) {
       createTextNode: (value) => new FakeText(value),
     };
     try {
-      const { homeView, japanView, recordsView } = await import('../public/js/views.js?v=1.0.0');
+      const { homeView, japanView, recordsView } = await import('../public/js/views.js?v=1.0.1');
       const matches = load('matches.json');
       const records = load('records.json');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const players = load('players.json');
+      const birthdays = load('birthdays.json');
       const japanDetails = teams.JPN.tournaments.map(({ year }) => load(`t/${year}.json`));
       const trees = [
-        homeView(tournaments, teams, matches, null, new Date(2026, 5, 14)),
+        homeView(tournaments, teams, matches, birthdays, null, new Date(2026, 5, 14)),
+        homeView(tournaments, teams, matches, birthdays, null, new Date(2026, 8, 13)),
         recordsView(records, matches, tournaments, teams, players),
         japanView(teams.JPN, japanDetails, teams),
       ];
@@ -398,7 +413,7 @@ export function register(test, equal, deepEqual) {
     try {
       const { countriesView, countryView, creditsView, errorView, homeView, matchView, meikanTeamKeys, meikanView, notFoundView,
         photoCreditsView, playerView, rankingsView, teamName, tournamentView } =
-        await import('../public/js/views.js?v=1.0.0');
+        await import('../public/js/views.js?v=1.0.1');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const players = load('players.json');
@@ -444,7 +459,7 @@ export function register(test, equal, deepEqual) {
         }
       };
 
-      const homeTree = render('home', () => homeView(tournaments, teams, load('matches.json'), null, new Date(2026, 5, 14)));
+      const homeTree = render('home', () => homeView(tournaments, teams, load('matches.json'), load('birthdays.json'), null, new Date(2026, 5, 14)));
       const homeTournamentCards = descendants(homeTree).filter((node) => hasClass(node, 'tournament-card'));
       deepEqual(assertRecentFirst(homeTournamentCards, 'home tournaments'),
         tournaments.map(({ year }) => year).sort((a, b) => b - a), 'home tournament years');

@@ -8,7 +8,7 @@ Built for two children (aged 8 and 10) to browse on an iPad.
 
 A static site: no accounts, no tracking, no server.
 
-> Status: v1.0.0 complete. The site covers every tournament and match, countries,
+> Status: v1.0.1 complete. The site covers every tournament and match, countries,
 > players and squads, search and rankings, records, and a dedicated Japan feature.
 
 ## Features
@@ -20,8 +20,8 @@ A static site: no accounts, no tracking, no server.
   marking penalties and own goals.
 - Japanese player names: Japan's players in kanji, other players in katakana with
   the Latin name in brackets, Latin only when no katakana is known.
-- 今日は何の日: matches played on today's month and day, with the nearest date
-  that has a match shown when today has none.
+- 今日は何の日: matches played on today's month and day, shown only when today
+  has a match, plus players born on today's date.
 - 記録: biggest wins, highest-scoring matches, hat-tricks and penalty shoot-outs.
 - 日本代表特集: Japan's World Cups, all 29 matches, leading scorers and squad
   links for every appearance.
@@ -70,6 +70,13 @@ exactly the allowlist, verifies every file on the live site by checksum, and
 confirms that unpublished paths return 404.
 
 ## Changelog
+
+### v1.0.1 — 2026-09-13
+
+- 今日は何の日 now appears only on days that actually have World Cup matches,
+  instead of showing the nearest other date.
+- New 今日誕生日の選手 on the home page: the World Cup players born on
+  today's date, with their photo and birth year.
 
 ### v1.0.0 — 2026-09-13
 

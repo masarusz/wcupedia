@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { prepareIndex, search } from '../public/js/search.js?v=1.0.0';
+import { prepareIndex, search } from '../public/js/search.js?v=1.0.1';
 
 const entry = (type, id, label, keys) => ({ type, id, label, keys });
 const load = (name) => JSON.parse(readFileSync(resolve(import.meta.dirname, '..', 'public/data', name), 'utf8'));

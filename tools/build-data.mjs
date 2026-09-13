@@ -11,6 +11,7 @@ import { applySquadChanges, playerTieOrder, rankRows, resolveLineups2026 } from 
 import { addTournamentHostKeys, mergeSearchAliases } from './lib/search-data.mjs';
 import { validatePhotoManifest, validatePhotoOriginals } from './lib/photos.mjs';
 import { fold, foldCompact } from '../public/js/fold.js';
+import { playerLabel } from '../public/js/format.js';
 import { rubyPlain, rubyReading, parseRuby } from '../public/js/ruby.js';
 import { ageInDays, ageInYears, isIsoDate } from '../public/js/ages.js';
 
@@ -826,6 +827,29 @@ for (const id of [...playerData.keys()].sort(compare)) {
   outputPlayers[id] = output;
 }
 
+const birthdayBuckets = new Map();
+for (const [id, player] of Object.entries(outputPlayers)) {
+  if (!player.birthDate) continue;
+  const key = player.birthDate.slice(5);
+  if (!birthdayBuckets.has(key)) birthdayBuckets.set(key, []);
+  birthdayBuckets.get(key).push({
+    id,
+    name: playerLabel(player, player.teams.includes('JPN') ? 'JPN' : player.teams.at(-1)),
+    year: Number(player.birthDate.slice(0, 4)),
+    photo: photoIds.has(id) ? 1 : 0,
+    goals: player.goals,
+    apps: player.apps ?? 0,
+  });
+}
+const birthdays = {};
+for (let offset = 0; offset < 366; offset += 1) {
+  const key = new Date(Date.UTC(2000, 0, offset + 1)).toISOString().slice(5, 10);
+  birthdays[key] = (birthdayBuckets.get(key) || [])
+    .sort((a, b) => b.photo - a.photo || b.goals - a.goals || b.apps - a.apps || compare(a.id, b.id))
+    .slice(0, 6)
+    .map(({ id, name, year, photo }) => ({ id, name, year, photo }));
+}
+
 const countryTieOrder = (left, right) => compare(
   fold(rubyReading(outputTeams[left.team].ja)), fold(rubyReading(outputTeams[right.team].ja)),
 ) || compare(left.team, right.team);
@@ -986,7 +1010,7 @@ await Promise.all([
   writeJson('meta.json', meta), writeJson('tournaments.json', tournamentSummaries),
   writeJson('teams.json', outputTeams), writeJson('players.json', outputPlayers),
   writeJson('matches.json', compactMatches), writeJson('records.json', records), writeJson('rankings.json', rankings), writeJson('search.json', search),
-  writeJson('photos.json', photoCredits),
+  writeJson('photos.json', photoCredits), writeJson('birthdays.json', birthdays),
   ...tournamentDetails.map((tournament) => writeJson(`t/${tournament.year}.json`, tournament)),
 ]);
 

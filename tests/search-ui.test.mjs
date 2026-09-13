@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import golden from './golden/lazykid.json' with { type: 'json' };
-import { prepareIndex, search } from '../public/js/search.js?v=1.0.0';
+import { prepareIndex, search } from '../public/js/search.js?v=1.0.1';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const load = (name) => JSON.parse(readFileSync(resolve(ROOT, 'public/data', name), 'utf8'));
@@ -43,13 +43,13 @@ export function register(test, equal) {
     globalThis.Node = FakeNode;
     globalThis.document = { createElement: (tag) => new FakeElement(tag), createTextNode: (value) => new FakeText(value) };
     try {
-      const { homeView, searchView } = await import('../public/js/views.js?v=1.0.0');
+      const { homeView, searchView } = await import('../public/js/views.js?v=1.0.1');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       let loads = 0;
       const loadContext = async () => { loads += 1; return { index: [], players: {}, teams, tournaments }; };
       const options = { initialQuery: '', loadContext, updateUrl: () => {} };
-      const home = homeView(tournaments, teams, options);
+      const home = homeView(tournaments, teams, [], {}, options);
       equal(descendants(home).filter((node) => node.tagName === 'INPUT').length, 1, 'home input');
       equal(loads, 0, 'home before focus');
       const input = descendants(home).find((node) => node.tagName === 'INPUT');
@@ -70,7 +70,7 @@ export function register(test, equal) {
     globalThis.Node = FakeNode;
     globalThis.document = { createElement: (tag) => new FakeElement(tag), createTextNode: (value) => new FakeText(value) };
     try {
-      const { searchComponent } = await import('../public/js/views.js?v=1.0.0');
+      const { searchComponent } = await import('../public/js/views.js?v=1.0.1');
       const entries = load('search.json');
       const context = {
         index: prepareIndex(entries), players: load('players.json'), teams: load('teams.json'), tournaments: load('tournaments.json'),
@@ -113,7 +113,7 @@ export function register(test, equal) {
     globalThis.Node = FakeNode;
     globalThis.document = { createElement: (tag) => new FakeElement(tag), createTextNode: (value) => new FakeText(value) };
     try {
-      const { countryView, playerView, searchView, tournamentView } = await import('../public/js/views.js?v=1.0.0');
+      const { countryView, playerView, searchView, tournamentView } = await import('../public/js/views.js?v=1.0.1');
       const entries = load('search.json');
       const players = load('players.json');
       const teams = load('teams.json');

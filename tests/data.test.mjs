@@ -15,6 +15,7 @@ const meta = load('meta.json');
 const tournaments = load('tournaments.json');
 const teams = load('teams.json');
 const players = load('players.json');
+const birthdays = load('birthdays.json');
 const records = load('records.json');
 const details = new Map(tournaments.map((item) => [item.year, load(`t/${item.year}.json`)]));
 const allMatches = [...details.values()].flatMap((item) => item.matches.map((match) => ({ ...match, year: item.year })));
@@ -62,6 +63,51 @@ export function register(test, equal, deepEqual) {
     equal(meta.counts.goals, facts.totals.goals);
     equal(allMatches.filter((match) => match.year <= 2022).length, facts.totals.matches1930to2022);
     equal(allMatches.filter((match) => match.year <= 2022).reduce((sum, match) => sum + match.goals.length, 0), facts.totals.goals1930to2022);
+  });
+
+  test('birthday index covers all 366 calendar days with compact rows', () => {
+    const expectedKeys = Array.from({ length: 366 }, (_, offset) =>
+      new Date(Date.UTC(2000, 0, offset + 1)).toISOString().slice(5, 10));
+    deepEqual(Object.keys(birthdays), expectedKeys);
+    for (const [key, rows] of Object.entries(birthdays)) {
+      equal(rows.length >= 1 && rows.length <= 6, true, `${key} row count`);
+      for (const row of rows) {
+        deepEqual(Object.keys(row), ['id', 'name', 'year', 'photo'], `${key} ${row.id} fields`);
+        equal(typeof row.id, 'string', `${key} id`);
+        equal(typeof row.name, 'string', `${key} name`);
+        equal(Number.isInteger(row.year), true, `${key} year`);
+        equal(row.photo === 0 || row.photo === 1, true, `${key} photo`);
+      }
+    }
+    equal(readFileSync(join(DATA, 'birthdays.json')).length < 200_000, true, 'birthdays.json under 200 KB');
+  });
+
+  test('birthday index references players and correct birth years', () => {
+    const photoIds = new Set(Object.keys(JSON.parse(readFileSync(join(ROOT, 'curated/photos.json'), 'utf8'))));
+    for (const [key, rows] of Object.entries(birthdays)) for (const row of rows) {
+      const player = players[row.id];
+      equal(Boolean(player), true, `${key} ${row.id} exists`);
+      equal(row.year, Number(player.birthDate.slice(0, 4)), `${key} ${row.id} year`);
+      equal(player.birthDate.slice(5), key, `${key} ${row.id} month-day`);
+      equal(row.photo, photoIds.has(row.id) ? 1 : 0, `${key} ${row.id} photo`);
+    }
+  });
+
+  test('birthday index stores build-time photo-goal-appearance ranking', () => {
+    const key = '09-13';
+    const photoIds = new Set(Object.keys(JSON.parse(readFileSync(join(ROOT, 'curated/photos.json'), 'utf8'))));
+    const displayName = (player) => !player.ja ? player.name
+      : player.teams.includes('JPN') ? player.ja : `${player.ja} (${player.name})`;
+    const expected = Object.entries(players).filter(([, player]) => player.birthDate?.slice(5) === key)
+      .map(([id, player]) => ({
+        id, name: displayName(player), year: Number(player.birthDate.slice(0, 4)), photo: photoIds.has(id) ? 1 : 0,
+        goals: player.goals, apps: player.apps ?? 0,
+      }))
+      .sort((a, b) => b.photo - a.photo || b.goals - a.goals || b.apps - a.apps || compare(a.id, b.id))
+      .slice(0, 6).map(({ id, name, year, photo }) => ({ id, name, year, photo }));
+    deepEqual(birthdays[key], expected);
+    equal(birthdays[key].some((row) => row.name.startsWith('トーマス ミュラー')), true, 'Thomas Müller surfaced');
+    equal(birthdays[key].some((row) => row.name.startsWith('ファビオ カンナヴァーロ')), true, 'Fabio Cannavaro surfaced');
   });
 
   test('golden per-tournament facts', () => {
