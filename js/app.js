@@ -1,10 +1,10 @@
-import { loadMeta, loadPhotos, loadPlayers, loadRankings, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=0.5.4';
-import { el, replace, rubyEl, rubyNodes } from './dom.js?v=0.5.4';
-import { prepareIndex } from './search.js?v=0.5.4';
-import { STRINGS } from './strings.js?v=0.5.4';
-import { countriesView, countryView, creditsView, errorView, homeView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, searchView, tournamentView } from './views.js?v=0.5.4';
-import { VERSION } from './version.js?v=0.5.4';
-import { backDecision } from './navigation.js?v=0.5.4';
+import { loadMatches, loadMeta, loadPhotos, loadPlayers, loadRankings, loadRecords, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=1.0.0';
+import { el, replace, rubyEl, rubyNodes } from './dom.js?v=1.0.0';
+import { prepareIndex } from './search.js?v=1.0.0';
+import { STRINGS } from './strings.js?v=1.0.0';
+import { countriesView, countryView, creditsView, errorView, homeView, japanView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, recordsView, searchView, tournamentView } from './views.js?v=1.0.0';
+import { VERSION } from './version.js?v=1.0.0';
+import { backDecision } from './navigation.js?v=1.0.0';
 
 const root = document.querySelector('#app');
 
@@ -25,6 +25,8 @@ function shell() {
         el('a', { href: '#/c' }, '国'),
         el('a', { href: '#/z' }, '選手名鑑'),
         el('a', { href: '#/r' }, 'ランキング'),
+        el('a', { href: '#/k' }, rubyNodes(STRINGS.records)),
+        el('a', { href: '#/j' }, rubyNodes(STRINGS.japanFeature)),
         el('a', { href: '#/s' }, rubyNodes(STRINGS.search)),
         el('a', { href: '#/credits' }, rubyNodes(STRINGS.credits)),
       ]),
@@ -102,8 +104,8 @@ async function renderRoute() {
   try {
     let view;
     if (route === '/') {
-      const [tournaments, teams] = await Promise.all([loadTournaments(), loadTeams()]);
-      view = homeView(tournaments, teams, searchOptions('/', query));
+      const [tournaments, teams, matches] = await Promise.all([loadTournaments(), loadTeams(), loadMatches()]);
+      view = homeView(tournaments, teams, matches, searchOptions('/', query));
     } else if (route === '/s') {
       view = searchView(searchOptions('/s', query, true));
     } else if (route === '/credits') {
@@ -115,6 +117,14 @@ async function renderRoute() {
     } else if (route === '/r') {
       const [rankings, teams] = await Promise.all([loadRankings(), loadTeams()]);
       view = rankingsView(rankings, teams, 'c', 'titles');
+    } else if (route === '/k') {
+      const [records, matches, tournaments, teams, players] = await Promise.all([
+        loadRecords(), loadMatches(), loadTournaments(), loadTeams(), loadPlayers(),
+      ]);
+      view = recordsView(records, matches, tournaments, teams, players);
+    } else if (route === '/j') {
+      const teams = await loadTeams();
+      view = japanView(teams.JPN, await Promise.all(teams.JPN.tournaments.map(({ year }) => loadTournament(year))), teams);
     } else {
       const tournamentMatch = /^\/t\/(\d{4})$/.exec(route);
       const matchMatch = /^\/m\/(M-(\d{4})-(?:\d{2}|\d{3}))$/.exec(route);

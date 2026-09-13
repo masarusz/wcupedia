@@ -2,6 +2,8 @@ export const STRINGS = Object.freeze({
   subtitle: 'Wカップ{大図鑑|だいずかん}',
   logoReading: 'ワールドカップペディア',
   tournaments: '{大会|たいかい}',
+  records: '{記録|きろく}',
+  japanFeature: '{日本代表特集|にほんだいひょうとくしゅう}',
   search: '{検索|けんさく}',
   searchLabel: '{国|くに}・{選手|せんしゅ}・{大会|たいかい}を{探|さが}す',
   loading: '{読|よ}み{込|こ}み{中|ちゅう}…',
@@ -62,6 +64,14 @@ export const STRINGS = Object.freeze({
   goldenGlove: 'ゴールデングローブ',
   bestYoungPlayer: '{最優秀若手選手|さいゆうしゅうわかてせんしゅ}',
   noGoals: 'ゴールはありません',
+  todayHistory: '{今日|きょう}は{何|なん}の{日|ひ}',
+  biggestWins: '{大|おお}きな{勝|か}ち',
+  highestScoring: 'たくさん{点|てん}が{入|はい}った{試合|しあい}',
+  hatTricks: 'ハットトリック',
+  shootouts: 'PK{戦|せん}',
+  japanWorldCups: '{日本|にほん}のワールドカップ',
+  japanMatches: '{日本|にほん}の{試合|しあい}',
+  japanScorers: '{日本|にほん}の{得点|とくてん}ランキング',
 });
 
 export const AWARD_LABELS = Object.freeze({

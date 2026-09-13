@@ -177,6 +177,83 @@ h3 { font-size: 21px; }
 .champion { color: var(--gold); font-weight: 700; }
 .card-count { margin-bottom: 0; color: var(--muted); }
 
+.today-history { margin: 0 0 34px; }
+.history-match-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+.history-match-row {
+  min-width: 0;
+  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 14px;
+  background: var(--surface-strong);
+  border-radius: 12px;
+}
+.history-tournament {
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.history-score-line {
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+.history-country-link:last-of-type { justify-self: end; }
+.history-score {
+  min-width: 54px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.history-score-line > .match-badges { grid-column: 1 / -1; }
+.history-date { grid-column: 2; grid-row: 1; color: var(--muted); white-space: nowrap; }
+
+.records-section, .japan-page > .panel { margin-bottom: 22px; }
+.record-extra {
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.record-extra a { min-height: 44px; display: inline-flex; align-items: center; font-weight: 800; }
+.japan-tournament-list, .japan-scorer-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; }
+.japan-tournament-list li {
+  min-width: 0;
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.japan-tournament-link, .japan-squad-link { min-height: 44px; display: flex; align-items: center; }
+.japan-tournament-link { min-width: 0; font-weight: 800; overflow-wrap: anywhere; }
+.japan-squad-link { padding-inline: 8px; }
+.japan-scorer-list li {
+  min-height: 50px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.japan-scorer-list a { min-height: 44px; display: flex; align-items: center; font-weight: 800; }
+
 .flag {
   width: 24px;
   height: 18px;
@@ -930,6 +1007,11 @@ h3 { font-size: 21px; }
 }
 .site-footer a { min-height: 44px; display: inline-flex; align-items: center; }
 
+@media (max-width: 1250px) {
+  .header-inner { flex-wrap: wrap; }
+  .site-nav { order: 3; width: 100%; flex-wrap: wrap; justify-content: center; }
+}
+
 @media (max-width: 900px) {
   .header-inner { padding-inline: 12px; gap: 6px; flex-wrap: wrap; }
   .brand { min-height: 48px; }
@@ -937,7 +1019,6 @@ h3 { font-size: 21px; }
   .brand strong { grid-row: auto; font-size: 24px; }
   .brand .subtitle { align-self: center; }
   .brand small { display: none; }
-  .site-nav { order: 3; width: 100%; justify-content: center; }
   .page { --page-padding-inline: 14px; padding: 22px var(--page-padding-inline) 52px; }
   .summary, .two-column { grid-template-columns: 1fr; }
   .match-link { grid-template-columns: minmax(95px, 1fr) auto minmax(95px, 1fr); }
@@ -946,6 +1027,11 @@ h3 { font-size: 21px; }
   .score-team .flag { width: 48px; height: 36px; }
   .timeline li { width: 88%; }
   .record-stats { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 620px) {
+  .japan-tournament-list li { grid-template-columns: minmax(0, 1fr) auto; }
+  .japan-squad-link { grid-column: 1 / -1; }
 }
 
 @media (min-width: 700px) { .meikan-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

@@ -1,5 +1,5 @@
-import { VERSION } from './version.js?v=0.5.4';
-import { isIsoDate } from './ages.js?v=0.5.4';
+import { VERSION } from './version.js?v=1.0.0';
+import { isIsoDate } from './ages.js?v=1.0.0';
 
 const cache = new Map();
 
@@ -42,6 +42,18 @@ const validators = {
     && Object.values(value).every((item) => validObject(item) && typeof item.artist === 'string'
       && typeof item.licence === 'string' && typeof item.licenceUrl === 'string' && typeof item.source === 'string'
       && typeof item.name === 'string' && (item.ja === null || typeof item.ja === 'string') && typeof item.team === 'string'),
+  'matches.json': (value) => Array.isArray(value) && value.length > 0
+    && value.every((row) => Array.isArray(row) && row.length === 11 && typeof row[0] === 'string'
+      && Number.isInteger(row[1]) && isIsoDate(row[2]) && typeof row[3] === 'string'
+      && typeof row[4] === 'string' && typeof row[5] === 'string'
+      && Number.isInteger(row[6]) && Number.isInteger(row[7]) && [0, 1].includes(row[8])
+      && (row[9] === null || Number.isInteger(row[9])) && (row[10] === null || Number.isInteger(row[10]))),
+  'records.json': (value) => validObject(value)
+    && ['biggestWins', 'highestScoring', 'shootouts'].every((key) => Array.isArray(value[key])
+      && value[key].every((id) => typeof id === 'string'))
+    && Array.isArray(value.hatTricks) && value.hatTricks.every((row) => validObject(row)
+      && typeof row.player === 'string' && typeof row.match === 'string' && Number.isInteger(row.goals))
+    && ['allTimeScorers', 'tournamentScorers', 'titles'].every((key) => Array.isArray(value[key])),
   tournament: (value) => validObject(value) && Number.isInteger(value.year) && isIsoDate(value.start)
     && Array.isArray(value.matches) && Array.isArray(value.groups) && validObject(value.people) && validObject(value.teamDisplay)
     && validObject(value.squads) && Object.values(value.squads).every((squad) => Array.isArray(squad)
@@ -73,3 +85,5 @@ export const loadPlayers = () => load('data/players.json', validators['players.j
 export const loadRankings = () => load('data/rankings.json', validators['rankings.json']);
 export const loadSearch = () => load('data/search.json', validators['search.json']);
 export const loadPhotos = () => load('data/photos.json', validators['photos.json']);
+export const loadMatches = () => load('data/matches.json', validators['matches.json']);
+export const loadRecords = () => load('data/records.json', validators['records.json']);
