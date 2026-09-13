@@ -8,8 +8,8 @@ Built for two children (aged 8 and 10) to browse on an iPad.
 
 A static site: no accounts, no tracking, no server.
 
-> Status: in development. Tournament, match and credits pages are done; country
-> pages, player pages and search come next.
+> Status: v1.0.0 complete. The site covers every tournament and match, countries,
+> players and squads, search and rankings, records, and a dedicated Japan feature.
 
 ## Features
 
@@ -20,6 +20,11 @@ A static site: no accounts, no tracking, no server.
   marking penalties and own goals.
 - Japanese player names: Japan's players in kanji, other players in katakana with
   the Latin name in brackets, Latin only when no katakana is known.
+- 今日は何の日: matches played on today's month and day, with the nearest date
+  that has a match shown when today has none.
+- 記録: biggest wins, highest-scoring matches, hat-tricks and penalty shoot-outs.
+- 日本代表特集: Japan's World Cups, all 29 matches, leading scorers and squad
+  links for every appearance.
 - iPad-first layout with no horizontal scrolling; the knockout chart stacks its
   two halves when the screen is narrow.
 
@@ -65,6 +70,15 @@ exactly the allowlist, verifies every file on the live site by checksum, and
 confirms that unpublished paths return 404.
 
 ## Changelog
+
+### v1.0.0 — 2026-09-13
+
+- 今日は何の日 on the home page: the World Cup matches played on today's date,
+  or the nearest date that has any.
+- 記録 (records): biggest wins, highest-scoring matches, hat-tricks and penalty
+  shoot-outs, each linking to the match.
+- 日本代表特集: every World Cup Japan reached, all of Japan's matches and its
+  scorers.
 
 ### v0.5.4 — 2026-09-12
 

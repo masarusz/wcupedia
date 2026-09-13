@@ -119,7 +119,7 @@ export function register(test, equal, deepEqual) {
     globalThis.Node = FakeNode;
     globalThis.document = { createElement: (tag) => new FakeElement(tag), createTextNode: (value) => new FakeText(value) };
     try {
-      const { photoCreditsView } = await import('../public/js/views.js?v=0.5.4');
+      const { photoCreditsView } = await import('../public/js/views.js?v=1.0.0');
       const tree = photoCreditsView(credits);
       const list = tree.childNodes.find((node) => node.tagName === 'UL');
       equal(list.childNodes.length, 6000, 'credit rows');

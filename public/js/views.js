@@ -1,14 +1,14 @@
-import { buildBracket } from './bracket.js?v=0.5.4';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=0.5.4';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=0.5.4';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=0.5.4';
-import { search as runSearch } from './search.js?v=0.5.4';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=0.5.4';
-import { VERSION } from './version.js?v=0.5.4';
-import { rubyPlain } from './ruby.js?v=0.5.4';
-import { rubyReading } from './ruby.js?v=0.5.4';
-import { fold } from './fold.js?v=0.5.4';
-import { ageInYears } from './ages.js?v=0.5.4';
+import { buildBracket } from './bracket.js?v=1.0.0';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=1.0.0';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=1.0.0';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=1.0.0';
+import { search as runSearch } from './search.js?v=1.0.0';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=1.0.0';
+import { VERSION } from './version.js?v=1.0.0';
+import { rubyPlain } from './ruby.js?v=1.0.0';
+import { rubyReading } from './ruby.js?v=1.0.0';
+import { fold } from './fold.js?v=1.0.0';
+import { ageInYears } from './ages.js?v=1.0.0';
 
 function flag(teams, key) {
   return el('img', {
@@ -161,7 +161,82 @@ export function searchComponent({ initialQuery = '', eager = false, loadContext,
   ]);
 }
 
-export function homeView(tournaments, teams, searchOptions = null) {
+function compactMatch(row) {
+  return {
+    id: row[0], year: row[1], date: row[2], stage: row[3], home: row[4], away: row[5],
+    score: { home: row[6], away: row[7], aet: Boolean(row[8]), pens: row[9] === null ? null : [row[9], row[10]] },
+  };
+}
+
+function calendarOrdinal(month, day) {
+  return Math.floor((Date.UTC(2000, month - 1, day) - Date.UTC(2000, 0, 1)) / 86400000);
+}
+
+export function calendarMatchSelection(matches, today = new Date()) {
+  const todayMonth = today.getMonth() + 1;
+  const todayDay = today.getDate();
+  const todayKey = `${String(todayMonth).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
+  const todayOrdinal = calendarOrdinal(todayMonth, todayDay);
+  let selectedKey = null;
+  let selectedDistance = Infinity;
+  let selectedRows = [];
+  for (const row of matches) {
+    const key = row[2].slice(5);
+    const month = Number(key.slice(0, 2));
+    const day = Number(key.slice(3, 5));
+    const difference = Math.abs(calendarOrdinal(month, day) - todayOrdinal);
+    const distance = Math.min(difference, 366 - difference);
+    if (distance < selectedDistance || (distance === selectedDistance && (selectedKey === null || key < selectedKey))) {
+      selectedKey = key;
+      selectedDistance = distance;
+      selectedRows = [row];
+    } else if (key === selectedKey) {
+      selectedRows.push(row);
+    }
+  }
+  if (!selectedRows.length) throw new Error('matches.json has no matches');
+  return {
+    exact: selectedKey === todayKey,
+    month: Number(selectedKey.slice(0, 2)),
+    day: Number(selectedKey.slice(3, 5)),
+    matches: selectedRows.slice().sort((a, b) => b[1] - a[1] || b[0].localeCompare(a[0])).map(compactMatch),
+  };
+}
+
+function tournamentFor(match, tournaments) {
+  const tournament = tournaments.find((item) => item.year === match.year);
+  if (!tournament) throw new Error(`missing tournament ${match.year}`);
+  return tournament;
+}
+
+function historyMatchRow(match, tournaments, teams, className = '', extra = null) {
+  const href = `#/m/${match.id}`;
+  return el('li', { class: `history-match-row ${className}`.trim(), 'data-year': match.year }, [
+    el('a', { class: 'history-tournament', href }, rubyNodes(tournamentTitle(tournamentFor(match, tournaments), teams))),
+    el('div', { class: 'history-score-line' }, [
+      countryLink(teams, match.home, 'country-link history-country-link'),
+      el('a', { class: 'history-score', href }, `${match.score.home}–${match.score.away}`),
+      countryLink(teams, match.away, 'country-link history-country-link'),
+      el('span', { class: 'match-badges' }, scoreBadges(match)),
+    ]),
+    extra,
+  ]);
+}
+
+export function todayMatchesView(matches, tournaments, teams, today = new Date()) {
+  const selected = calendarMatchSelection(matches, today);
+  return el('section', { class: 'today-history panel' }, [
+    selected.exact ? rubyEl('h2', STRINGS.todayHistory) : el('h2', {}, `${selected.month}月${selected.day}日の試合`),
+    el('ol', { class: 'history-match-list today-match-list' }, selected.matches.map((match) =>
+      historyMatchRow(match, tournaments, teams, 'today-match-row'))),
+  ]);
+}
+
+export function homeView(tournaments, teams, matches = [], searchOptions = null, today = new Date()) {
+  if (!Array.isArray(matches)) {
+    searchOptions = matches;
+    matches = [];
+  }
   const cards = [...tournaments].sort((a, b) => b.year - a.year).map((tournament) => {
     const champion = tournament.placings['1'];
     return el('a', { class: 'tournament-card', href: `#/t/${tournament.year}`, 'data-year': tournament.year }, [
@@ -173,9 +248,95 @@ export function homeView(tournaments, teams, searchOptions = null) {
   });
   return el('section', { class: 'page home-page' }, [
     searchOptions ? searchComponent(searchOptions) : null,
+    matches.length ? todayMatchesView(matches, tournaments, teams, today) : null,
     rubyEl('h1', STRINGS.tournaments),
     rubyEl('p', STRINGS.intro, { class: 'intro' }),
     el('div', { class: 'tournament-grid' }, cards),
+  ]);
+}
+
+function recordMatches(ids, matchIndex, value) {
+  return ids.map((id, storedIndex) => {
+    const match = matchIndex.get(id);
+    if (!match) throw new Error(`missing compact match ${id}`);
+    return { match, storedIndex, value: value(match) };
+  }).sort((a, b) => b.value - a.value || b.match.date.localeCompare(a.match.date)
+    || b.match.id.localeCompare(a.match.id) || a.storedIndex - b.storedIndex).map((row) => row.match);
+}
+
+function recordsSection(heading, rows, tournaments, teams, className) {
+  return el('section', { class: `panel records-section ${className}` }, [
+    rubyEl('h2', heading),
+    el('ol', { class: 'history-match-list records-list' }, rows.map(({ match, extra }) =>
+      historyMatchRow(match, tournaments, teams, 'record-row', extra))),
+  ]);
+}
+
+export function recordsView(records, matches, tournaments, teams, players) {
+  const matchIndex = new Map(matches.map((row) => {
+    const match = compactMatch(row);
+    return [match.id, match];
+  }));
+  const plainRows = (ids, value) => recordMatches(ids, matchIndex, value).map((match) => ({ match }));
+  const hats = records.hatTricks.map((row, storedIndex) => {
+    const match = matchIndex.get(row.match);
+    if (!match) throw new Error(`missing compact match ${row.match}`);
+    return { ...row, matchData: match, storedIndex };
+  }).sort((a, b) => b.goals - a.goals || b.matchData.date.localeCompare(a.matchData.date)
+    || b.matchData.id.localeCompare(a.matchData.id) || a.storedIndex - b.storedIndex);
+  return el('article', { class: 'page records-page' }, [
+    rubyEl('h1', STRINGS.records),
+    recordsSection(STRINGS.biggestWins, plainRows(records.biggestWins,
+      (match) => Math.abs(match.score.home - match.score.away) * 100 + match.score.home + match.score.away),
+    tournaments, teams, 'biggest-wins'),
+    recordsSection(STRINGS.highestScoring, plainRows(records.highestScoring,
+      (match) => (match.score.home + match.score.away) * 100 + Math.abs(match.score.home - match.score.away)),
+    tournaments, teams, 'highest-scoring'),
+    recordsSection(STRINGS.hatTricks, hats.map((row) => {
+      const player = players[row.player];
+      if (!player) throw new Error(`missing player ${row.player}`);
+      const teamKey = player.teams.includes('JPN') ? 'JPN' : player.teams.at(-1);
+      return {
+        match: row.matchData,
+        extra: el('div', { class: 'record-extra' }, [
+          el('a', { class: 'person', href: `#/p/${row.player}` }, playerLabel(player, teamKey)),
+          el('strong', {}, `${row.goals}点`),
+        ]),
+      };
+    }), tournaments, teams, 'hat-tricks'),
+    recordsSection(STRINGS.shootouts, plainRows(records.shootouts, () => 0), tournaments, teams, 'shootouts'),
+  ]);
+}
+
+export function japanView(japan, details, teams) {
+  const tournaments = details.slice().sort((a, b) => b.year - a.year);
+  const finishes = new Map(japan.tournaments.map((item) => [item.year, item.finish]));
+  const matches = tournaments.flatMap((detail) => detail.matches
+    .filter((match) => match.home === 'JPN' || match.away === 'JPN')
+    .map((match) => ({ ...match, year: detail.year })))
+    .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  return el('article', { class: 'page japan-page' }, [
+    rubyEl('h1', STRINGS.japanFeature),
+    el('section', { class: 'panel japan-tournaments-panel' }, [
+      rubyEl('h2', STRINGS.japanWorldCups),
+      el('ol', { class: 'japan-tournament-list' }, tournaments.map((detail) => el('li', { 'data-year': detail.year }, [
+        el('a', { class: 'japan-tournament-link', href: `#/t/${detail.year}` }, rubyNodes(tournamentTitle(detail, teams))),
+        el('strong', {}, FINISH_LABELS[finishes.get(detail.year)] || finishes.get(detail.year)),
+        el('a', { class: 'japan-squad-link', href: `#/z/${detail.year}/JPN` }, '選手名鑑'),
+      ]))),
+    ]),
+    el('section', { class: 'panel japan-matches-panel' }, [
+      rubyEl('h2', STRINGS.japanMatches),
+      el('ol', { class: 'history-match-list japan-match-list' }, matches.map((match) =>
+        historyMatchRow(match, tournaments, teams, 'japan-match-row', el('small', { class: 'history-date' }, formatDate(match.date))))),
+    ]),
+    el('section', { class: 'panel japan-scorers-panel' }, [
+      rubyEl('h2', STRINGS.japanScorers),
+      el('ol', { class: 'japan-scorer-list' }, japan.topScorers.map((row) => el('li', {}, [
+        el('a', { class: 'person', href: `#/p/${row.player}` }, playerLabel(row, 'JPN')),
+        el('strong', {}, `${row.goals}点`),
+      ]))),
+    ]),
   ]);
 }
 

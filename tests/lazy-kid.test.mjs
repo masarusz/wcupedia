@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { prepareIndex, search } from '../public/js/search.js?v=0.5.4';
+import { prepareIndex, search } from '../public/js/search.js?v=1.0.0';
 import golden from './golden/lazykid.json' with { type: 'json' };
 
 const ROOT = resolve(import.meta.dirname, '..');

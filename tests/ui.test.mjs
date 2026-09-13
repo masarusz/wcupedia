@@ -4,14 +4,14 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { crc32, inflateSync } from 'node:zlib';
 import ui from './golden/ui.json' with { type: 'json' };
-import { buildBracket } from '../public/js/bracket.js?v=0.5.4';
+import { buildBracket } from '../public/js/bracket.js?v=1.0.0';
 import { foldCompact } from '../public/js/fold.js';
-import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=0.5.4';
+import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=1.0.0';
 import { parseRuby } from '../public/js/ruby.js';
-import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=0.5.4';
-import { VERSION } from '../public/js/version.js?v=0.5.4';
+import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=1.0.0';
+import { VERSION } from '../public/js/version.js?v=1.0.0';
 import { applySquadChanges } from '../tools/lib/phase4.mjs';
-import { awardTier } from '../public/js/views.js?v=0.5.4';
+import { awardTier } from '../public/js/views.js?v=1.0.0';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const PUBLIC = join(ROOT, 'public');
@@ -366,7 +366,7 @@ export function register(test, equal, deepEqual) {
   });
 
   test('asset imports and footer share VERSION', () => {
-    equal(VERSION, '0.5.4');
+    equal(VERSION, '1.0.0');
     const html = readFileSync(join(PUBLIC, 'index.html'), 'utf8');
     for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
       const url = match[1];
@@ -421,7 +421,7 @@ export function register(test, equal, deepEqual) {
     }
     equal(html.includes('name="viewport"'), true, 'viewport');
     const app = readFileSync(join(PUBLIC, 'js/app.js'), 'utf8');
-    for (const route of ["route === '/'", "route === '/s'", "route === '/credits'", "route === '/credits/photos'", "route === '/c'", "route === '/r'", '/^\\/t\\/', '/^\\/m\\/', '/^\\/c\\/', '/^\\/p\\/', '/^\\/r\\/', '/^\\/z']) equal(app.includes(route), true, route);
+    for (const route of ["route === '/'", "route === '/s'", "route === '/credits'", "route === '/credits/photos'", "route === '/c'", "route === '/r'", "route === '/k'", "route === '/j'", '/^\\/t\\/', '/^\\/m\\/', '/^\\/c\\/', '/^\\/p\\/', '/^\\/r\\/', '/^\\/z']) equal(app.includes(route), true, route);
     const playerBranch = app.slice(app.indexOf('} else if (playerMatch)'), app.indexOf('} else if (rankingMatch)'));
     equal(playerBranch.includes('loadTeams'), false, 'player route loads only players and its tournament files');
     equal(app.includes('window.scrollTo(0, 0)'), true, 'route scroll');
@@ -434,6 +434,9 @@ export function register(test, equal, deepEqual) {
     const css = readFileSync(join(PUBLIC, 'css/app.css'), 'utf8');
     equal(/\.site-header\s*\{[^}]*position:\s*sticky[^}]*top:\s*0/s.test(css), true, 'sticky header');
     equal(/html, body\s*\{[^}]*overflow-x:\s*clip/s.test(css), true, 'body overflow');
+    equal(/@media \(max-width: 1250px\)\s*\{[^}]*\.header-inner\s*\{[^}]*flex-wrap:\s*wrap/s.test(css), true,
+      'header wraps before the four target iPad widths');
+    equal(/\.site-nav\s*\{[^}]*flex-wrap:\s*wrap/s.test(css), true, 'expanded navigation wraps');
     for (const selector of ['.table-scroll', '.bracket-scroll']) equal(css.includes(selector), true, selector);
     const fontSizes = [...css.matchAll(/(?:^|[;{])\s*font-size:\s*(\d+)px/gm)].map((match) => Number(match[1]));
     equal(fontSizes.filter((size) => size < 16).every((size) => size === 11 || size === 12 || size === 13 || size === 14 || size === 15), true);

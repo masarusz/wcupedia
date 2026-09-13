@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { rubyPlain } from '../public/js/ruby.js?v=0.5.4';
-import { stageLabel } from '../public/js/strings.js?v=0.5.4';
+import { rubyPlain } from '../public/js/ruby.js?v=1.0.0';
+import { stageLabel } from '../public/js/strings.js?v=1.0.0';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -89,6 +89,12 @@ function descendants(node) {
   return found;
 }
 
+function renderedTextNodes(node) {
+  if (node instanceof FakeText) return [node];
+  if (!(node instanceof FakeElement)) return [];
+  return node.childNodes.flatMap(renderedTextNodes);
+}
+
 function hasClass(node, name) {
   return (node.getAttribute('class') || '').split(/\s+/).includes(name);
 }
@@ -150,7 +156,7 @@ export function register(test, equal, deepEqual) {
       await new Promise((resolvePromise) => setImmediate(resolvePromise));
       equal(requested.includes('data/search.json'), false, 'home does not load search before focus');
       deepEqual(descendants(appRoot).filter((node) => node.tagName === 'NAV' && node.getAttribute('aria-label') === 'main')[0]
-        .childNodes.map((node) => node.textContent), ['大会', '国', '選手名鑑', 'ランキング', '検索', 'クレジット'], 'menu order');
+        .childNodes.map((node) => node.textContent), ['大会', '国', '選手名鑑', 'ランキング', '記録', '日本代表特集', '検索', 'クレジット'], 'menu order');
       equal(descendants(appRoot).some((node) => node.tagName === 'BUTTON'), false, 'shell buttons');
       equal(descendants(appRoot).some((node) => node.tagName === 'RUBY' || node.tagName === 'RT'), false,
         'shell ruby or rt elements');
@@ -163,7 +169,7 @@ export function register(test, equal, deepEqual) {
       equal(marks[0].tagName, 'IMG', 'brand-mark is an img element');
       equal(brand.childNodes[0], marks[0], 'brand-mark is the first child of .brand');
       equal(marks[0].getAttribute('alt'), '', 'brand-mark has empty alt text');
-      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=0.5.4', 'brand-mark versioned resource');
+      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=1.0.0', 'brand-mark versioned resource');
       equal(marks[0].getAttribute('width'), '34', 'brand-mark width');
       equal(marks[0].getAttribute('height'), '34', 'brand-mark height');
       requested.length = 0;
@@ -206,6 +212,14 @@ export function register(test, equal, deepEqual) {
         equal(descendants(appRoot).filter((node) => hasClass(node, 'header-back')).length, 1, `${hash} header back`);
       }
       equal(requested.includes('data/search.json'), false, 'tournament/match routes do not load search.json');
+      for (const hash of ['#/k', '#/j']) {
+        globalThis.location.hash = hash;
+        globalThis.history.state = null;
+        await listeners.get('hashchange')();
+        equal(descendants(appRoot).filter((node) => hasClass(node, 'header-back')).length, 1, `${hash} header back`);
+        if (hash === '#/k') equal(descendants(appRoot).filter((node) => hasClass(node, 'record-row')).length, 137, 'records route rows');
+        if (hash === '#/j') equal(descendants(appRoot).filter((node) => hasClass(node, 'japan-match-row')).length, 29, 'Japan route matches');
+      }
       globalThis.location.hash = '#/';
       globalThis.history.state = null;
       await listeners.get('hashchange')();
@@ -242,6 +256,136 @@ export function register(test, equal, deepEqual) {
     }
   });
 
+  test('今日は何の日 always renders today or the nearest calendar date', async () => {
+    const previousDocument = globalThis.document;
+    const previousNode = globalThis.Node;
+    globalThis.Node = FakeNode;
+    globalThis.document = {
+      createElement: (tagName) => new FakeElement(tagName),
+      createTextNode: (value) => new FakeText(value),
+    };
+    try {
+      const { calendarMatchSelection, todayMatchesView } = await import('../public/js/views.js?v=1.0.0');
+      const matches = load('matches.json');
+      const tournaments = load('tournaments.json');
+      const teams = load('teams.json');
+      const cases = [
+        [new Date(2026, 5, 14), '今日は何の日', true],
+        [new Date(2026, 4, 26), '5月27日の試合', false],
+        [new Date(2026, 0, 2), '12月18日の試合', false],
+      ];
+      for (const [date, heading, exact] of cases) {
+        const selection = calendarMatchSelection(matches, date);
+        const tree = todayMatchesView(matches, tournaments, teams, date);
+        equal(selection.exact, exact, heading);
+        equal(descendants(tree).find((node) => node.tagName === 'H2').textContent, heading, `${heading} heading`);
+        equal(descendants(tree).filter((node) => hasClass(node, 'today-match-row')).length > 0, true, `${heading} rows`);
+      }
+      const tied = calendarMatchSelection([
+        ['M-2000-01', 2000, '2000-06-12', 'group', 'JPN', 'BRA', 0, 1, 0, null, null],
+        ['M-2000-02', 2000, '2000-06-14', 'group', 'JPN', 'BRA', 0, 1, 0, null, null],
+      ], new Date(2026, 5, 13));
+      equal(`${tied.month}-${tied.day}`, '6-12', 'equal-distance tie uses earlier month-day');
+    } finally {
+      if (previousDocument === undefined) delete globalThis.document; else globalThis.document = previousDocument;
+      if (previousNode === undefined) delete globalThis.Node; else globalThis.Node = previousNode;
+    }
+  });
+
+  test('records and Japan special views render every stored row', async () => {
+    const previousDocument = globalThis.document;
+    const previousNode = globalThis.Node;
+    globalThis.Node = FakeNode;
+    globalThis.document = {
+      createElement: (tagName) => new FakeElement(tagName),
+      createTextNode: (value) => new FakeText(value),
+    };
+    try {
+      const { japanView, recordsView, todayMatchesView } = await import('../public/js/views.js?v=1.0.0');
+      const matches = load('matches.json');
+      const records = load('records.json');
+      const tournaments = load('tournaments.json');
+      const teams = load('teams.json');
+      const players = load('players.json');
+      let todayRows = 0;
+      for (const key of new Set(matches.map((row) => row[2].slice(5)))) {
+        const [month, day] = key.split('-').map(Number);
+        const tree = todayMatchesView(matches, tournaments, teams, new Date(2026, month - 1, day));
+        todayRows += descendants(tree).filter((node) => hasClass(node, 'today-match-row')).length;
+      }
+      equal(todayRows, 1068, 'every compact match rendered across calendar dates');
+
+      const recordsTree = recordsView(records, matches, tournaments, teams, players);
+      equal(records.hatTricks.length, 58, 'hat-trick source count');
+      equal(records.shootouts.length, 39, 'shoot-out source count');
+      equal(descendants(recordsTree).filter((node) => hasClass(node, 'record-row')).length,
+        records.biggestWins.length + records.highestScoring.length + records.hatTricks.length + records.shootouts.length,
+      'every record row rendered');
+      const recordSections = descendants(recordsTree).filter((node) => hasClass(node, 'records-section'));
+      const firstRecordRow = (section) => descendants(section).find((node) => hasClass(node, 'record-row'));
+      equal(descendants(firstRecordRow(recordSections[0])).some((node) => node.getAttribute('href') === '#/m/M-1982-05'), true,
+        'HUN 10-1 SLV is first among biggest wins');
+      equal(firstRecordRow(recordSections[0]).textContent.includes('10–1'), true, 'biggest-win anchor score');
+      equal(descendants(firstRecordRow(recordSections[1])).some((node) => node.getAttribute('href') === '#/m/M-1954-19'), true,
+        'AUT 7-5 CHE is first among highest-scoring matches');
+      equal(firstRecordRow(recordSections[1]).textContent.includes('7–5'), true, 'highest-scoring anchor score');
+      equal(descendants(recordSections[2]).filter((node) => node.tagName === 'A' && /^#\/p\//.test(node.getAttribute('href') || '')).length,
+        58, 'every hat-trick player linked');
+      for (const row of descendants(recordsTree).filter((node) => hasClass(node, 'record-row'))) {
+        equal(descendants(row).some((node) => node.tagName === 'A' && /^#\/m\//.test(node.getAttribute('href') || '')), true,
+          'record row has match link');
+      }
+
+      const japanDetails = teams.JPN.tournaments.map(({ year }) => load(`t/${year}.json`));
+      const japanTree = japanView(teams.JPN, japanDetails, teams);
+      const japanRows = descendants(japanTree).filter((node) => hasClass(node, 'japan-match-row'));
+      equal(japanRows.length, 29, 'Japan match count');
+      equal(japanRows[0].getAttribute('data-year'), '2026', 'Japan matches newest first');
+      equal(japanRows.at(-1).getAttribute('data-year'), '1998', 'Japan matches oldest last');
+      equal(japanRows.every((row) => descendants(row).some((node) => node.tagName === 'A'
+        && /^#\/m\//.test(node.getAttribute('href') || ''))), true, 'every Japan row has match link');
+      equal(descendants(japanTree).filter((node) => hasClass(node, 'japan-tournament-link')).length, 8, 'Japan tournament count');
+      equal(descendants(japanTree).filter((node) => hasClass(node, 'japan-squad-link')).length, 8, 'Japan squad links');
+      equal(descendants(japanTree).filter((node) => hasClass(node, 'japan-scorer-list'))[0].childNodes.length,
+        teams.JPN.topScorers.length, 'every Japan scorer rendered');
+    } finally {
+      if (previousDocument === undefined) delete globalThis.document; else globalThis.document = previousDocument;
+      if (previousNode === undefined) delete globalThis.Node; else globalThis.Node = previousNode;
+    }
+  });
+
+  test('new views render no literal furigana markup', async () => {
+    const previousDocument = globalThis.document;
+    const previousNode = globalThis.Node;
+    globalThis.Node = FakeNode;
+    globalThis.document = {
+      createElement: (tagName) => new FakeElement(tagName),
+      createTextNode: (value) => new FakeText(value),
+    };
+    try {
+      const { homeView, japanView, recordsView } = await import('../public/js/views.js?v=1.0.0');
+      const matches = load('matches.json');
+      const records = load('records.json');
+      const tournaments = load('tournaments.json');
+      const teams = load('teams.json');
+      const players = load('players.json');
+      const japanDetails = teams.JPN.tournaments.map(({ year }) => load(`t/${year}.json`));
+      const trees = [
+        homeView(tournaments, teams, matches, null, new Date(2026, 5, 14)),
+        recordsView(records, matches, tournaments, teams, players),
+        japanView(teams.JPN, japanDetails, teams),
+      ];
+      const leaked = trees.flatMap(renderedTextNodes).map((node) => node.textContent).filter((value) => /[{|]/.test(value));
+      deepEqual(leaked, [], 'literal ruby delimiters in rendered text nodes');
+      const nested = trees.flatMap((tree) => descendants(tree).filter((node) => node.tagName === 'A'
+        && descendants(node).slice(1).some((child) => child.tagName === 'A')));
+      equal(nested.length, 0, 'new views contain no nested links');
+    } finally {
+      if (previousDocument === undefined) delete globalThis.document; else globalThis.document = previousDocument;
+      if (previousNode === undefined) delete globalThis.Node; else globalThis.Node = previousNode;
+    }
+  });
+
   test('real views render every tournament and match', async () => {
     const previousDocument = globalThis.document;
     const previousNode = globalThis.Node;
@@ -254,7 +398,7 @@ export function register(test, equal, deepEqual) {
     try {
       const { countriesView, countryView, creditsView, errorView, homeView, matchView, meikanTeamKeys, meikanView, notFoundView,
         photoCreditsView, playerView, rankingsView, teamName, tournamentView } =
-        await import('../public/js/views.js?v=0.5.4');
+        await import('../public/js/views.js?v=1.0.0');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const players = load('players.json');
@@ -300,7 +444,7 @@ export function register(test, equal, deepEqual) {
         }
       };
 
-      const homeTree = render('home', () => homeView(tournaments, teams));
+      const homeTree = render('home', () => homeView(tournaments, teams, load('matches.json'), null, new Date(2026, 5, 14)));
       const homeTournamentCards = descendants(homeTree).filter((node) => hasClass(node, 'tournament-card'));
       deepEqual(assertRecentFirst(homeTournamentCards, 'home tournaments'),
         tournaments.map(({ year }) => year).sort((a, b) => b - a), 'home tournament years');

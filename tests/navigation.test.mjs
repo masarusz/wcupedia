@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { backDecision } from '../public/js/navigation.js?v=0.5.4';
+import { backDecision } from '../public/js/navigation.js?v=1.0.0';
 
 const ROOT = resolve(import.meta.dirname, '..');
 
@@ -9,7 +9,7 @@ export function register(test, equal, deepEqual) {
     deepEqual(backDecision('/p/P-14758', true), { action: 'back' }, 'earlier player page');
     deepEqual(backDecision('/m/M-2022-64', false), { action: 'hash', hash: '#/t/2022' }, 'direct match');
     deepEqual(backDecision('/c/JPN', false), { action: 'hash', hash: '#/c' }, 'direct country');
-    for (const route of ['/t/2022', '/p/P-14758', '/r/p/youngest', '/s', '/credits', '/missing']) {
+    for (const route of ['/t/2022', '/p/P-14758', '/r/p/youngest', '/k', '/j', '/s', '/credits', '/missing']) {
       deepEqual(backDecision(route, false), { action: 'hash', hash: '#/' }, route);
     }
   });

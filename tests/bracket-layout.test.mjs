@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import ui from './golden/ui.json' with { type: 'json' };
-import { buildBracket } from '../public/js/bracket.js?v=0.5.4';
-import { BRACKET_STYLE_METRICS, bracketLayout, bracketState, stackedBracketLayout } from '../public/js/bracket-layout.js?v=0.5.4';
+import { buildBracket } from '../public/js/bracket.js?v=1.0.0';
+import { BRACKET_STYLE_METRICS, bracketLayout, bracketState, stackedBracketLayout } from '../public/js/bracket-layout.js?v=1.0.0';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
