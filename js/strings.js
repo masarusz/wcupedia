@@ -65,6 +65,7 @@ export const STRINGS = Object.freeze({
   bestYoungPlayer: '{最優秀若手選手|さいゆうしゅうわかてせんしゅ}',
   noGoals: 'ゴールはありません',
   todayHistory: '{今日|きょう}は{何|なん}の{日|ひ}',
+  todayBirthdays: '{今日|きょう}{誕生日|たんじょうび}の{選手|せんしゅ}',
   biggestWins: '{大|おお}きな{勝|か}ち',
   highestScoring: 'たくさん{点|てん}が{入|はい}った{試合|しあい}',
   hatTricks: 'ハットトリック',

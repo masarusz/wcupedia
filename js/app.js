@@ -1,10 +1,10 @@
-import { loadMatches, loadMeta, loadPhotos, loadPlayers, loadRankings, loadRecords, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=1.0.0';
-import { el, replace, rubyEl, rubyNodes } from './dom.js?v=1.0.0';
-import { prepareIndex } from './search.js?v=1.0.0';
-import { STRINGS } from './strings.js?v=1.0.0';
-import { countriesView, countryView, creditsView, errorView, homeView, japanView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, recordsView, searchView, tournamentView } from './views.js?v=1.0.0';
-import { VERSION } from './version.js?v=1.0.0';
-import { backDecision } from './navigation.js?v=1.0.0';
+import { loadBirthdays, loadMatches, loadMeta, loadPhotos, loadPlayers, loadRankings, loadRecords, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=1.0.1';
+import { el, replace, rubyEl, rubyNodes } from './dom.js?v=1.0.1';
+import { prepareIndex } from './search.js?v=1.0.1';
+import { STRINGS } from './strings.js?v=1.0.1';
+import { countriesView, countryView, creditsView, errorView, homeView, japanView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, recordsView, searchView, tournamentView } from './views.js?v=1.0.1';
+import { VERSION } from './version.js?v=1.0.1';
+import { backDecision } from './navigation.js?v=1.0.1';
 
 const root = document.querySelector('#app');
 
@@ -104,8 +104,10 @@ async function renderRoute() {
   try {
     let view;
     if (route === '/') {
-      const [tournaments, teams, matches] = await Promise.all([loadTournaments(), loadTeams(), loadMatches()]);
-      view = homeView(tournaments, teams, matches, searchOptions('/', query));
+      const [tournaments, teams, matches, birthdays] = await Promise.all([
+        loadTournaments(), loadTeams(), loadMatches(), loadBirthdays(),
+      ]);
+      view = homeView(tournaments, teams, matches, birthdays, searchOptions('/', query));
     } else if (route === '/s') {
       view = searchView(searchOptions('/s', query, true));
     } else if (route === '/credits') {

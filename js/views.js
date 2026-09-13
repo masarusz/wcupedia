@@ -1,14 +1,14 @@
-import { buildBracket } from './bracket.js?v=1.0.0';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=1.0.0';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=1.0.0';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=1.0.0';
-import { search as runSearch } from './search.js?v=1.0.0';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=1.0.0';
-import { VERSION } from './version.js?v=1.0.0';
-import { rubyPlain } from './ruby.js?v=1.0.0';
-import { rubyReading } from './ruby.js?v=1.0.0';
-import { fold } from './fold.js?v=1.0.0';
-import { ageInYears } from './ages.js?v=1.0.0';
+import { buildBracket } from './bracket.js?v=1.0.1';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=1.0.1';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=1.0.1';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=1.0.1';
+import { search as runSearch } from './search.js?v=1.0.1';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=1.0.1';
+import { VERSION } from './version.js?v=1.0.1';
+import { rubyPlain } from './ruby.js?v=1.0.1';
+import { rubyReading } from './ruby.js?v=1.0.1';
+import { fold } from './fold.js?v=1.0.1';
+import { ageInYears } from './ages.js?v=1.0.1';
 
 function flag(teams, key) {
   return el('img', {
@@ -168,39 +168,8 @@ function compactMatch(row) {
   };
 }
 
-function calendarOrdinal(month, day) {
-  return Math.floor((Date.UTC(2000, month - 1, day) - Date.UTC(2000, 0, 1)) / 86400000);
-}
-
-export function calendarMatchSelection(matches, today = new Date()) {
-  const todayMonth = today.getMonth() + 1;
-  const todayDay = today.getDate();
-  const todayKey = `${String(todayMonth).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
-  const todayOrdinal = calendarOrdinal(todayMonth, todayDay);
-  let selectedKey = null;
-  let selectedDistance = Infinity;
-  let selectedRows = [];
-  for (const row of matches) {
-    const key = row[2].slice(5);
-    const month = Number(key.slice(0, 2));
-    const day = Number(key.slice(3, 5));
-    const difference = Math.abs(calendarOrdinal(month, day) - todayOrdinal);
-    const distance = Math.min(difference, 366 - difference);
-    if (distance < selectedDistance || (distance === selectedDistance && (selectedKey === null || key < selectedKey))) {
-      selectedKey = key;
-      selectedDistance = distance;
-      selectedRows = [row];
-    } else if (key === selectedKey) {
-      selectedRows.push(row);
-    }
-  }
-  if (!selectedRows.length) throw new Error('matches.json has no matches');
-  return {
-    exact: selectedKey === todayKey,
-    month: Number(selectedKey.slice(0, 2)),
-    day: Number(selectedKey.slice(3, 5)),
-    matches: selectedRows.slice().sort((a, b) => b[1] - a[1] || b[0].localeCompare(a[0])).map(compactMatch),
-  };
+function monthDayKey(today) {
+  return `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 }
 
 function tournamentFor(match, tournaments) {
@@ -224,19 +193,41 @@ function historyMatchRow(match, tournaments, teams, className = '', extra = null
 }
 
 export function todayMatchesView(matches, tournaments, teams, today = new Date()) {
-  const selected = calendarMatchSelection(matches, today);
+  const selected = matches.filter((row) => row[2].slice(5) === monthDayKey(today))
+    .sort((a, b) => b[1] - a[1] || b[0].localeCompare(a[0])).map(compactMatch);
+  if (!selected.length) return null;
   return el('section', { class: 'today-history panel' }, [
-    selected.exact ? rubyEl('h2', STRINGS.todayHistory) : el('h2', {}, `${selected.month}月${selected.day}日の試合`),
-    el('ol', { class: 'history-match-list today-match-list' }, selected.matches.map((match) =>
+    rubyEl('h2', STRINGS.todayHistory),
+    el('ol', { class: 'history-match-list today-match-list' }, selected.map((match) =>
       historyMatchRow(match, tournaments, teams, 'today-match-row'))),
   ]);
 }
 
-export function homeView(tournaments, teams, matches = [], searchOptions = null, today = new Date()) {
-  if (!Array.isArray(matches)) {
-    searchOptions = matches;
-    matches = [];
-  }
+function playerSilhouette(number = null) {
+  return el('div', { class: 'meikan-silhouette', 'aria-label': '写真なし' }, [
+    el('span', { class: 'silhouette-person', 'aria-hidden': 'true' }, '👤'),
+    number === null ? null : el('strong', { class: 'silhouette-number' }, number),
+  ]);
+}
+
+export function todayBirthdaysView(birthdays, today = new Date()) {
+  const players = birthdays[monthDayKey(today)] || [];
+  if (!players.length) return null;
+  return el('section', { class: 'today-birthdays panel' }, [
+    rubyEl('h2', STRINGS.todayBirthdays),
+    el('ol', { class: 'birthday-player-list' }, players.map((player) => el('li', {},
+      el('a', { class: 'birthday-player-card', href: `#/p/${player.id}` }, [
+        player.photo ? el('img', {
+          class: 'birthday-player-photo', src: `assets/players/${player.id}.webp?v=${VERSION}`,
+          loading: 'lazy', width: 240, height: 320, alt: player.name,
+        }) : playerSilhouette(),
+        el('strong', { class: 'birthday-player-name person' }, player.name),
+        el('span', { class: 'birthday-player-year' }, `${player.year}年生まれ`),
+      ])))),
+  ]);
+}
+
+export function homeView(tournaments, teams, matches = [], birthdays = {}, searchOptions = null, today = new Date()) {
   const cards = [...tournaments].sort((a, b) => b.year - a.year).map((tournament) => {
     const champion = tournament.placings['1'];
     return el('a', { class: 'tournament-card', href: `#/t/${tournament.year}`, 'data-year': tournament.year }, [
@@ -248,7 +239,8 @@ export function homeView(tournaments, teams, matches = [], searchOptions = null,
   });
   return el('section', { class: 'page home-page' }, [
     searchOptions ? searchComponent(searchOptions) : null,
-    matches.length ? todayMatchesView(matches, tournaments, teams, today) : null,
+    todayMatchesView(matches, tournaments, teams, today),
+    todayBirthdaysView(birthdays, today),
     rubyEl('h1', STRINGS.tournaments),
     rubyEl('p', STRINGS.intro, { class: 'intro' }),
     el('div', { class: 'tournament-grid' }, cards),
@@ -769,10 +761,7 @@ function meikanCard(detail, member, teamKey) {
       class: 'meikan-photo', src: `assets/players/${member.player}.webp?v=${VERSION}`,
       loading: 'lazy', width: 240, height: 320, alt: label,
     })
-    : el('div', { class: 'meikan-silhouette', 'aria-label': '写真なし' }, [
-      el('span', { class: 'silhouette-person', 'aria-hidden': 'true' }, '👤'),
-      el('strong', { class: 'silhouette-number' }, member.no ?? '–'),
-    ]);
+    : playerSilhouette(member.no ?? '–');
   return el('a', { class: 'meikan-card', href: `#/p/${member.player}` }, [
     picture,
     el('strong', { class: 'meikan-name person' }, label),
