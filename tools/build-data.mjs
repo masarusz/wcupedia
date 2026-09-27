@@ -10,6 +10,7 @@ import { chooseJapaneseNames, matchSquadClubEntry, matchSquadEntry, parseSquadWi
 import { applySquadChanges, playerTieOrder, rankRows, resolveLineups2026 } from './lib/phase4.mjs';
 import { addTournamentHostKeys, mergeSearchAliases } from './lib/search-data.mjs';
 import { validatePhotoManifest, validatePhotoOriginals } from './lib/photos.mjs';
+import { buildFifaRanking } from './lib/fifa-ranking.mjs';
 import { fold, foldCompact } from '../public/js/fold.js';
 import { playerLabel } from '../public/js/format.js';
 import { rubyPlain, rubyReading, parseRuby } from '../public/js/ruby.js';
@@ -22,13 +23,15 @@ let outputRoot = 'public/data';
 let searchAliasesPath = join(ROOT, 'curated/search-aliases.json');
 let birthDateCorrectionsPath = join(ROOT, 'curated/birth-date-corrections.json');
 let photosPath = join(ROOT, 'curated/photos.json');
+let fifaRankingPath = join(ROOT, 'curated/fifa-ranking.json');
 for (let index = 0; index < args.length; index += 1) {
   if (args[index] === '--src' && args[index + 1]) sourceRoot = args[++index];
   else if (args[index] === '--out' && args[index + 1]) outputRoot = args[++index];
   else if (args[index] === '--search-aliases' && args[index + 1]) searchAliasesPath = resolve(args[++index]);
   else if (args[index] === '--birth-date-corrections' && args[index + 1]) birthDateCorrectionsPath = resolve(args[++index]);
   else if (args[index] === '--photos' && args[index + 1]) photosPath = resolve(args[++index]);
-  else throw new Error('usage: node tools/build-data.mjs [--src DIR] [--out DIR] [--search-aliases FILE] [--birth-date-corrections FILE] [--photos FILE]');
+  else if (args[index] === '--fifa-ranking' && args[index + 1]) fifaRankingPath = resolve(args[++index]);
+  else throw new Error('usage: node tools/build-data.mjs [--src DIR] [--out DIR] [--search-aliases FILE] [--birth-date-corrections FILE] [--photos FILE] [--fifa-ranking FILE]');
 }
 sourceRoot = resolve(sourceRoot);
 outputRoot = resolve(outputRoot);
@@ -54,6 +57,7 @@ const playersJaOverrides = await json(join(ROOT, 'curated/players-ja-overrides.j
 const searchAliases = await json(searchAliasesPath);
 const birthDateCorrections = await json(birthDateCorrectionsPath);
 const photoManifest = await json(photosPath);
+const fifaRankingSource = await json(fifaRankingPath);
 const photoEntries = validatePhotoManifest(photoManifest);
 await validatePhotoOriginals(photoEntries, join(sourceRoot, 'photos/orig'));
 const photoIds = new Set(photoEntries.map(([id]) => id));
@@ -919,6 +923,7 @@ for (const row of menAppearances) {
 appearanceTotalsByYear[2026] = full2026.matches.reduce((total, match) => total + match.lineup.reduce((sideTotal, lineup) =>
   sideTotal + new Set([...(lineup.starter || []).map((item) => item.name), ...(lineup.subs || []).map((item) => item.on)]).size, 0), 0);
 const rankings = { countries: countryRankings, players: playerRankings, appearanceTotalsByYear };
+const fifaRanking = buildFifaRanking(fifaRankingSource, outputTeams);
 
 const compactMatches = allMatches.map((match) => [
   match.id, match.year, match.date, match.stage, match.home, match.away,
@@ -988,6 +993,7 @@ const meta = {
   sources: {
     openfootball: { sha: SOURCES.openfootball.sha, url: SOURCES.openfootball.url, license: SOURCES.openfootball.license },
     fjelstul: { sha: SOURCES.fjelstul.sha, url: SOURCES.fjelstul.url, license: SOURCES.fjelstul.license, attribution: SOURCES.fjelstul.attribution },
+    fifa: { publisher: fifaRanking.publisher, url: fifaRanking.source, license: fifaRanking.sourceLicence },
   },
   counts: { tournaments: tournamentSummaries.length, matches: allMatches.length, goals: allMatches.reduce((sum, match) => sum + match.goals.length, 0), teams: allTeamKeys.length, players: playerData.size },
 };
@@ -1009,7 +1015,7 @@ const writeJson = (name, value) => writeFile(join(outputRoot, name), `${JSON.str
 await Promise.all([
   writeJson('meta.json', meta), writeJson('tournaments.json', tournamentSummaries),
   writeJson('teams.json', outputTeams), writeJson('players.json', outputPlayers),
-  writeJson('matches.json', compactMatches), writeJson('records.json', records), writeJson('rankings.json', rankings), writeJson('search.json', search),
+  writeJson('matches.json', compactMatches), writeJson('records.json', records), writeJson('rankings.json', rankings), writeJson('fifa-ranking.json', fifaRanking), writeJson('search.json', search),
   writeJson('photos.json', photoCredits), writeJson('birthdays.json', birthdays),
   ...tournamentDetails.map((tournament) => writeJson(`t/${tournament.year}.json`, tournament)),
 ]);

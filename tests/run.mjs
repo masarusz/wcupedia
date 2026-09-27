@@ -18,6 +18,7 @@ import { register as agesTests } from './ages.test.mjs';
 import { register as navigationTests } from './navigation.test.mjs';
 import { register as meikanTests } from './meikan.test.mjs';
 import { register as photoTests } from './photos.test.mjs';
+import { register as fifaTests } from './fifa.test.mjs';
 
 const checks = [];
 const test = (name, run) => checks.push({ name, run });
@@ -46,6 +47,7 @@ agesTests(test, equal, deepEqual);
 navigationTests(test, equal, deepEqual);
 meikanTests(test, equal, deepEqual);
 photoTests(test, equal, deepEqual);
+fifaTests(test, equal, deepEqual);
 viewsRenderTests(test, equal, deepEqual);
 
 let passed = 0;

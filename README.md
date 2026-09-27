@@ -8,7 +8,7 @@ Built for two children (aged 8 and 10) to browse on an iPad.
 
 A static site: no accounts, no tracking, no server.
 
-> Status: v1.0.1 complete. The site covers every tournament and match, countries,
+> Status: v1.1.0 complete. The site covers every tournament and match, countries,
 > players and squads, search and rankings, records, and a dedicated Japan feature.
 
 ## Features
@@ -37,6 +37,7 @@ The files in `public/data/` are generated from:
 | [Fjelstul World Cup Database](https://github.com/jfjelstul/worldcup) v1.2.0, © 2023 Joshua C. Fjelstul, Ph.D. | 1930–2022 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) |
 | [openfootball/worldcup.json](https://github.com/openfootball/worldcup.json) | 2026 | CC0 1.0 |
 | Japanese Wikipedia squad pages and article titles (player names in Japanese) | 1950, 1990–2026, plus article titles | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) |
+| FIFA men's ranking, transcribed from [English Wikipedia's data module](https://en.wikipedia.org/wiki/Module:SportsRankings/data/FIFA_World_Rankings) and cross-checked against the Japanese article | 20 July 2026 release | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) |
 
 Modifications: the sources are filtered to men's tournaments, combined by year,
 re-keyed, given Japanese names, and restructured into per-tournament JSON. The
@@ -70,6 +71,12 @@ exactly the allowlist, verifies every file on the live site by checksum, and
 confirms that unpublished paths return 404.
 
 ## Changelog
+
+### v1.1.0 — 2026-09-27
+
+- FIFAランキング in the ranking menu: all 211 men's national teams from the
+  20 July 2026 release, with points and the movement since June. Countries
+  with a page in this site link to it.
 
 ### v1.0.1 — 2026-09-13
 

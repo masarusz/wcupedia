@@ -1,10 +1,10 @@
-import { loadBirthdays, loadMatches, loadMeta, loadPhotos, loadPlayers, loadRankings, loadRecords, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=1.0.1';
-import { el, replace, rubyEl, rubyNodes } from './dom.js?v=1.0.1';
-import { prepareIndex } from './search.js?v=1.0.1';
-import { STRINGS } from './strings.js?v=1.0.1';
-import { countriesView, countryView, creditsView, errorView, homeView, japanView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, recordsView, searchView, tournamentView } from './views.js?v=1.0.1';
-import { VERSION } from './version.js?v=1.0.1';
-import { backDecision } from './navigation.js?v=1.0.1';
+import { loadBirthdays, loadFifaRanking, loadMatches, loadMeta, loadPhotos, loadPlayers, loadRankings, loadRecords, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=1.1.0';
+import { el, replace, rubyEl, rubyNodes } from './dom.js?v=1.1.0';
+import { prepareIndex } from './search.js?v=1.1.0';
+import { STRINGS } from './strings.js?v=1.1.0';
+import { countriesView, countryView, creditsView, errorView, homeView, japanView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, recordsView, searchView, tournamentView } from './views.js?v=1.1.0';
+import { VERSION } from './version.js?v=1.1.0';
+import { backDecision } from './navigation.js?v=1.1.0';
 
 const root = document.querySelector('#app');
 
@@ -158,9 +158,15 @@ async function renderRoute() {
         view = player ? playerView(playerMatch[1], player, await Promise.all(player.years.map(loadTournament)), null, photos[playerMatch[1]] || null) : notFoundView();
       } else if (rankingMatch) {
         const [kind, metric] = rankingMatch.slice(1);
-        const allowed = kind === 'c' ? ['titles', 'appearances', 'wins', 'goals'] : ['goals', 'tournamentGoals', 'awards', 'squads', 'apps', 'youngest', 'oldest'];
-        const [rankings, teams] = await Promise.all([loadRankings(), loadTeams()]);
-        view = allowed.includes(metric) ? rankingsView(rankings, teams, kind, metric) : notFoundView();
+        const allowed = kind === 'c' ? ['titles', 'appearances', 'wins', 'goals', 'fifa'] : ['goals', 'tournamentGoals', 'awards', 'squads', 'apps', 'youngest', 'oldest'];
+        if (!allowed.includes(metric)) view = notFoundView();
+        else if (kind === 'c' && metric === 'fifa') {
+          const [fifaRanking, teams] = await Promise.all([loadFifaRanking(), loadTeams()]);
+          view = rankingsView(null, teams, kind, metric, fifaRanking);
+        } else {
+          const [rankings, teams] = await Promise.all([loadRankings(), loadTeams()]);
+          view = rankingsView(rankings, teams, kind, metric);
+        }
       } else if (meikanMatch) {
         const year = Number(meikanMatch[1] || 2026);
         const [tournaments, teams] = await Promise.all([loadTournaments(), loadTeams()]);

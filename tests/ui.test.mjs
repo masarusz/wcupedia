@@ -4,14 +4,14 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { crc32, inflateSync } from 'node:zlib';
 import ui from './golden/ui.json' with { type: 'json' };
-import { buildBracket } from '../public/js/bracket.js?v=1.0.1';
+import { buildBracket } from '../public/js/bracket.js?v=1.1.0';
 import { foldCompact } from '../public/js/fold.js';
-import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=1.0.1';
+import { formatDate, formatMinute, tournamentTitle } from '../public/js/format.js?v=1.1.0';
 import { parseRuby } from '../public/js/ruby.js';
-import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=1.0.1';
-import { VERSION } from '../public/js/version.js?v=1.0.1';
+import { AWARD_LABELS, STAGE_LABELS, STAGE_LABELS_BY_YEAR, STRINGS } from '../public/js/strings.js?v=1.1.0';
+import { VERSION } from '../public/js/version.js?v=1.1.0';
 import { applySquadChanges } from '../tools/lib/phase4.mjs';
-import { awardTier } from '../public/js/views.js?v=1.0.1';
+import { awardTier } from '../public/js/views.js?v=1.1.0';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const PUBLIC = join(ROOT, 'public');
@@ -366,7 +366,7 @@ export function register(test, equal, deepEqual) {
   });
 
   test('asset imports and footer share VERSION', () => {
-    equal(VERSION, '1.0.1');
+    equal(VERSION, '1.1.0');
     const html = readFileSync(join(PUBLIC, 'index.html'), 'utf8');
     for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
       const url = match[1];
@@ -409,6 +409,9 @@ export function register(test, equal, deepEqual) {
       rejected = false;
       try { await data.loadSearch(); } catch { rejected = true; }
       equal(rejected, true, 'invalid search rejected');
+      rejected = false;
+      try { await data.loadFifaRanking(); } catch { rejected = true; }
+      equal(rejected, true, 'invalid FIFA ranking rejected');
     } finally {
       globalThis.fetch = originalFetch;
     }
@@ -484,7 +487,7 @@ export function register(test, equal, deepEqual) {
   test('credit links use the approved HTTPS hosts', () => {
     const sources = [readFileSync(join(PUBLIC, 'js/views.js'), 'utf8'), JSON.stringify(load('meta.json'))].join('\n');
     for (const match of sources.matchAll(/https:\/\/([^/'"`]+)/g)) {
-      equal(['github.com', 'creativecommons.org', 'commons.wikimedia.org'].includes(match[1]), true, match[0]);
+      equal(['github.com', 'creativecommons.org', 'commons.wikimedia.org', 'en.wikipedia.org'].includes(match[1]), true, match[0]);
     }
   });
 
