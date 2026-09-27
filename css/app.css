@@ -976,6 +976,8 @@ h3 { font-size: 21px; }
 .rank-3 .ranking-rank { color: var(--bronze); }
 .ranking-name { min-height: 44px; min-width: 0; display: flex; align-items: center; font-weight: 700; }
 .ranking-value { min-height: 44px; display: flex; align-items: center; text-align: right; }
+.ranking-fifa-values { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.ranking-movement { min-width: 2.5em; font-weight: 800; text-align: right; }
 .ranking-japan { background: var(--advance); border-color: var(--primary); }
 
 .search-box {
@@ -1079,6 +1081,8 @@ h3 { font-size: 21px; }
   .podium li .flag { width: 20px; height: 15px; }
   .ranking-row { grid-template-columns: 2em 24px minmax(0, 1fr); gap: 7px; padding-inline: 8px; }
   .ranking-value { grid-column: 3; justify-self: start; text-align: left; }
+  .ranking-fifa-values { grid-column: 3; justify-content: flex-start; }
+  .ranking-fifa-values .ranking-value { grid-column: auto; }
   .opponents-panel { overflow-x: auto; }
   .opponents-table { min-width: 390px; }
 }

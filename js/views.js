@@ -1,20 +1,24 @@
-import { buildBracket } from './bracket.js?v=1.0.1';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=1.0.1';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=1.0.1';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=1.0.1';
-import { search as runSearch } from './search.js?v=1.0.1';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=1.0.1';
-import { VERSION } from './version.js?v=1.0.1';
-import { rubyPlain } from './ruby.js?v=1.0.1';
-import { rubyReading } from './ruby.js?v=1.0.1';
-import { fold } from './fold.js?v=1.0.1';
-import { ageInYears } from './ages.js?v=1.0.1';
+import { buildBracket } from './bracket.js?v=1.1.0';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=1.1.0';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=1.1.0';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=1.1.0';
+import { search as runSearch } from './search.js?v=1.1.0';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=1.1.0';
+import { VERSION } from './version.js?v=1.1.0';
+import { rubyPlain } from './ruby.js?v=1.1.0';
+import { rubyReading } from './ruby.js?v=1.1.0';
+import { fold } from './fold.js?v=1.1.0';
+import { ageInYears } from './ages.js?v=1.1.0';
 
-function flag(teams, key) {
+function flagIcon(code) {
   return el('img', {
-    class: 'flag', src: `assets/flags/${teams[key].flag}.svg?v=${VERSION}`,
+    class: 'flag', src: `assets/flags/${code}.svg?v=${VERSION}`,
     alt: '', width: '24', height: '18',
   });
+}
+
+function flag(teams, key) {
+  return flagIcon(teams[key].flag);
 }
 
 export function teamName(markup, className = 'team-name') {
@@ -811,7 +815,7 @@ export function meikanView(detail, teams, tournaments, selectedTeam = null) {
 }
 
 const COUNTRY_METRICS = [
-  ['titles', '優勝回数'], ['appearances', '出場回数'], ['wins', '勝利数'], ['goals', '総得点'],
+  ['titles', '優勝回数'], ['appearances', '出場回数'], ['wins', '勝利数'], ['goals', '総得点'], ['fifa', 'FIFAランキング'],
 ];
 const PLAYER_METRICS = [
   ['goals', '通算ゴール'], ['tournamentGoals', '1大会のゴール'], ['awards', '大会賞の数'],
@@ -833,14 +837,17 @@ function rankingValue(kind, metric, row) {
   return `出場試合数 ${row.value}試合`;
 }
 
-export function rankingsView(rankings, teams, kind = 'c', metric = 'titles') {
+export function rankingsView(rankings, teams, kind = 'c', metric = 'titles', fifaRanking = null) {
   const metrics = kind === 'c' ? COUNTRY_METRICS : PLAYER_METRICS;
-  const rows = kind === 'c' ? rankings.countries[metric] : rankings.players[metric];
+  const isFifa = kind === 'c' && metric === 'fifa';
+  const rows = isFifa ? fifaRanking.rows : kind === 'c' ? rankings.countries[metric] : rankings.players[metric];
   const yearBearingMetric = kind === 'p' && ['tournamentGoals', 'youngest', 'oldest'].includes(metric);
   const displayRows = yearBearingMetric
     ? [...rows].sort((a, b) => a.rank - b.rank || b.year - a.year)
     : rows;
-  const caption = kind === 'p' && metric === 'squads' ? 'メンバーに選ばれた大会の数'
+  const caption = isFifa
+    ? `${formatDate(fifaRanking.releaseDate)}発表　次回は${formatDate(fifaRanking.nextUpdate)}`
+    : kind === 'p' && metric === 'squads' ? 'メンバーに選ばれた大会の数'
     : kind === 'p' && metric === 'apps' ? '1970年から' : null;
   return el('article', { class: 'page rankings-page' }, [
     el('h1', {}, 'ランキング'),
@@ -851,16 +858,24 @@ export function rankingsView(rankings, teams, kind = 'c', metric = 'titles') {
     el('nav', { class: 'ranking-metrics', 'aria-label': 'ランキングの項目' }, metrics.map(([key, label]) =>
       el('a', { href: `#/r/${kind}/${key}`, 'aria-current': key === metric ? 'page' : null }, label))),
     caption ? el('p', { class: 'ranking-caption' }, caption) : null,
-    el('ol', { class: 'ranking-list' }, displayRows.map((row) => el('li', {
-      class: `ranking-row rank-${Math.min(row.rank, 4)}${kind === 'c' && row.team === 'JPN' ? ' ranking-japan' : ''}`,
+    el('ol', { class: `ranking-list${isFifa ? ' fifa-ranking-list' : ''}` }, displayRows.map((row) => el('li', {
+      class: `ranking-row rank-${Math.min(row.rank, 4)}${isFifa ? ' fifa-ranking-row' : ''}${kind === 'c' && row.team === 'JPN' ? ' ranking-japan' : ''}`,
       'data-year': yearBearingMetric ? row.year : null,
     }, [
       el('strong', { class: 'ranking-rank' }, String(row.rank)),
-      flag(teams, row.team),
-      kind === 'c'
+      isFifa && !row.team ? flagIcon(row.flag) : flag(teams, row.team),
+      isFifa
+        ? row.team
+          ? el('a', { class: 'ranking-name', href: `#/c/${row.team}` }, teamName(teams[row.team].ja))
+          : el('span', { class: 'ranking-name' }, row.name)
+        : kind === 'c'
         ? el('a', { class: 'ranking-name', href: `#/c/${row.team}` }, teamName(row.ja))
         : el('a', { class: 'ranking-name person', href: `#/p/${row.player}` }, playerLabel(row, row.team)),
-      ['tournamentGoals', 'youngest', 'oldest'].includes(metric) ? el('a', { class: 'ranking-value', href: `#/t/${row.year}` }, rankingValue(kind, metric, row))
+      isFifa ? el('span', { class: 'ranking-fifa-values' }, [
+        el('strong', { class: 'ranking-value' }, `${row.points.toFixed(2)}ポイント`),
+        el('span', { class: 'ranking-movement' }, row.move === 'up' ? `▲${row.moveBy}` : row.move === 'down' ? `▼${row.moveBy}` : '—'),
+      ])
+        : ['tournamentGoals', 'youngest', 'oldest'].includes(metric) ? el('a', { class: 'ranking-value', href: `#/t/${row.year}` }, rankingValue(kind, metric, row))
         : el('strong', { class: 'ranking-value' }, rankingValue(kind, metric, row)),
     ]))),
   ]);
@@ -889,6 +904,12 @@ export function creditsView(meta) {
     el('section', { class: 'panel credit-block' }, [
       el('h3', {}, 'Wikipedia'),
       el('p', {}, [text('Japanese names — '), link('https://creativecommons.org/licenses/by-sa/4.0/', 'CC BY-SA 4.0')]),
+    ]),
+    el('section', { class: 'panel credit-block' }, [
+      el('h3', {}, 'FIFAランキング'),
+      el('p', {}, [text('FIFA発表の男子ランキングを、'), link(meta.sources.fifa.url, '英語版Wikipediaのデータモジュール'),
+        text('から転記し、日本語版Wikipediaの記事と照合しました。')]),
+      el('p', {}, [text(`${meta.sources.fifa.publisher} — `), link('https://creativecommons.org/licenses/by-sa/4.0/', meta.sources.fifa.license)]),
     ]),
     el('section', { class: 'panel credit-block' }, [
       rubyEl('h3', STRINGS.flags),

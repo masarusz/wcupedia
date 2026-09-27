@@ -1,5 +1,5 @@
-import { VERSION } from './version.js?v=1.0.1';
-import { isIsoDate } from './ages.js?v=1.0.1';
+import { VERSION } from './version.js?v=1.1.0';
+import { isIsoDate } from './ages.js?v=1.1.0';
 
 const cache = new Map();
 
@@ -30,6 +30,16 @@ const validators = {
       && typeof row.player === 'string' && typeof row.name === 'string' && typeof row.team === 'string' && Number.isInteger(row.value))
     && ['youngest', 'oldest'].every((key) => value.players[key].every((row) => Number.isInteger(row.year)
       && Number.isInteger(row.age) && Number.isInteger(row.ageDays))),
+  'fifa-ranking.json': (value) => validObject(value) && isIsoDate(value.releaseDate)
+    && isIsoDate(value.previousDate) && isIsoDate(value.nextUpdate)
+    && Array.isArray(value.rows) && value.rows.length === 211
+    && value.rows.every((row, index) => validObject(row) && row.rank === index + 1
+      && typeof row.points === 'number' && Number.isFinite(row.points)
+      && (index === 0 || row.points <= value.rows[index - 1].points)
+      && ['up', 'down', 'same'].includes(row.move)
+      && (row.move === 'same' || (Number.isInteger(row.moveBy) && row.moveBy > 0))
+      && ((typeof row.team === 'string' && row.team.length > 0)
+        || (typeof row.name === 'string' && row.name.length > 0 && typeof row.flag === 'string' && row.flag.length > 0))),
   'search.json': (value) => Array.isArray(value) && value.length > 0
     && value.every((item) => validObject(item) && ['team', 'player', 'tournament'].includes(item.type)
       && typeof item.id === 'string' && typeof item.label === 'string' && Array.isArray(item.keys)
@@ -88,6 +98,7 @@ export const loadMeta = () => load('data/meta.json', validators['meta.json']);
 export const loadTournament = (year) => load(`data/t/${year}.json`, validators.tournament);
 export const loadPlayers = () => load('data/players.json', validators['players.json']);
 export const loadRankings = () => load('data/rankings.json', validators['rankings.json']);
+export const loadFifaRanking = () => load('data/fifa-ranking.json', validators['fifa-ranking.json']);
 export const loadSearch = () => load('data/search.json', validators['search.json']);
 export const loadPhotos = () => load('data/photos.json', validators['photos.json']);
 export const loadBirthdays = () => load('data/birthdays.json', validators['birthdays.json']);
