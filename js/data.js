@@ -1,5 +1,5 @@
-import { VERSION } from './version.js?v=1.2.1';
-import { isIsoDate } from './ages.js?v=1.2.1';
+import { VERSION } from './version.js?v=1.3.0';
+import { isIsoDate } from './ages.js?v=1.3.0';
 
 const cache = new Map();
 
@@ -40,6 +40,14 @@ const validators = {
       && (row.move === 'same' || (Number.isInteger(row.moveBy) && row.moveBy > 0))
       && ((typeof row.team === 'string' && row.team.length > 0)
         || (typeof row.name === 'string' && row.name.length > 0 && typeof row.flag === 'string' && row.flag.length > 0))),
+  'japan-h2h.json': (value) => validObject(value) && isIsoDate(value.asOf)
+    && validObject(value.totals) && ['p', 'w', 'd', 'l'].every((key) => Number.isInteger(value.totals[key]) && value.totals[key] >= 0)
+    && typeof value.source === 'string' && typeof value.sourceLicence === 'string'
+    && validObject(value.rows) && Object.keys(value.rows).length === 111
+    && Object.values(value.rows).every((row) => validObject(row)
+      && ['p', 'w', 'd', 'l', 'gf', 'ga'].every((key) => Number.isInteger(row[key]) && row[key] >= 0)
+      && row.w + row.d + row.l === row.p && Number.isInteger(row.first) && Number.isInteger(row.last))
+    && Object.values(value.rows).reduce((sum, row) => sum + row.p, 0) === 793,
   'search.json': (value) => Array.isArray(value) && value.length > 0
     && value.every((item) => validObject(item) && ['team', 'player', 'tournament'].includes(item.type)
       && typeof item.id === 'string' && typeof item.label === 'string' && Array.isArray(item.keys)
@@ -99,6 +107,7 @@ export const loadTournament = (year) => load(`data/t/${year}.json`, validators.t
 export const loadPlayers = () => load('data/players.json', validators['players.json']);
 export const loadRankings = () => load('data/rankings.json', validators['rankings.json']);
 export const loadFifaRanking = () => load('data/fifa-ranking.json', validators['fifa-ranking.json']);
+export const loadJapanH2h = () => load('data/japan-h2h.json', validators['japan-h2h.json']);
 export const loadSearch = () => load('data/search.json', validators['search.json']);
 export const loadPhotos = () => load('data/photos.json', validators['photos.json']);
 export const loadBirthdays = () => load('data/birthdays.json', validators['birthdays.json']);
