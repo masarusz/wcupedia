@@ -19,6 +19,8 @@
   --teal: #0b5e5c;
   --teal-bg: #d3f0ef;
   --advance: #dceddf;
+  --movement-up: #17653a;
+  --movement-down: #a32929;
   --danger: #8a2929;
   --shadow: 0 2px 8px rgb(23 37 30 / 12%);
   --page-padding-inline: 24px;
@@ -48,6 +50,8 @@
     --teal: #8fe9e4;
     --teal-bg: #103a39;
     --advance: #1d422b;
+    --movement-up: #7ddd9b;
+    --movement-down: #ff9c9c;
     --danger: #ffaaaa;
     --shadow: 0 2px 10px rgb(0 0 0 / 35%);
   }
@@ -979,7 +983,9 @@ h3 { font-size: 21px; }
 .ranking-japan-record { color: var(--muted); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; }
 .ranking-value { min-height: 44px; display: flex; align-items: center; text-align: right; }
 .ranking-fifa-values { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
-.ranking-movement { min-width: 2.5em; font-weight: 800; text-align: right; }
+.ranking-movement { min-width: 2.5em; color: var(--muted); font-weight: 800; text-align: right; }
+.ranking-movement-up { color: var(--movement-up); }
+.ranking-movement-down { color: var(--movement-down); }
 .ranking-japan { background: var(--advance); border-color: var(--primary); }
 
 .search-box {

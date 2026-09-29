@@ -1,14 +1,14 @@
-import { buildBracket } from './bracket.js?v=1.2.0';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=1.2.0';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=1.2.0';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=1.2.0';
-import { search as runSearch } from './search.js?v=1.2.0';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=1.2.0';
-import { VERSION } from './version.js?v=1.2.0';
-import { rubyPlain } from './ruby.js?v=1.2.0';
-import { rubyReading } from './ruby.js?v=1.2.0';
-import { fold } from './fold.js?v=1.2.0';
-import { ageInYears } from './ages.js?v=1.2.0';
+import { buildBracket } from './bracket.js?v=1.2.1';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=1.2.1';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=1.2.1';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=1.2.1';
+import { search as runSearch } from './search.js?v=1.2.1';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=1.2.1';
+import { VERSION } from './version.js?v=1.2.1';
+import { rubyPlain } from './ruby.js?v=1.2.1';
+import { rubyReading } from './ruby.js?v=1.2.1';
+import { fold } from './fold.js?v=1.2.1';
+import { ageInYears } from './ages.js?v=1.2.1';
 
 function flagIcon(code) {
   return el('img', {
@@ -844,6 +844,15 @@ function japanWorldCupRecord(opponent) {
   return `日本 ${parts.join('')}`;
 }
 
+function fifaMovement(row) {
+  const isUp = row.move === 'up';
+  const isDown = row.move === 'down';
+  return el('span', {
+    class: `ranking-movement${isUp ? ' ranking-movement-up' : isDown ? ' ranking-movement-down' : ''}`,
+    'aria-label': isUp ? `${row.moveBy}つ上がった` : isDown ? `${row.moveBy}つ下がった` : '変わらず',
+  }, isUp ? `+${row.moveBy}` : isDown ? `−${row.moveBy}` : '—');
+}
+
 export function rankingsView(rankings, teams, kind = 'c', metric = 'titles', fifaRanking = null) {
   const metrics = kind === 'c' ? COUNTRY_METRICS : PLAYER_METRICS;
   const isFifa = kind === 'c' && metric === 'fifa';
@@ -887,7 +896,7 @@ export function rankingsView(rankings, teams, kind = 'c', metric = 'titles', fif
         : el('a', { class: 'ranking-name person', href: `#/p/${row.player}` }, playerLabel(row, row.team)),
       isFifa ? el('span', { class: 'ranking-fifa-values' }, [
         el('strong', { class: 'ranking-value' }, `${row.points.toFixed(2)}ポイント`),
-        el('span', { class: 'ranking-movement' }, row.move === 'up' ? `▲${row.moveBy}` : row.move === 'down' ? `▼${row.moveBy}` : '—'),
+        fifaMovement(row),
       ])
         : ['tournamentGoals', 'youngest', 'oldest'].includes(metric) ? el('a', { class: 'ranking-value', href: `#/t/${row.year}` }, rankingValue(kind, metric, row))
         : el('strong', { class: 'ranking-value' }, rankingValue(kind, metric, row)),
@@ -901,7 +910,7 @@ export function creditsView(meta) {
     rubyEl('h1', STRINGS.credits),
     rubyEl('h2', STRINGS.dataSources),
     el('section', { class: 'panel credit-block' }, [
-      el('h3', {}, 'Fjelstul World Cup Database v1.2.0'),
+      el('h3', {}, 'Fjelstul World Cup Database v1.2.' + '0'),
       el('p', {}, meta.sources.fjelstul.attribution),
       el('p', {}, [link(meta.sources.fjelstul.url, 'github.com/jfjelstul/worldcup'), text(' — '), link('https://creativecommons.org/licenses/by-sa/4.0/', 'CC BY-SA 4.0')]),
       rubyEl('p', STRINGS.modified),
