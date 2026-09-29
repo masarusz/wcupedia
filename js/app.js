@@ -1,10 +1,10 @@
-import { loadBirthdays, loadFifaRanking, loadMatches, loadMeta, loadPhotos, loadPlayers, loadRankings, loadRecords, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=1.1.0';
-import { el, replace, rubyEl, rubyNodes } from './dom.js?v=1.1.0';
-import { prepareIndex } from './search.js?v=1.1.0';
-import { STRINGS } from './strings.js?v=1.1.0';
-import { countriesView, countryView, creditsView, errorView, homeView, japanView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, recordsView, searchView, tournamentView } from './views.js?v=1.1.0';
-import { VERSION } from './version.js?v=1.1.0';
-import { backDecision } from './navigation.js?v=1.1.0';
+import { loadBirthdays, loadFifaRanking, loadMatches, loadMeta, loadPhotos, loadPlayers, loadRankings, loadRecords, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=1.2.0';
+import { el, replace, rubyEl, rubyNodes } from './dom.js?v=1.2.0';
+import { prepareIndex } from './search.js?v=1.2.0';
+import { STRINGS } from './strings.js?v=1.2.0';
+import { countriesView, countryView, creditsView, errorView, homeView, japanView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, recordsView, searchView, tournamentView } from './views.js?v=1.2.0';
+import { VERSION } from './version.js?v=1.2.0';
+import { backDecision } from './navigation.js?v=1.2.0';
 
 const root = document.querySelector('#app');
 

@@ -975,6 +975,8 @@ h3 { font-size: 21px; }
 .rank-2 .ranking-rank { color: var(--silver); }
 .rank-3 .ranking-rank { color: var(--bronze); }
 .ranking-name { min-height: 44px; min-width: 0; display: flex; align-items: center; font-weight: 700; }
+.ranking-fifa-team { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+.ranking-japan-record { color: var(--muted); font-size: 14px; font-weight: 700; line-height: 1.4; white-space: nowrap; }
 .ranking-value { min-height: 44px; display: flex; align-items: center; text-align: right; }
 .ranking-fifa-values { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 .ranking-movement { min-width: 2.5em; font-weight: 800; text-align: right; }
