@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { rubyPlain } from '../public/js/ruby.js?v=1.2.0';
-import { stageLabel } from '../public/js/strings.js?v=1.2.0';
+import { rubyPlain } from '../public/js/ruby.js?v=1.2.1';
+import { stageLabel } from '../public/js/strings.js?v=1.2.1';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -173,7 +173,7 @@ export function register(test, equal, deepEqual) {
       equal(marks[0].tagName, 'IMG', 'brand-mark is an img element');
       equal(brand.childNodes[0], marks[0], 'brand-mark is the first child of .brand');
       equal(marks[0].getAttribute('alt'), '', 'brand-mark has empty alt text');
-      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=1.2.0', 'brand-mark versioned resource');
+      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=1.2.1', 'brand-mark versioned resource');
       equal(marks[0].getAttribute('width'), '34', 'brand-mark width');
       equal(marks[0].getAttribute('height'), '34', 'brand-mark height');
       requested.length = 0;
@@ -277,7 +277,7 @@ export function register(test, equal, deepEqual) {
       createTextNode: (value) => new FakeText(value),
     };
     try {
-      const { homeView } = await import('../public/js/views.js?v=1.2.0');
+      const { homeView } = await import('../public/js/views.js?v=1.2.1');
       const matches = load('matches.json');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
@@ -323,7 +323,7 @@ export function register(test, equal, deepEqual) {
       createTextNode: (value) => new FakeText(value),
     };
     try {
-      const { japanView, recordsView, todayMatchesView } = await import('../public/js/views.js?v=1.2.0');
+      const { japanView, recordsView, todayMatchesView } = await import('../public/js/views.js?v=1.2.1');
       const matches = load('matches.json');
       const records = load('records.json');
       const tournaments = load('tournaments.json');
@@ -385,7 +385,7 @@ export function register(test, equal, deepEqual) {
       createTextNode: (value) => new FakeText(value),
     };
     try {
-      const { homeView, japanView, recordsView } = await import('../public/js/views.js?v=1.2.0');
+      const { homeView, japanView, recordsView } = await import('../public/js/views.js?v=1.2.1');
       const matches = load('matches.json');
       const records = load('records.json');
       const tournaments = load('tournaments.json');
@@ -410,6 +410,59 @@ export function register(test, equal, deepEqual) {
     }
   });
 
+  test('FIFA ranking movements use signed accessible labels', async () => {
+    const previousDocument = globalThis.document;
+    const previousNode = globalThis.Node;
+    globalThis.Node = FakeNode;
+    globalThis.document = {
+      createElement: (tagName) => new FakeElement(tagName),
+      createTextNode: (value) => new FakeText(value),
+    };
+
+    try {
+      const { rankingsView } = await import('../public/js/views.js?v=1.2.1');
+      const teams = load('teams.json');
+      const fifaRanking = load('fifa-ranking.json');
+      const tree = rankingsView(null, teams, 'c', 'fifa', fifaRanking);
+      const movements = descendants(tree).filter((node) => hasClass(node, 'ranking-movement'));
+      const expectedCounts = { up: 0, down: 0, same: 0 };
+
+      equal(movements.length, fifaRanking.rows.length, 'one movement per FIFA row');
+      fifaRanking.rows.forEach((row, index) => {
+        const movement = movements[index];
+        expectedCounts[row.move] += 1;
+        if (row.move === 'up') {
+          equal(movement.textContent, `+${row.moveBy}`, `up row ${row.rank} text`);
+          equal(hasClass(movement, 'ranking-movement-up'), true, `up row ${row.rank} colour class`);
+          equal(movement.getAttribute('aria-label'), `${row.moveBy}つ上がった`, `up row ${row.rank} label`);
+        } else if (row.move === 'down') {
+          equal(movement.textContent, `−${row.moveBy}`, `down row ${row.rank} text`);
+          equal(movement.textContent.codePointAt(0), 0x2212, `down row ${row.rank} uses U+2212`);
+          equal(movement.textContent.includes('-'), false, `down row ${row.rank} has no U+002D`);
+          equal(hasClass(movement, 'ranking-movement-down'), true, `down row ${row.rank} colour class`);
+          equal(movement.getAttribute('aria-label'), `${row.moveBy}つ下がった`, `down row ${row.rank} label`);
+        } else {
+          equal(movement.textContent, '—', `unchanged row ${row.rank} text`);
+          equal(hasClass(movement, 'ranking-movement-up') || hasClass(movement, 'ranking-movement-down'), false,
+            `unchanged row ${row.rank} has no movement colour class`);
+          equal(movement.getAttribute('aria-label'), '変わらず', `unchanged row ${row.rank} label`);
+        }
+      });
+
+      equal(movements.filter((node) => hasClass(node, 'ranking-movement-up')).length, expectedCounts.up, 'up movement count');
+      equal(movements.filter((node) => hasClass(node, 'ranking-movement-down')).length, expectedCounts.down, 'down movement count');
+      equal(movements.filter((node) => !hasClass(node, 'ranking-movement-up')
+        && !hasClass(node, 'ranking-movement-down')).length, expectedCounts.same, 'unchanged movement count');
+      deepEqual(renderedTextNodes(tree).map((node) => node.textContent).filter((value) => /[{|]/.test(value)), [],
+        'FIFA movement rendering has no literal ruby delimiters');
+    } finally {
+      if (previousDocument === undefined) delete globalThis.document;
+      else globalThis.document = previousDocument;
+      if (previousNode === undefined) delete globalThis.Node;
+      else globalThis.Node = previousNode;
+    }
+  });
+
   test('real views render every tournament and match', async () => {
     const previousDocument = globalThis.document;
     const previousNode = globalThis.Node;
@@ -422,7 +475,7 @@ export function register(test, equal, deepEqual) {
     try {
       const { countriesView, countryView, creditsView, errorView, homeView, matchView, meikanTeamKeys, meikanView, notFoundView,
         photoCreditsView, playerView, rankingsView, teamName, tournamentView } =
-        await import('../public/js/views.js?v=1.2.0');
+        await import('../public/js/views.js?v=1.2.1');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const players = load('players.json');
@@ -711,8 +764,8 @@ export function register(test, equal, deepEqual) {
         descendants(link).some((node) => hasClass(node, 'ranking-japan-record'))), false, 'Japan records are not links');
       equal(descendants(fifaTree).filter((node) => hasClass(node, 'ranking-movement')).length, 211, 'FIFA movement labels');
       const fifaMovements = descendants(fifaTree).filter((node) => hasClass(node, 'ranking-movement')).map((node) => node.textContent);
-      equal(fifaMovements.some((value) => /^▲\d+$/.test(value)), true, 'FIFA upward movement');
-      equal(fifaMovements.some((value) => /^▼\d+$/.test(value)), true, 'FIFA downward movement');
+      equal(fifaMovements.some((value) => /^\+\d+$/.test(value)), true, 'FIFA upward movement');
+      equal(fifaMovements.some((value) => /^−\d+$/.test(value)), true, 'FIFA downward movement');
       equal(fifaMovements.includes('—'), true, 'FIFA unchanged movement');
       equal(fifaTree.textContent.includes('2026年7月20日発表'), true, 'FIFA release date');
       equal(fifaTree.textContent.includes('次回は2026年10月7日'), true, 'FIFA next update');
