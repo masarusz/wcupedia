@@ -11,6 +11,7 @@ import { applySquadChanges, playerTieOrder, rankRows, resolveLineups2026 } from 
 import { addTournamentHostKeys, mergeSearchAliases } from './lib/search-data.mjs';
 import { validatePhotoManifest, validatePhotoOriginals } from './lib/photos.mjs';
 import { buildFifaRanking } from './lib/fifa-ranking.mjs';
+import { buildJapanH2h } from './lib/japan-h2h.mjs';
 import { fold, foldCompact } from '../public/js/fold.js';
 import { playerLabel } from '../public/js/format.js';
 import { rubyPlain, rubyReading, parseRuby } from '../public/js/ruby.js';
@@ -24,6 +25,7 @@ let searchAliasesPath = join(ROOT, 'curated/search-aliases.json');
 let birthDateCorrectionsPath = join(ROOT, 'curated/birth-date-corrections.json');
 let photosPath = join(ROOT, 'curated/photos.json');
 let fifaRankingPath = join(ROOT, 'curated/fifa-ranking.json');
+let japanH2hPath = join(ROOT, 'curated/japan-h2h.json');
 for (let index = 0; index < args.length; index += 1) {
   if (args[index] === '--src' && args[index + 1]) sourceRoot = args[++index];
   else if (args[index] === '--out' && args[index + 1]) outputRoot = args[++index];
@@ -31,7 +33,8 @@ for (let index = 0; index < args.length; index += 1) {
   else if (args[index] === '--birth-date-corrections' && args[index + 1]) birthDateCorrectionsPath = resolve(args[++index]);
   else if (args[index] === '--photos' && args[index + 1]) photosPath = resolve(args[++index]);
   else if (args[index] === '--fifa-ranking' && args[index + 1]) fifaRankingPath = resolve(args[++index]);
-  else throw new Error('usage: node tools/build-data.mjs [--src DIR] [--out DIR] [--search-aliases FILE] [--birth-date-corrections FILE] [--photos FILE] [--fifa-ranking FILE]');
+  else if (args[index] === '--japan-h2h' && args[index + 1]) japanH2hPath = resolve(args[++index]);
+  else throw new Error('usage: node tools/build-data.mjs [--src DIR] [--out DIR] [--search-aliases FILE] [--birth-date-corrections FILE] [--photos FILE] [--fifa-ranking FILE] [--japan-h2h FILE]');
 }
 sourceRoot = resolve(sourceRoot);
 outputRoot = resolve(outputRoot);
@@ -58,6 +61,7 @@ const searchAliases = await json(searchAliasesPath);
 const birthDateCorrections = await json(birthDateCorrectionsPath);
 const photoManifest = await json(photosPath);
 const fifaRankingSource = await json(fifaRankingPath);
+const japanH2hSource = await json(japanH2hPath);
 const photoEntries = validatePhotoManifest(photoManifest);
 await validatePhotoOriginals(photoEntries, join(sourceRoot, 'photos/orig'));
 const photoIds = new Set(photoEntries.map(([id]) => id));
@@ -924,6 +928,7 @@ appearanceTotalsByYear[2026] = full2026.matches.reduce((total, match) => total +
   sideTotal + new Set([...(lineup.starter || []).map((item) => item.name), ...(lineup.subs || []).map((item) => item.on)]).size, 0), 0);
 const rankings = { countries: countryRankings, players: playerRankings, appearanceTotalsByYear };
 const fifaRanking = buildFifaRanking(fifaRankingSource, outputTeams);
+const japanH2h = buildJapanH2h(japanH2hSource, fifaRanking);
 
 const compactMatches = allMatches.map((match) => [
   match.id, match.year, match.date, match.stage, match.home, match.away,
@@ -1015,7 +1020,7 @@ const writeJson = (name, value) => writeFile(join(outputRoot, name), `${JSON.str
 await Promise.all([
   writeJson('meta.json', meta), writeJson('tournaments.json', tournamentSummaries),
   writeJson('teams.json', outputTeams), writeJson('players.json', outputPlayers),
-  writeJson('matches.json', compactMatches), writeJson('records.json', records), writeJson('rankings.json', rankings), writeJson('fifa-ranking.json', fifaRanking), writeJson('search.json', search),
+  writeJson('matches.json', compactMatches), writeJson('records.json', records), writeJson('rankings.json', rankings), writeJson('fifa-ranking.json', fifaRanking), writeJson('japan-h2h.json', japanH2h), writeJson('search.json', search),
   writeJson('photos.json', photoCredits), writeJson('birthdays.json', birthdays),
   ...tournamentDetails.map((tournament) => writeJson(`t/${tournament.year}.json`, tournament)),
 ]);

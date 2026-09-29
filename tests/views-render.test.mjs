@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { rubyPlain } from '../public/js/ruby.js?v=1.2.1';
-import { stageLabel } from '../public/js/strings.js?v=1.2.1';
+import { rubyPlain } from '../public/js/ruby.js?v=1.3.0';
+import { stageLabel } from '../public/js/strings.js?v=1.3.0';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
@@ -159,6 +159,7 @@ export function register(test, equal, deepEqual) {
       equal(requested.includes('data/players.json'), false, 'home does not load players.json');
       equal(requested.includes('data/photos.json'), false, 'home does not load photos.json');
       equal(requested.includes('data/fifa-ranking.json'), false, 'home does not load fifa-ranking.json');
+      equal(requested.includes('data/japan-h2h.json'), false, 'home does not load japan-h2h.json');
       deepEqual(descendants(appRoot).filter((node) => node.tagName === 'NAV' && node.getAttribute('aria-label') === 'main')[0]
         .childNodes.map((node) => node.textContent), ['大会', '国', '選手名鑑', 'ランキング', '記録', '日本代表特集', '検索', 'クレジット'], 'menu order');
       equal(descendants(appRoot).some((node) => node.tagName === 'BUTTON'), false, 'shell buttons');
@@ -173,7 +174,7 @@ export function register(test, equal, deepEqual) {
       equal(marks[0].tagName, 'IMG', 'brand-mark is an img element');
       equal(brand.childNodes[0], marks[0], 'brand-mark is the first child of .brand');
       equal(marks[0].getAttribute('alt'), '', 'brand-mark has empty alt text');
-      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=1.2.1', 'brand-mark versioned resource');
+      equal(marks[0].getAttribute('src'), 'assets/ball-mark.png?v=1.3.0', 'brand-mark versioned resource');
       equal(marks[0].getAttribute('width'), '34', 'brand-mark width');
       equal(marks[0].getAttribute('height'), '34', 'brand-mark height');
       requested.length = 0;
@@ -191,11 +192,13 @@ export function register(test, equal, deepEqual) {
       equal(requested.some((path) => path.endsWith('players.json') || path.endsWith('search.json')), false,
         `country/ranking loader requests: ${requested.join(', ')}`);
       equal(requested.includes('data/fifa-ranking.json'), false, 'non-FIFA routes do not load fifa-ranking.json');
+      equal(requested.includes('data/japan-h2h.json'), false, 'non-FIFA routes do not load japan-h2h.json');
       requested.length = 0;
       globalThis.location.hash = '#/r/c/fifa';
       globalThis.history.state = null;
       await listeners.get('hashchange')();
       equal(requested.includes('data/fifa-ranking.json'), true, 'FIFA ranking route loads fifa-ranking.json');
+      equal(requested.includes('data/japan-h2h.json'), true, 'FIFA ranking route loads japan-h2h.json');
       equal(requested.includes('data/rankings.json'), false, 'FIFA ranking route does not load rankings.json');
       equal(descendants(appRoot).filter((node) => hasClass(node, 'fifa-ranking-row')).length, 211, 'FIFA route rows');
       requested.length = 0;
@@ -277,7 +280,7 @@ export function register(test, equal, deepEqual) {
       createTextNode: (value) => new FakeText(value),
     };
     try {
-      const { homeView } = await import('../public/js/views.js?v=1.2.1');
+      const { homeView } = await import('../public/js/views.js?v=1.3.0');
       const matches = load('matches.json');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
@@ -323,7 +326,7 @@ export function register(test, equal, deepEqual) {
       createTextNode: (value) => new FakeText(value),
     };
     try {
-      const { japanView, recordsView, todayMatchesView } = await import('../public/js/views.js?v=1.2.1');
+      const { japanView, recordsView, todayMatchesView } = await import('../public/js/views.js?v=1.3.0');
       const matches = load('matches.json');
       const records = load('records.json');
       const tournaments = load('tournaments.json');
@@ -385,7 +388,7 @@ export function register(test, equal, deepEqual) {
       createTextNode: (value) => new FakeText(value),
     };
     try {
-      const { homeView, japanView, recordsView } = await import('../public/js/views.js?v=1.2.1');
+      const { homeView, japanView, recordsView } = await import('../public/js/views.js?v=1.3.0');
       const matches = load('matches.json');
       const records = load('records.json');
       const tournaments = load('tournaments.json');
@@ -420,10 +423,11 @@ export function register(test, equal, deepEqual) {
     };
 
     try {
-      const { rankingsView } = await import('../public/js/views.js?v=1.2.1');
+      const { rankingsView } = await import('../public/js/views.js?v=1.3.0');
       const teams = load('teams.json');
       const fifaRanking = load('fifa-ranking.json');
-      const tree = rankingsView(null, teams, 'c', 'fifa', fifaRanking);
+      const japanH2h = load('japan-h2h.json');
+      const tree = rankingsView(null, teams, 'c', 'fifa', fifaRanking, japanH2h);
       const movements = descendants(tree).filter((node) => hasClass(node, 'ranking-movement'));
       const expectedCounts = { up: 0, down: 0, same: 0 };
 
@@ -475,12 +479,13 @@ export function register(test, equal, deepEqual) {
     try {
       const { countriesView, countryView, creditsView, errorView, homeView, matchView, meikanTeamKeys, meikanView, notFoundView,
         photoCreditsView, playerView, rankingsView, teamName, tournamentView } =
-        await import('../public/js/views.js?v=1.2.1');
+        await import('../public/js/views.js?v=1.3.0');
       const tournaments = load('tournaments.json');
       const teams = load('teams.json');
       const players = load('players.json');
       const rankings = load('rankings.json');
       const fifaRanking = load('fifa-ranking.json');
+      const japanH2h = load('japan-h2h.json');
       const meta = load('meta.json');
       const photos = load('photos.json');
       const details = tournaments.map(({ year }) => load(`t/${year}.json`));
@@ -734,7 +739,7 @@ export function register(test, equal, deepEqual) {
           }
         }
       }
-      const fifaTree = render('ranking c/fifa', () => rankingsView(null, teams, 'c', 'fifa', fifaRanking));
+      const fifaTree = render('ranking c/fifa', () => rankingsView(null, teams, 'c', 'fifa', fifaRanking, japanH2h));
       rankingRenders += Boolean(fifaTree);
       const fifaRows = descendants(fifaTree).filter((node) => hasClass(node, 'fifa-ranking-row'));
       equal(fifaRows.length, 211, 'FIFA ranking rows');
@@ -742,24 +747,31 @@ export function register(test, equal, deepEqual) {
         81, 'FIFA country-page links');
       const fifaRowFor = (team) => fifaRows.find((row) => descendants(row).some((node) =>
         node.tagName === 'A' && node.getAttribute('href') === `#/c/${team}`));
+      const fifaRowForName = (name) => fifaRows.find((row) => descendants(row).some((node) =>
+        hasClass(node, 'ranking-name') && node.textContent === name));
       const japanRecordNodes = descendants(fifaTree).filter((node) => hasClass(node, 'ranking-japan-record'));
-      equal(japanRecordNodes.length, 22, 'FIFA Japan World Cup record rows');
+      equal(japanRecordNodes.length, 111, 'FIFA Japan all-time record rows');
       equal(fifaRows.filter((row) => !descendants(row).some((node) => hasClass(node, 'ranking-japan-record'))).length,
-        189, 'FIFA rows without Japan records');
-      for (const opponent of teams.JPN.opponents) {
-        const expected = `日本 ${opponent.w ? `${opponent.w}勝` : ''}${opponent.d ? `${opponent.d}分` : ''}${opponent.l ? `${opponent.l}敗` : ''}`;
-        const records = descendants(fifaRowFor(opponent.team)).filter((node) => hasClass(node, 'ranking-japan-record'));
-        equal(records.length, 1, `${opponent.team} Japan record count`);
-        equal(records[0].textContent, expected, `${opponent.team} Japan record`);
-      }
-      for (const [team, expected] of [['ESP', '日本 1勝'], ['BRA', '日本 2敗'], ['HRV', '日本 2分1敗'], ['TUN', '日本 2勝']]) {
+        100, 'FIFA rows without Japan records');
+      for (const [team, expected] of [['BRA', '日本 1勝2分12敗'], ['KOR', '日本 16勝23分40敗'], ['ESP', '日本 1勝1敗']]) {
         equal(descendants(fifaRowFor(team)).find((node) => hasClass(node, 'ranking-japan-record')).textContent,
           expected, `${team} sample Japan record`);
       }
+      equal(descendants(fifaRowForName('ベネズエラ')).find((node) => hasClass(node, 'ranking-japan-record')).textContent,
+        '日本 1勝3分1敗', 'standalone-name sample Japan record');
+      equal(descendants(fifaRowFor('KOR')).find((node) => hasClass(node, 'ranking-name')).textContent,
+        '韓国', 'team-key name is parsed from ruby markup');
+      equal(descendants(fifaRowForName('ベネズエラ')).find((node) => hasClass(node, 'ranking-name')).tagName,
+        'SPAN', 'standalone ranking name stays plain text');
       const japanFifaRow = fifaRowFor('JPN');
       equal(descendants(japanFifaRow).some((node) => hasClass(node, 'ranking-japan-record')), false, 'Japan has no self record');
       equal(hasClass(japanFifaRow, 'ranking-japan'), true, 'Japan FIFA row is highlighted');
-      equal(japanRecordNodes.some((node) => /0[勝分敗]/.test(node.textContent)), false, 'Japan records omit zero parts');
+      equal(japanRecordNodes.some((node) => /(?:日本 |[勝分敗])0[勝分敗]/.test(node.textContent)), false,
+        'Japan records omit zero parts');
+      equal(descendants(fifaTree).filter((node) => hasClass(node, 'ranking-fifa-team')
+        && node.childNodes.some((child) => child instanceof FakeElement && hasClass(child, 'ranking-japan-record')))
+        .every((node) => node.childNodes.length === 2 && hasClass(node.childNodes[1], 'ranking-japan-record')), true,
+      'Japan records are direct siblings after country names');
       equal(descendants(fifaTree).filter((node) => node.tagName === 'A').some((link) =>
         descendants(link).some((node) => hasClass(node, 'ranking-japan-record'))), false, 'Japan records are not links');
       equal(descendants(fifaTree).filter((node) => hasClass(node, 'ranking-movement')).length, 211, 'FIFA movement labels');
@@ -769,7 +781,7 @@ export function register(test, equal, deepEqual) {
       equal(fifaMovements.includes('—'), true, 'FIFA unchanged movement');
       equal(fifaTree.textContent.includes('2026年7月20日発表'), true, 'FIFA release date');
       equal(fifaTree.textContent.includes('次回は2026年10月7日'), true, 'FIFA next update');
-      equal(fifaTree.textContent.includes('ワールドカップで日本が対戦した国には、日本の成績をのせています'), true,
+      equal(fifaTree.textContent.includes('日本が対戦したことのある国には、日本代表の通算成績をのせています（2026年9月24日現在）'), true,
         'FIFA Japan record explanation');
       deepEqual(renderedTextNodes(fifaTree).map((node) => node.textContent).filter((value) => /[{|]/.test(value)), [],
         'FIFA ranking has no literal ruby delimiters');

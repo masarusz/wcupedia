@@ -1,10 +1,10 @@
-import { loadBirthdays, loadFifaRanking, loadMatches, loadMeta, loadPhotos, loadPlayers, loadRankings, loadRecords, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=1.2.1';
-import { el, replace, rubyEl, rubyNodes } from './dom.js?v=1.2.1';
-import { prepareIndex } from './search.js?v=1.2.1';
-import { STRINGS } from './strings.js?v=1.2.1';
-import { countriesView, countryView, creditsView, errorView, homeView, japanView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, recordsView, searchView, tournamentView } from './views.js?v=1.2.1';
-import { VERSION } from './version.js?v=1.2.1';
-import { backDecision } from './navigation.js?v=1.2.1';
+import { loadBirthdays, loadFifaRanking, loadJapanH2h, loadMatches, loadMeta, loadPhotos, loadPlayers, loadRankings, loadRecords, loadSearch, loadTeams, loadTournament, loadTournaments } from './data.js?v=1.3.0';
+import { el, replace, rubyEl, rubyNodes } from './dom.js?v=1.3.0';
+import { prepareIndex } from './search.js?v=1.3.0';
+import { STRINGS } from './strings.js?v=1.3.0';
+import { countriesView, countryView, creditsView, errorView, homeView, japanView, matchView, meikanView, notFoundView, photoCreditsView, playerView, rankingsView, recordsView, searchView, tournamentView } from './views.js?v=1.3.0';
+import { VERSION } from './version.js?v=1.3.0';
+import { backDecision } from './navigation.js?v=1.3.0';
 
 const root = document.querySelector('#app');
 
@@ -161,8 +161,8 @@ async function renderRoute() {
         const allowed = kind === 'c' ? ['titles', 'appearances', 'wins', 'goals', 'fifa'] : ['goals', 'tournamentGoals', 'awards', 'squads', 'apps', 'youngest', 'oldest'];
         if (!allowed.includes(metric)) view = notFoundView();
         else if (kind === 'c' && metric === 'fifa') {
-          const [fifaRanking, teams] = await Promise.all([loadFifaRanking(), loadTeams()]);
-          view = rankingsView(null, teams, kind, metric, fifaRanking);
+          const [fifaRanking, japanH2h, teams] = await Promise.all([loadFifaRanking(), loadJapanH2h(), loadTeams()]);
+          view = rankingsView(null, teams, kind, metric, fifaRanking, japanH2h);
         } else {
           const [rankings, teams] = await Promise.all([loadRankings(), loadTeams()]);
           view = rankingsView(rankings, teams, kind, metric);

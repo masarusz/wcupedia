@@ -8,7 +8,7 @@ Built for two children (aged 8 and 10) to browse on an iPad.
 
 A static site: no accounts, no tracking, no server.
 
-> Status: v1.2.1 complete. The site covers every tournament and match, countries,
+> Status: v1.3.0 complete. The site covers every tournament and match, countries,
 > players and squads, search and rankings, records, and a dedicated Japan feature.
 
 ## Features
@@ -38,6 +38,7 @@ The files in `public/data/` are generated from:
 | [openfootball/worldcup.json](https://github.com/openfootball/worldcup.json) | 2026 | CC0 1.0 |
 | Japanese Wikipedia squad pages and article titles (player names in Japanese) | 1950, 1990–2026, plus article titles | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) |
 | FIFA men's ranking, transcribed from [English Wikipedia's data module](https://en.wikipedia.org/wiki/Module:SportsRankings/data/FIFA_World_Rankings) and cross-checked against the Japanese article | 20 July 2026 release | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) |
+| [Japanese Wikipedia「サッカー日本代表のチーム別対戦成績」](https://ja.wikipedia.org/wiki/サッカー日本代表のチーム別対戦成績) | Through 24 September 2026 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) |
 
 Modifications: the sources are filtered to men's tournaments, combined by year,
 re-keyed, given Japanese names, and restructured into per-tournament JSON. The
@@ -71,6 +72,12 @@ exactly the allowlist, verifies every file on the live site by checksum, and
 confirms that unpublished paths return 404.
 
 ## Changelog
+
+### v1.3.0 — 2026-09-29
+
+- FIFAランキング now shows Japan's all-time record against each country —
+  every international A-match, not only World Cup matches — for the 111
+  countries Japan has played, as of 24 September 2026.
 
 ### v1.2.1 — 2026-09-29
 
