@@ -1,5 +1,5 @@
 {
- "_about": "Latest FIFA/Coca-Cola Men's World Ranking, transcribed from the English Wikipedia data module Module:SportsRankings/data/FIFA World Rankings (CC BY-SA 4.0), which cites FIFA as the publisher. Cross-checked row by row against the top-55 table in the Japanese Wikipedia article FIFAランキング; the two disagree on two point values (see _discrepancies) and agree on every rank. Rows carrying \"team\" refer to a Wcupedia country page; rows carrying \"name\"/\"flag\" are FIFA members that have never played a World Cup and so have no page. Refresh after each FIFA release.",
+ "_about": "Latest FIFA/Coca-Cola Men's World Ranking, transcribed from the English Wikipedia data module Module:SportsRankings/data/FIFA World Rankings (CC BY-SA 4.0), which cites FIFA as the publisher. Cross-checked row by row against the top-55 table in the Japanese Wikipedia article FIFAランキング; the two disagree on two point values (see _discrepancies) and agree on every rank. Country names come from the FIFA source and can differ from this site's English names (FIFA says Côte d'Ivoire, teams.json says Ivory Coast), so map on the team key, not the name. Rows carrying \"team\" refer to a Wcupedia country page; rows carrying \"name\"/\"flag\" are FIFA members that have never played a World Cup and so have no page. Refresh after each FIFA release.",
  "releaseDate": "2026-07-20",
  "previousDate": "2026-06-11",
  "nextUpdate": "2026-10-07",
@@ -220,8 +220,7 @@
    "points": 1565.47,
    "move": "up",
    "moveBy": 2,
-   "name": "コートジボワール",
-   "flag": "ci"
+   "team": "CIV"
   },
   {
    "rank": 32,

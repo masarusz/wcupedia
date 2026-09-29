@@ -8,7 +8,7 @@ Built for two children (aged 8 and 10) to browse on an iPad.
 
 A static site: no accounts, no tracking, no server.
 
-> Status: v1.1.0 complete. The site covers every tournament and match, countries,
+> Status: v1.2.0 complete. The site covers every tournament and match, countries,
 > players and squads, search and rankings, records, and a dedicated Japan feature.
 
 ## Features
@@ -71,6 +71,11 @@ exactly the allowlist, verifies every file on the live site by checksum, and
 confirms that unpublished paths return 404.
 
 ## Changelog
+
+### v1.2.0 — 2026-09-28
+
+- FIFAランキング now shows Japan's World Cup record against each country it
+  has played there, and Côte d'Ivoire links to its country page.
 
 ### v1.1.0 — 2026-09-27
 

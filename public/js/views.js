@@ -1,14 +1,14 @@
-import { buildBracket } from './bracket.js?v=1.1.0';
-import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=1.1.0';
-import { el, rubyEl, rubyNodes, text } from './dom.js?v=1.1.0';
-import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=1.1.0';
-import { search as runSearch } from './search.js?v=1.1.0';
-import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=1.1.0';
-import { VERSION } from './version.js?v=1.1.0';
-import { rubyPlain } from './ruby.js?v=1.1.0';
-import { rubyReading } from './ruby.js?v=1.1.0';
-import { fold } from './fold.js?v=1.1.0';
-import { ageInYears } from './ages.js?v=1.1.0';
+import { buildBracket } from './bracket.js?v=1.2.0';
+import { bracketState, stackedBracketLayout } from './bracket-layout.js?v=1.2.0';
+import { el, rubyEl, rubyNodes, text } from './dom.js?v=1.2.0';
+import { formatDate, formatMinute, groupLabel, playerLabel, signed, tournamentTitle } from './format.js?v=1.2.0';
+import { search as runSearch } from './search.js?v=1.2.0';
+import { AWARD_LABELS, AWARD_ORDER, stageLabel, STRINGS } from './strings.js?v=1.2.0';
+import { VERSION } from './version.js?v=1.2.0';
+import { rubyPlain } from './ruby.js?v=1.2.0';
+import { rubyReading } from './ruby.js?v=1.2.0';
+import { fold } from './fold.js?v=1.2.0';
+import { ageInYears } from './ages.js?v=1.2.0';
 
 function flagIcon(code) {
   return el('img', {
@@ -837,10 +837,20 @@ function rankingValue(kind, metric, row) {
   return `出場試合数 ${row.value}試合`;
 }
 
+function japanWorldCupRecord(opponent) {
+  const parts = [['w', '勝'], ['d', '分'], ['l', '敗']]
+    .filter(([key]) => opponent[key] > 0)
+    .map(([key, label]) => `${opponent[key]}${label}`);
+  return `日本 ${parts.join('')}`;
+}
+
 export function rankingsView(rankings, teams, kind = 'c', metric = 'titles', fifaRanking = null) {
   const metrics = kind === 'c' ? COUNTRY_METRICS : PLAYER_METRICS;
   const isFifa = kind === 'c' && metric === 'fifa';
   const rows = isFifa ? fifaRanking.rows : kind === 'c' ? rankings.countries[metric] : rankings.players[metric];
+  const japanRecords = isFifa
+    ? new Map(teams.JPN.opponents.map((opponent) => [opponent.team, japanWorldCupRecord(opponent)]))
+    : null;
   const yearBearingMetric = kind === 'p' && ['tournamentGoals', 'youngest', 'oldest'].includes(metric);
   const displayRows = yearBearingMetric
     ? [...rows].sort((a, b) => a.rank - b.rank || b.year - a.year)
@@ -858,6 +868,7 @@ export function rankingsView(rankings, teams, kind = 'c', metric = 'titles', fif
     el('nav', { class: 'ranking-metrics', 'aria-label': 'ランキングの項目' }, metrics.map(([key, label]) =>
       el('a', { href: `#/r/${kind}/${key}`, 'aria-current': key === metric ? 'page' : null }, label))),
     caption ? el('p', { class: 'ranking-caption' }, caption) : null,
+    isFifa ? el('p', { class: 'ranking-caption' }, 'ワールドカップで日本が対戦した国には、日本の成績をのせています') : null,
     el('ol', { class: `ranking-list${isFifa ? ' fifa-ranking-list' : ''}` }, displayRows.map((row) => el('li', {
       class: `ranking-row rank-${Math.min(row.rank, 4)}${isFifa ? ' fifa-ranking-row' : ''}${kind === 'c' && row.team === 'JPN' ? ' ranking-japan' : ''}`,
       'data-year': yearBearingMetric ? row.year : null,
@@ -865,9 +876,12 @@ export function rankingsView(rankings, teams, kind = 'c', metric = 'titles', fif
       el('strong', { class: 'ranking-rank' }, String(row.rank)),
       isFifa && !row.team ? flagIcon(row.flag) : flag(teams, row.team),
       isFifa
-        ? row.team
-          ? el('a', { class: 'ranking-name', href: `#/c/${row.team}` }, teamName(teams[row.team].ja))
-          : el('span', { class: 'ranking-name' }, row.name)
+        ? el('span', { class: 'ranking-fifa-team' }, [
+          row.team
+            ? el('a', { class: 'ranking-name', href: `#/c/${row.team}` }, teamName(teams[row.team].ja))
+            : el('span', { class: 'ranking-name' }, row.name),
+          japanRecords.get(row.team) ? el('span', { class: 'ranking-japan-record' }, japanRecords.get(row.team)) : null,
+        ])
         : kind === 'c'
         ? el('a', { class: 'ranking-name', href: `#/c/${row.team}` }, teamName(row.ja))
         : el('a', { class: 'ranking-name person', href: `#/p/${row.player}` }, playerLabel(row, row.team)),
