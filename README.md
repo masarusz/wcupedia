@@ -8,7 +8,7 @@ Built for two children (aged 8 and 10) to browse on an iPad.
 
 A static site: no accounts, no tracking, no server.
 
-> Status: v1.3.0 complete. The site covers every tournament and match, countries,
+> Status: v1.3.1 complete. The site covers every tournament and match, countries,
 > players and squads, search and rankings, records, and a dedicated Japan feature.
 
 ## Features
@@ -72,6 +72,11 @@ exactly the allowlist, verifies every file on the live site by checksum, and
 confirms that unpublished paths return 404.
 
 ## Changelog
+
+### v1.3.1 — 2026-10-08
+
+- FIFAランキング updated to the 7 October 2026 release (was 20 July 2026).
+  The next release is due on 18 November 2026.
 
 ### v1.3.0 — 2026-09-29
 

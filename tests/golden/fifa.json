@@ -1,281 +1,281 @@
 {
- "_about": "Independent oracle for the FIFA ranking: the top-55 table in the Japanese Wikipedia article FIFAランキング (2026-07-20 release), parsed from raw wikitext. Written by hand from that source, NOT from curated/fifa-ranking.json or public/data, so it can catch a bad transcription in either. Codes are mapped to Wcupedia team keys where a page exists; VEN and MLI have no page.",
- "releaseDate": "2026-07-20",
+ "_about": "Independent oracle for the FIFA ranking: the top-55 table in the Japanese Wikipedia article FIFAランキング (2026-10-07 release), parsed from raw wikitext. Written by hand from that source, NOT from curated/fifa-ranking.json or public/data, so it can catch a bad transcription in either. Codes are mapped to Wcupedia team keys where a page exists; VEN and MLI have no page.",
+ "releaseDate": "2026-10-07",
  "top55": [
   {
    "rank": 1,
    "code": "ESP",
-   "points": 1995.88
+   "points": 2011.57
   },
   {
    "rank": 2,
    "code": "ARG",
-   "points": 1970.37
+   "points": 1972.8
   },
   {
    "rank": 3,
    "code": "FRA",
-   "points": 1948.97
+   "points": 1958.86
   },
   {
    "rank": 4,
    "code": "ENG",
-   "points": 1922.83
+   "points": 1925.59
   },
   {
    "rank": 5,
-   "code": "BRA",
-   "points": 1804.92
+   "code": "PRT",
+   "points": 1807.69
   },
   {
    "rank": 6,
-   "code": "MAR",
-   "points": 1803.99
+   "code": "BRA",
+   "points": 1806.51
   },
   {
    "rank": 7,
-   "code": "PRT",
-   "points": 1787.85
+   "code": "MAR",
+   "points": 1805.34
   },
   {
    "rank": 8,
    "code": "BEL",
-   "points": 1778.36
+   "points": 1779.17
   },
   {
    "rank": 9,
    "code": "NLD",
-   "points": 1775.54
+   "points": 1778.61
   },
   {
    "rank": 10,
    "code": "MEX",
-   "points": 1754.3
+   "points": 1738.48
   },
   {
    "rank": 11,
    "code": "COL",
-   "points": 1739.89
+   "points": 1735.8
   },
   {
    "rank": 12,
-   "code": "DEU",
-   "points": 1726.22
+   "code": "CHE",
+   "points": 1725.39
   },
   {
    "rank": 13,
-   "code": "HRV",
-   "points": 1723.05
+   "code": "DEU",
+   "points": 1717.52
   },
   {
    "rank": 14,
-   "code": "CHE",
-   "points": 1710.88
+   "code": "HRV",
+   "points": 1714.74
   },
   {
    "rank": 15,
    "code": "ITA",
-   "points": 1704.73
+   "points": 1713.04
   },
   {
    "rank": 16,
    "code": "USA",
-   "points": 1690.33
+   "points": 1705.47
   },
   {
    "rank": 17,
    "code": "JPN",
-   "points": 1673.68
+   "points": 1684.75
   },
   {
    "rank": 18,
    "code": "SEN",
-   "points": 1653.43
+   "points": 1648.84
   },
   {
    "rank": 19,
    "code": "NOR",
-   "points": 1651.29
+   "points": 1637.89
   },
   {
    "rank": 20,
    "code": "URY",
-   "points": 1634.7
+   "points": 1635.54
   },
   {
    "rank": 21,
    "code": "DNK",
-   "points": 1619.47
+   "points": 1619.62
   },
   {
    "rank": 22,
-   "code": "IRN",
-   "points": 1609.85
+   "code": "AUT",
+   "points": 1600.66
   },
   {
    "rank": 23,
-   "code": "AUT",
-   "points": 1598.82
+   "code": "IRN",
+   "points": 1597.31
   },
   {
    "rank": 24,
-   "code": "EGY",
-   "points": 1597.04
+   "code": "ECU",
+   "points": 1587.07
   },
   {
    "rank": 25,
-   "code": "ECU",
-   "points": 1592.59
+   "code": "EGY",
+   "points": 1585.86
   },
   {
    "rank": 26,
-   "code": "NGA",
-   "points": 1585.02
+   "code": "AUS",
+   "points": 1580.52
   },
   {
    "rank": 27,
-   "code": "TUR",
-   "points": 1582.54
+   "code": "CAN",
+   "points": 1575.31
   },
   {
    "rank": 28,
-   "code": "AUS",
-   "points": 1581.51
+   "code": "DZA",
+   "points": 1574.77
   },
   {
    "rank": 29,
-   "code": "DZA",
-   "points": 1576.8
+   "code": "CIV",
+   "points": 1569.32
   },
   {
    "rank": 30,
-   "code": "CAN",
-   "points": 1571.34
+   "code": "NGA",
+   "points": 1567.97
   },
   {
    "rank": 31,
-   "code": "CIV",
-   "points": 1565.47
+   "code": "TUR",
+   "points": 1563.54
   },
   {
    "rank": 32,
    "code": "KOR",
-   "points": 1558.72
+   "points": 1562.49
   },
   {
    "rank": 33,
-   "code": "UKR",
-   "points": 1549.29
+   "code": "PRY",
+   "points": 1552.3
   },
   {
    "rank": 34,
-   "code": "PRY",
-   "points": 1542.48
+   "code": "SWE",
+   "points": 1543.8
   },
   {
    "rank": 35,
    "code": "RUS",
-   "points": 1529.6
+   "points": 1537.45
   },
   {
    "rank": 36,
-   "code": "POL",
-   "points": 1526.18
+   "code": "UKR",
+   "points": 1535.27
   },
   {
    "rank": 37,
-   "code": "SWE",
-   "points": 1525.58
+   "code": "POL",
+   "points": 1514.58
   },
   {
    "rank": 38,
-   "code": "WAL",
-   "points": 1516.95
+   "code": "HUN",
+   "points": 1511.24
   },
   {
    "rank": 39,
-   "code": "HUN",
-   "points": 1506.39
+   "code": "WAL",
+   "points": 1510.37
   },
   {
    "rank": 40,
-   "code": "SRB",
-   "points": 1502.13
+   "code": "COD",
+   "points": 1506.37
   },
   {
    "rank": 41,
-   "code": "COD",
-   "points": 1495.48
+   "code": "GRC",
+   "points": 1498.71
   },
   {
    "rank": 42,
-   "code": "SCO",
-   "points": 1491.22
+   "code": "CMR",
+   "points": 1485.3
   },
   {
    "rank": 43,
-   "code": "CMR",
-   "points": 1481.24
+   "code": "SCO",
+   "points": 1483.57
   },
   {
    "rank": 44,
-   "code": "PAN",
-   "points": 1478.41
+   "code": "SRB",
+   "points": 1482.24
   },
   {
    "rank": 45,
    "code": "SVK",
-   "points": 1473.66
+   "points": 1477.34
   },
   {
    "rank": 46,
-   "code": "GRC",
-   "points": 1473.19
+   "code": "PAN",
+   "points": 1476.97
   },
   {
    "rank": 47,
-   "code": "VEN",
-   "points": 1469.18
+   "code": "MLI",
+   "points": 1474.14
   },
   {
    "rank": 48,
-   "code": "CZE",
-   "points": 1467.26
+   "code": "ZAF",
+   "points": 1468.88
   },
   {
    "rank": 49,
-   "code": "CHL",
-   "points": 1458.2
+   "code": "VEN",
+   "points": 1465.87
   },
   {
    "rank": 50,
-   "code": "PER",
-   "points": 1457.69
+   "code": "CHL",
+   "points": 1458.97
   },
   {
    "rank": 51,
-   "code": "CRI",
-   "points": 1456.03
+   "code": "CZE",
+   "points": 1457.12
   },
   {
    "rank": 52,
-   "code": "ROU",
-   "points": 1455.89
+   "code": "SVN",
+   "points": 1452.48
   },
   {
    "rank": 53,
-   "code": "MLI",
-   "points": 1455.59
+   "code": "PER",
+   "points": 1450.95
   },
   {
    "rank": 54,
-   "code": "ZAF",
-   "points": 1451.24
+   "code": "CRI",
+   "points": 1444.85
   },
   {
    "rank": 55,
-   "code": "IRL",
-   "points": 1441.1
+   "code": "SAU",
+   "points": 1443.17
   }
  ]
 }
