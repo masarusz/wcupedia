@@ -20,6 +20,7 @@ import { register as meikanTests } from './meikan.test.mjs';
 import { register as photoTests } from './photos.test.mjs';
 import { register as fifaTests } from './fifa.test.mjs';
 import { register as rankingCheckTests } from './ranking-check.test.mjs';
+import { register as deployVerifyTests } from './deploy-verify.test.mjs';
 
 const checks = [];
 const test = (name, run) => checks.push({ name, run });
@@ -50,6 +51,7 @@ meikanTests(test, equal, deepEqual);
 photoTests(test, equal, deepEqual);
 fifaTests(test, equal, deepEqual);
 rankingCheckTests(test, equal, deepEqual);
+deployVerifyTests(test, equal, deepEqual);
 viewsRenderTests(test, equal, deepEqual);
 
 let passed = 0;

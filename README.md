@@ -64,12 +64,17 @@ python3 -m http.server 4182 --directory public   # serve locally
 ```bash
 ./scripts/deploy.sh --dry-run    # show what would be published
 ./scripts/deploy.sh              # publish public/ to gh-pages and verify the live site
+./scripts/deploy.sh --verify-only  # re-check the published site without publishing
 ```
 
 Only allowlisted files from `public/` are published. The script refuses to
-deploy on a failing test suite, checks that the published branch contains
-exactly the allowlist, verifies every file on the live site by checksum, and
-confirms that unpublished paths return 404.
+deploy on a failing test suite and checks that the published branch contains
+exactly the allowlist. It then verifies every file in the gh-pages tree against
+`public/` by git hash, and waits for the GitHub Pages API to report the pushed
+commit as built (this needs `gh` logged in). Finally it fetches a few live
+samples by checksum and confirms that unpublished paths return 404, retrying
+when GitHub rate-limits. Exit codes: 0 `Deploy verified`, 1 `DEPLOY FAILED`,
+3 `DEPLOY UNVERIFIED (rate-limited)`.
 
 ## Changelog
 

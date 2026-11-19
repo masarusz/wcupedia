@@ -141,4 +141,15 @@ paths or e-mail). `git push origin main`, then `./scripts/deploy.sh` and require
 `Deploy verified` line — otherwise stop and do not tag. Only then tag `vX.Y.Z`, push the
 tag, re-run the audit, and confirm the live `js/version.js` serves the new version.
 
+The deploy checks every file through git (the gh-pages tree against `public/`), waits
+for the GitHub Pages API to report `built` for the pushed commit (`gh` must be logged
+in), then fetches only 5 live samples and 11 must-be-404 paths. Outcomes: exit 0
+`Deploy verified`; exit 1 `DEPLOY FAILED` (a real mismatch, a leak, or a Pages build
+error or timeout) → BROKE; exit 3 `DEPLOY UNVERIFIED (rate-limited)` (GitHub kept
+answering 429 after the retries) → do not tag. Wait until the site answers again,
+then run `./scripts/deploy.sh --verify-only`, which re-checks without republishing,
+and tag only on its `Deploy verified`. Do not loop full deploys or fetch the whole
+site by hand: on 2026-11-19 about five full passes over 5,202 files got this
+machine rate-limited.
+
 Report: the new date, who is #1, where Japan sits, countries that entered or left.
