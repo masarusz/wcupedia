@@ -1,282 +1,282 @@
 {
- "_about": "Independent oracle for the FIFA ranking: the top-55 table in the Japanese Wikipedia article FIFAランキング (2026-10-07 release), parsed from raw wikitext. nextUpdate is the next release date given with that table (2026-11-18), which matches the en.wikipedia module's data.next. Written by hand from that source, NOT from curated/fifa-ranking.json or public/data, so it can catch a bad transcription in either. Codes are mapped to Wcupedia team keys where a page exists; VEN and MLI have no page.",
- "releaseDate": "2026-10-07",
- "nextUpdate": "2026-11-18",
+ "_about": "Independent oracle for the FIFA ranking: the top-55 table in the Japanese Wikipedia article FIFAランキング (2026-11-18 release), parsed from raw wikitext. nextUpdate is the article's 次回発表予定日 (2026年12月16日), which matches the en.wikipedia module's data.next. Written from that source, NOT from curated/fifa-ranking.json or public/data, so it can catch a bad transcription in either. One exception, settled by FIFA's own ranking API: ja.wikipedia gives Spain (rank 1) 2004.08, FIFA's API gives 2004.484416, so 2004.48 is used. Codes are mapped to Wcupedia team keys where a page exists; MLI and VEN have no page.",
+ "releaseDate": "2026-11-18",
+ "nextUpdate": "2026-12-16",
  "top55": [
   {
    "rank": 1,
    "code": "ESP",
-   "points": 2011.57
+   "points": 2004.48
   },
   {
    "rank": 2,
    "code": "ARG",
-   "points": 1972.8
+   "points": 1966.13
   },
   {
    "rank": 3,
    "code": "FRA",
-   "points": 1958.86
+   "points": 1950.82
   },
   {
    "rank": 4,
    "code": "ENG",
-   "points": 1925.59
+   "points": 1938.9
   },
   {
    "rank": 5,
-   "code": "PRT",
-   "points": 1807.69
+   "code": "MAR",
+   "points": 1809.37
   },
   {
    "rank": 6,
-   "code": "BRA",
-   "points": 1806.51
+   "code": "PRT",
+   "points": 1801.28
   },
   {
    "rank": 7,
-   "code": "MAR",
-   "points": 1805.34
+   "code": "BRA",
+   "points": 1800.91
   },
   {
    "rank": 8,
    "code": "BEL",
-   "points": 1779.17
+   "points": 1790.37
   },
   {
    "rank": 9,
    "code": "NLD",
-   "points": 1778.61
+   "points": 1774.06
   },
   {
    "rank": 10,
-   "code": "MEX",
-   "points": 1738.48
+   "code": "COL",
+   "points": 1735.9
   },
   {
    "rank": 11,
-   "code": "COL",
-   "points": 1735.8
+   "code": "DEU",
+   "points": 1730.22
   },
   {
    "rank": 12,
    "code": "CHE",
-   "points": 1725.39
+   "points": 1726.15
   },
   {
    "rank": 13,
-   "code": "DEU",
-   "points": 1717.52
+   "code": "MEX",
+   "points": 1723.64
   },
   {
    "rank": 14,
-   "code": "HRV",
-   "points": 1714.74
+   "code": "ITA",
+   "points": 1717.2
   },
   {
    "rank": 15,
-   "code": "ITA",
-   "points": 1713.04
+   "code": "HRV",
+   "points": 1714.22
   },
   {
    "rank": 16,
    "code": "USA",
-   "points": 1705.47
+   "points": 1713.56
   },
   {
    "rank": 17,
    "code": "JPN",
-   "points": 1684.75
+   "points": 1684.61
   },
   {
    "rank": 18,
    "code": "SEN",
-   "points": 1648.84
+   "points": 1655.34
   },
   {
    "rank": 19,
    "code": "NOR",
-   "points": 1637.89
+   "points": 1650.89
   },
   {
    "rank": 20,
    "code": "URY",
-   "points": 1635.54
+   "points": 1644.48
   },
   {
    "rank": 21,
    "code": "DNK",
-   "points": 1619.62
+   "points": 1622.41
   },
   {
    "rank": 22,
    "code": "AUT",
-   "points": 1600.66
+   "points": 1602.21
   },
   {
    "rank": 23,
    "code": "IRN",
-   "points": 1597.31
+   "points": 1597.59
   },
   {
    "rank": 24,
    "code": "ECU",
-   "points": 1587.07
+   "points": 1593.34
   },
   {
    "rank": 25,
-   "code": "EGY",
-   "points": 1585.86
+   "code": "CAN",
+   "points": 1586.12
   },
   {
    "rank": 26,
-   "code": "AUS",
-   "points": 1580.52
+   "code": "EGY",
+   "points": 1580.49
   },
   {
    "rank": 27,
-   "code": "CAN",
-   "points": 1575.31
+   "code": "AUS",
+   "points": 1576.9
   },
   {
    "rank": 28,
-   "code": "DZA",
-   "points": 1574.77
+   "code": "CIV",
+   "points": 1565.93
   },
   {
    "rank": 29,
-   "code": "CIV",
-   "points": 1569.32
+   "code": "NGA",
+   "points": 1564.18
   },
   {
    "rank": 30,
-   "code": "NGA",
-   "points": 1567.97
+   "code": "KOR",
+   "points": 1560.02
   },
   {
    "rank": 31,
-   "code": "TUR",
-   "points": 1563.54
+   "code": "PRY",
+   "points": 1559.89
   },
   {
    "rank": 32,
-   "code": "KOR",
-   "points": 1562.49
+   "code": "DZA",
+   "points": 1557.94
   },
   {
    "rank": 33,
-   "code": "PRY",
-   "points": 1552.3
+   "code": "TUR",
+   "points": 1556.22
   },
   {
    "rank": 34,
    "code": "SWE",
-   "points": 1543.8
+   "points": 1549.05
   },
   {
    "rank": 35,
    "code": "RUS",
-   "points": 1537.45
+   "points": 1545.59
   },
   {
    "rank": 36,
    "code": "UKR",
-   "points": 1535.27
+   "points": 1530.59
   },
   {
    "rank": 37,
-   "code": "POL",
-   "points": 1514.58
+   "code": "HUN",
+   "points": 1514.7
   },
   {
    "rank": 38,
-   "code": "HUN",
-   "points": 1511.24
+   "code": "POL",
+   "points": 1506.49
   },
   {
    "rank": 39,
-   "code": "WAL",
-   "points": 1510.37
+   "code": "COD",
+   "points": 1503.08
   },
   {
    "rank": 40,
-   "code": "COD",
-   "points": 1506.37
+   "code": "GRC",
+   "points": 1502.14
   },
   {
    "rank": 41,
-   "code": "GRC",
-   "points": 1498.71
+   "code": "WAL",
+   "points": 1500.99
   },
   {
    "rank": 42,
    "code": "CMR",
-   "points": 1485.3
+   "points": 1495.84
   },
   {
    "rank": 43,
-   "code": "SCO",
-   "points": 1483.57
+   "code": "MLI",
+   "points": 1485.35
   },
   {
    "rank": 44,
-   "code": "SRB",
-   "points": 1482.24
+   "code": "SCO",
+   "points": 1484.84
   },
   {
    "rank": 45,
-   "code": "SVK",
-   "points": 1477.34
+   "code": "PAN",
+   "points": 1481.68
   },
   {
    "rank": 46,
-   "code": "PAN",
-   "points": 1476.97
+   "code": "SRB",
+   "points": 1470.66
   },
   {
    "rank": 47,
-   "code": "MLI",
-   "points": 1474.14
+   "code": "SVK",
+   "points": 1469
   },
   {
    "rank": 48,
    "code": "ZAF",
-   "points": 1468.88
+   "points": 1468.62
   },
   {
    "rank": 49,
-   "code": "VEN",
-   "points": 1465.87
+   "code": "SVN",
+   "points": 1462.01
   },
   {
    "rank": 50,
-   "code": "CHL",
-   "points": 1458.97
+   "code": "VEN",
+   "points": 1461.58
   },
   {
    "rank": 51,
-   "code": "CZE",
-   "points": 1457.12
+   "code": "CHL",
+   "points": 1458.87
   },
   {
    "rank": 52,
-   "code": "SVN",
-   "points": 1452.48
+   "code": "PER",
+   "points": 1454.73
   },
   {
    "rank": 53,
-   "code": "PER",
-   "points": 1450.95
+   "code": "CZE",
+   "points": 1451.42
   },
   {
    "rank": 54,
-   "code": "CRI",
-   "points": 1444.85
+   "code": "SAU",
+   "points": 1443.94
   },
   {
    "rank": 55,
-   "code": "SAU",
-   "points": 1443.17
+   "code": "CRI",
+   "points": 1440
   }
  ]
 }

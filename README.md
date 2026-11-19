@@ -8,7 +8,7 @@ Built for two children (aged 8 and 10) to browse on an iPad.
 
 A static site: no accounts, no tracking, no server.
 
-> Status: v1.3.1 complete. The site covers every tournament and match, countries,
+> Status: v1.3.2 complete. The site covers every tournament and match, countries,
 > players and squads, search and rankings, records, and a dedicated Japan feature.
 
 ## Features
@@ -72,6 +72,18 @@ exactly the allowlist, verifies every file on the live site by checksum, and
 confirms that unpublished paths return 404.
 
 ## Changelog
+
+### v1.3.2 — 2026-11-19
+
+- FIFAランキング updated to the 18 November 2026 release (was 7 October 2026).
+  The next release is due on 16 December 2026.
+- Spain's points (rank 1): English Wikipedia says 2004.48, Japanese Wikipedia
+  says 2004.08. FIFA's ranking API gives 2004.484416, so 2004.48 is used.
+- Switzerland, Indonesia and North Korea are shown as unchanged: English
+  Wikipedia still carried their October movement, but FIFA's API confirms
+  each kept its rank.
+- The FIFA ranking tests now take their dates from the oracle file, so a
+  routine refresh no longer needs a test edit.
 
 ### v1.3.1 — 2026-10-08
 
