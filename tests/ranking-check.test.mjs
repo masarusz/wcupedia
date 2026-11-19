@@ -1,17 +1,35 @@
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { isAbsolute, join, resolve } from 'node:path';
 import { parseModuleDates, decide } from '../tools/ranking-check.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const FIXTURES = join(import.meta.dirname, 'fixtures/ranking-check');
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+function addUtcDays(value, days) {
+  const date = new Date(`${value}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function moduleText(updated, previous, next) {
+  const line = (key, value) => {
+    const [year, month, day] = value.split('-').map(Number);
+    return `data.${key} = { day = ${day}, month = '${MONTHS[month - 1]}', year = ${year} }`;
+  };
+  return `local data = {}\n${line('updated', updated)}\n${line('previous', previous)}\n${line('next', next)}\nreturn data\n`;
+}
 
 function runCli(moduleName, today, curated = null) {
   const dir = mkdtempSync(join(tmpdir(), 'wcupedia-ranking-check-'));
   const env = {
     ...process.env,
-    WCUPEDIA_MODULE_FILE: join(FIXTURES, moduleName),
+    WCUPEDIA_MODULE_FILE: isAbsolute(moduleName) ? moduleName : join(FIXTURES, moduleName),
     WCUPEDIA_TODAY: today,
   };
   if (curated) {
@@ -75,12 +93,20 @@ export function register(test, equal, deepEqual) {
 
   test('ranking-check CLI reports every outcome and leaves the worktree unchanged', () => {
     const before = execFileSync('git', ['status', '--porcelain'], { cwd: ROOT, encoding: 'utf8' });
+    const curated = JSON.parse(readFileSync(join(ROOT, 'curated/fifa-ranking.json'), 'utf8'));
+    const fixtureDir = mkdtempSync(join(tmpdir(), 'wcupedia-ranking-check-modules-'));
+    const currentModule = join(fixtureDir, 'current.lua');
+    const newModule = join(fixtureDir, 'new.lua');
+    const olderModule = join(fixtureDir, 'older.lua');
+    writeFileSync(currentModule, moduleText(curated.releaseDate, curated.previousDate, curated.nextUpdate));
+    writeFileSync(newModule, moduleText(curated.nextUpdate, curated.releaseDate, addUtcDays(curated.nextUpdate, 35)));
+    writeFileSync(olderModule, moduleText(curated.previousDate, addUtcDays(curated.previousDate, -35), curated.releaseDate));
     const cases = [
-      ['current.lua', '2026-11-28', null, 0, 'NOOP'],
-      ['new.lua', '2026-11-18', null, 3, 'NEW'],
-      ['current.lua', '2026-11-29', null, 2, 'HOLD'],
-      ['older.lua', '2026-10-08', null, 2, 'HOLD'],
-      ['unparseable.lua', '2026-10-08', null, 1, 'BROKE'],
+      [currentModule, addUtcDays(curated.nextUpdate, 10), null, 0, 'NOOP'],
+      [newModule, curated.nextUpdate, null, 3, 'NEW'],
+      [currentModule, addUtcDays(curated.nextUpdate, 11), null, 2, 'HOLD'],
+      [olderModule, curated.releaseDate, null, 2, 'HOLD'],
+      ['unparseable.lua', curated.releaseDate, null, 1, 'BROKE'],
     ];
     for (const [fixture, today, curated, expectedCode, outcome] of cases) {
       const result = runCli(fixture, today, curated);

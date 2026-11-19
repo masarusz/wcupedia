@@ -1,11 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import oracle from './golden/fifa.json' with { type: 'json' };
 import { rubyPlain } from '../public/js/ruby.js?v=1.3.1';
 import { stageLabel } from '../public/js/strings.js?v=1.3.1';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const DATA = join(ROOT, 'public/data');
 const load = (path) => JSON.parse(readFileSync(join(DATA, path), 'utf8'));
+const japaneseDate = (value) => {
+  const [year, month, day] = value.split('-').map(Number);
+  return `${year}年${month}月${day}日`;
+};
 
 class FakeNode {}
 
@@ -779,8 +784,8 @@ export function register(test, equal, deepEqual) {
       equal(fifaMovements.some((value) => /^\+\d+$/.test(value)), true, 'FIFA upward movement');
       equal(fifaMovements.some((value) => /^−\d+$/.test(value)), true, 'FIFA downward movement');
       equal(fifaMovements.includes('—'), true, 'FIFA unchanged movement');
-      equal(fifaTree.textContent.includes('2026年10月7日発表'), true, 'FIFA release date');
-      equal(fifaTree.textContent.includes('次回は2026年11月18日'), true, 'FIFA next update');
+      equal(fifaTree.textContent.includes(`${japaneseDate(oracle.releaseDate)}発表`), true, 'FIFA release date');
+      equal(fifaTree.textContent.includes(`次回は${japaneseDate(oracle.nextUpdate)}`), true, 'FIFA next update');
       equal(fifaTree.textContent.includes('日本が対戦したことのある国には、日本代表の通算成績をのせています（2026年9月24日現在）'), true,
         'FIFA Japan record explanation');
       deepEqual(renderedTextNodes(fifaTree).map((node) => node.textContent).filter((value) => /[{|]/.test(value)), [],

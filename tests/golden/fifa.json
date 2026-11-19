@@ -1,6 +1,7 @@
 {
- "_about": "Independent oracle for the FIFA ranking: the top-55 table in the Japanese Wikipedia article FIFAランキング (2026-10-07 release), parsed from raw wikitext. Written by hand from that source, NOT from curated/fifa-ranking.json or public/data, so it can catch a bad transcription in either. Codes are mapped to Wcupedia team keys where a page exists; VEN and MLI have no page.",
+ "_about": "Independent oracle for the FIFA ranking: the top-55 table in the Japanese Wikipedia article FIFAランキング (2026-10-07 release), parsed from raw wikitext. nextUpdate is the next release date given with that table (2026-11-18), which matches the en.wikipedia module's data.next. Written by hand from that source, NOT from curated/fifa-ranking.json or public/data, so it can catch a bad transcription in either. Codes are mapped to Wcupedia team keys where a page exists; VEN and MLI have no page.",
  "releaseDate": "2026-10-07",
+ "nextUpdate": "2026-11-18",
  "top55": [
   {
    "rank": 1,

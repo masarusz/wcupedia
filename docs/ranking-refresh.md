@@ -56,9 +56,17 @@ Compare rank and points of every row in the ja.wikipedia top-55 table
 with the rebuilt rows, programmatically. First confirm the ja table shows the same
 release date; if not, it has not caught up — HOLD and retry in a few days.
 
-For each disagreement, query FIFA's own ranking API (api.fifa.com, the men's
-ranking schedule published on the new date; find the schedule id from the API
-itself). If FIFA's value matches one side exactly (2 decimals), use it and record
+For each disagreement, query FIFA's own ranking API:
+`https://api.fifa.com/api/v3/fifarankings/rankings/rankingsbyschedule?rankingScheduleId=<id>&language=en`
+(211 rows: `IdCountry` FIFA code, `Rank`, `PrevRank`, `TotalPoints` to 6 decimals).
+**Schedule ids are named after the previous release**: the 18 Nov 2026 release is
+`FRS_Male_Football_20261007`. The list of ids, each with its publication `date`, is
+embedded in the HTML of `https://inside.fifa.com/fifa-rankings/world-ranking/men`
+(grep `"id":"FRS_Male_Football_`). Do not use `api/v3/rankings/?rankingScheduleId=`:
+it ignores the parameter and silently returns an older release.
+Compare movement too: the en module has carried the previous release's movement for
+rows whose rank did not change (2026-11-18: three rows); FIFA's `PrevRank` settles it.
+If FIFA's value matches one side exactly (2 decimals), use it and record
 the reasoning in `_discrepancies`, in the style of the existing entry. API
 unreachable or matching neither side → HOLD. More than 3 disagreements → HOLD.
 If ja/en disagree, es.wikipedia and fr.wikipedia may also help; a points value
@@ -66,7 +74,11 @@ higher than the rank above it is wrong.
 
 Rewrite `tests/golden/fifa.json` (same shape) from the **ja.wikipedia table** as the
 independent oracle — never from the curated file, except a FIFA-API-settled value,
-noted as such.
+noted as such. Set its `releaseDate` and `nextUpdate` from the ja article (the table
+caption and 次回発表予定日; confirm `nextUpdate` equals the module's `data.next`).
+`tests/views-render.test.mjs` takes the expected 「…発表」 and 「次回は…」 text from
+these two golden fields, and `tests/ranking-check.test.mjs` builds its CLI fixtures
+from the curated file's own dates, so neither test needs editing on a refresh.
 
 ## 4. Flags
 
